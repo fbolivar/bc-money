@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -37,8 +38,14 @@ export function Configuracion() {
         setUpdatingPassword(true);
 
         try {
-            // 1. Verify current password by signing in
-            const { error: signInError } = await supabase.auth.signInWithPassword({
+            // 1. Verify current password using a temporary client to avoid affecting global session
+            const tempClient = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                { auth: { persistSession: false } }
+            );
+
+            const { error: signInError } = await tempClient.auth.signInWithPassword({
                 email: user?.email || '',
                 password: currentPassword
             });
@@ -49,7 +56,7 @@ export function Configuracion() {
                 return;
             }
 
-            // 2. Update password
+            // 2. Update password using main client (authenticated user)
             const { error } = await supabase.auth.updateUser({ password: newPassword });
 
             if (error) {
