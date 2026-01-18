@@ -56,9 +56,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let mounted = true;
 
+        // Timeout de seguridad: Si Supabase no responde en 3 segundos, forzamos la carga
+        // Esto evita que la app se quede congelada en "Cargando..." por problemas de red o caché
+        const safetyTimer = setTimeout(() => {
+            if (mounted) {
+                console.warn('Verificación de autenticación tardó demasiado - forzando finalización');
+                setLoading(false);
+            }
+        }, 3000);
+
         async function getInitialSession() {
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                // Usamos Promise.race para evitar bloqueos si getSession nunca resuelve
+                const sessionPromise = supabase.auth.getSession();
+                const timeoutPromise = new Promise<{ data: { session: Session | null }, error: any }>((_, reject) =>
+                    setTimeout(() => reject(new Error('Tiempo de espera agotado al obtener sesión')), 4000)
+                );
+
+                const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
 
                 if (error) throw error;
 
@@ -66,7 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setSession(session);
                     setUser(session?.user ?? null);
                     if (session?.user) {
-                        await fetchProfile(session.user.id);
+                        try {
+                            await fetchProfile(session.user.id);
+                        } catch (err) {
+                            console.error('Error fetching profile:', err);
+                        }
                     }
                 }
             } catch (error) {
@@ -88,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(session?.user ?? null);
 
                 if (session?.user) {
-                    await fetchProfile(session.user.id);
+                    await fetchProfile(session.user.id).catch(err => console.error(err));
                 } else {
                     setProfile(null);
                 }
@@ -101,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => {
             mounted = false;
+            clearTimeout(safetyTimer);
             subscription.unsubscribe();
         };
     }, [fetchProfile]);
