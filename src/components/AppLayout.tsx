@@ -1,4 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -19,6 +20,8 @@ export function AppLayout() {
         return <Navigate to="/login" replace />;
     }
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     // Redirect to onboarding if not completed
     if (profile && !profile.onboarding_completed) {
         return <Navigate to="/onboarding" replace />;
@@ -26,9 +29,9 @@ export function AppLayout() {
 
     return (
         <div className="app-layout">
-            <Sidebar />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <main className="main-content">
-                <TopBar />
+                <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
                 <div className="page-content">
                     <Outlet />
                 </div>

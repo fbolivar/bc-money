@@ -1,6 +1,9 @@
 .sidebar-header {
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar-logo {
@@ -10,6 +13,14 @@
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
+}
+
+.close-sidebar-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
 }
 
 .sidebar-nav {
@@ -145,4 +156,16 @@
 .logout-btn:hover {
     color: var(--color-danger);
     background-color: var(--color-danger-light);
+}
+
+@media (max-width: 768px) {
+    .close-sidebar-btn {
+        display: block;
+    }
+
+    .sidebar {
+        /* Usually defined in Sidebar style prop or globally, but we override here for safety */
+        z-index: 100;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
 }

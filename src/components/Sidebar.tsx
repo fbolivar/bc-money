@@ -10,6 +10,7 @@ import {
     LogOut,
     DollarSign,
     Tags,
+    X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
@@ -24,60 +25,100 @@ const baseNavItems = [
     { path: '/asesor', icon: Bot, label: 'Asesor IA' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { signOut, profile } = useAuth();
     const navItems = baseNavItems;
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
-                <div className="sidebar-logo">
-                    <DollarSign size={28} />
-                    <span>BC MONEY</span>
-                </div>
-            </div>
-
-            <nav className="sidebar-nav">
-                <div className="nav-section">
-                    <span className="nav-section-title">MENÚ PRINCIPAL</span>
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={({ isActive }) =>
-                                `nav-link ${isActive ? 'nav-link-active' : ''}`
-                            }
-                        >
-                            <item.icon size={20} />
-                            <span>{item.label}</span>
-                        </NavLink>
-                    ))}
-                </div>
-            </nav>
-
-            <div className="sidebar-footer">
-                <div className="user-info">
-                    <NavLink to="/configuracion" className="user-info-link" title="Ir a mi perfil" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                        <div className="user-avatar">
-                            {profile?.full_name?.[0]?.toUpperCase() || '?'}
-                        </div>
-                        <div className="user-details">
-                            <span className="user-name">{profile?.full_name || 'Usuario'}</span>
-                            <span className="user-email">{profile?.email}</span>
-                        </div>
-                    </NavLink>
-                </div>
-                <div className="sidebar-actions">
-                    <NavLink to="/configuracion" className="nav-link">
-                        <Settings size={20} />
-                        <span>Configuración</span>
-                    </NavLink>
-                    <button onClick={signOut} className="nav-link logout-btn">
-                        <LogOut size={20} />
-                        <span>Cerrar Sesión</span>
+        <>
+            <div
+                className={`sidebar-overlay ${isOpen ? 'open' : ''}`}
+                onClick={onClose}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 90,
+                    opacity: isOpen ? 1 : 0,
+                    pointerEvents: isOpen ? 'auto' : 'none',
+                    transition: 'opacity 0.3s ease',
+                    display: 'block' // Always render but handle with opacity/pointerEvents
+                }}
+            />
+            <aside
+                className={`sidebar ${isOpen ? 'open' : ''}`}
+                style={{
+                    ...(window.innerWidth <= 768 ? {
+                        position: 'fixed',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+                    } : {})
+                }}
+            >
+                <div className="sidebar-header">
+                    <div className="sidebar-logo">
+                        <DollarSign size={28} />
+                        <span>BC MONEY</span>
+                    </div>
+                    <button className="close-sidebar-btn" onClick={onClose}>
+                        <X size={24} />
                     </button>
                 </div>
-            </div>
-        </aside>
+
+                <nav className="sidebar-nav">
+                    <div className="nav-section">
+                        <span className="nav-section-title">MENÚ PRINCIPAL</span>
+                        {navItems.map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) =>
+                                    `nav-link ${isActive ? 'nav-link-active' : ''}`
+                                }
+                                onClick={() => {
+                                    if (window.innerWidth <= 768) {
+                                        onClose();
+                                    }
+                                }}
+                            >
+                                <item.icon size={20} />
+                                <span>{item.label}</span>
+                            </NavLink>
+                        ))}
+                    </div>
+                </nav>
+
+                <div className="sidebar-footer">
+                    <div className="user-info">
+                        <NavLink to="/configuracion" className="user-info-link" title="Ir a mi perfil" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                            <div className="user-avatar">
+                                {profile?.full_name?.[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div className="user-details">
+                                <span className="user-name">{profile?.full_name || 'Usuario'}</span>
+                                <span className="user-email">{profile?.email}</span>
+                            </div>
+                        </NavLink>
+                    </div>
+                    <div className="sidebar-actions">
+                        <NavLink to="/configuracion" className="nav-link" onClick={() => window.innerWidth <= 768 && onClose()}>
+                            <Settings size={20} />
+                            <span>Configuración</span>
+                        </NavLink>
+                        <button onClick={signOut} className="nav-link logout-btn">
+                            <LogOut size={20} />
+                            <span>Cerrar Sesión</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 }

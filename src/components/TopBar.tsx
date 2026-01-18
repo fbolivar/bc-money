@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { Sun, Moon, Bell, Search } from 'lucide-react';
+import { Sun, Moon, Bell, Search, Menu } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import './TopBar.css';
 
@@ -14,7 +14,11 @@ const pageTitles: Record<string, string> = {
     '/onboarding': 'Configuración Inicial',
 };
 
-export function TopBar() {
+interface TopBarProps {
+    onMenuClick: () => void;
+}
+
+export function TopBar({ onMenuClick }: TopBarProps) {
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
     const pageTitle = pageTitles[location.pathname] || 'BC Money';
@@ -22,6 +26,9 @@ export function TopBar() {
     return (
         <header className="topbar">
             <div className="topbar-left">
+                <button className="menu-btn lg:hidden mr-2 p-2" onClick={onMenuClick} style={{ display: 'none' }}>
+                    <Menu size={24} />
+                </button>
                 <h1 className="topbar-title">{pageTitle}</h1>
             </div>
 
