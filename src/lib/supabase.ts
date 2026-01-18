@@ -9,6 +9,15 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
 // Check if properly configured
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// Helper to create a temporary client for isolated auth operations (e.g. password verification)
+export const createTemporaryClient = () => createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+});
+
 // Type exports for database
 export type Profile = {
   id: string;

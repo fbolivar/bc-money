@@ -1,7 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
 import { User, Shield, Lock, Save } from 'lucide-react';
 import './Configuracion.css';
@@ -39,11 +38,7 @@ export function Configuracion() {
 
         try {
             // 1. Verify current password using a temporary client to avoid affecting global session
-            const tempClient = createClient(
-                import.meta.env.VITE_SUPABASE_URL,
-                import.meta.env.VITE_SUPABASE_ANON_KEY,
-                { auth: { persistSession: false } }
-            );
+            const tempClient = createTemporaryClient();
 
             const { error: signInError } = await tempClient.auth.signInWithPassword({
                 email: user?.email || '',
