@@ -67,7 +67,10 @@ export function Metas() {
     };
 
     useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
         getGoals(user.id).then(data => {
             setGoals(data);
             setLoading(false);
@@ -360,6 +363,8 @@ export function Metas() {
                                 <label className="form-label">Nombre de la meta</label>
                                 <input
                                     type="text"
+                                    name="name"
+                                    id="name"
                                     className="form-input"
                                     value={formData.name}
                                     onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
@@ -393,6 +398,8 @@ export function Metas() {
                                     <label className="form-label">Monto objetivo ({currency})</label>
                                     <input
                                         type="number"
+                                        name="target_amount"
+                                        id="target_amount"
                                         className="form-input"
                                         value={formData.target_amount}
                                         onChange={(e) => setFormData(p => ({ ...p, target_amount: e.target.value }))}
@@ -408,6 +415,8 @@ export function Metas() {
                                     <div className="flex gap-2 items-center">
                                         <input
                                             type="number"
+                                            name="target_percentage"
+                                            id="target_percentage"
                                             className="form-input"
                                             value={formData.target_percentage}
                                             onChange={(e) => setFormData(p => ({ ...p, target_percentage: e.target.value }))}
@@ -442,6 +451,8 @@ export function Metas() {
                                 <label className="form-label">Fecha objetivo (opcional)</label>
                                 <input
                                     type="date"
+                                    name="target_date"
+                                    id="target_date"
                                     className="form-input"
                                     value={formData.target_date}
                                     onChange={(e) => setFormData(p => ({ ...p, target_date: e.target.value }))}
@@ -484,6 +495,8 @@ export function Metas() {
                             <div className="form-group">
                                 <label className="form-label">Descripción (opcional)</label>
                                 <textarea
+                                    name="description"
+                                    id="description"
                                     className="form-textarea"
                                     value={formData.description}
                                     onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
@@ -518,6 +531,8 @@ export function Metas() {
                                 <label className="form-label">Monto a aportar ({currency})</label>
                                 <input
                                     type="number"
+                                    name="contributionAmount"
+                                    id="contributionAmount"
                                     className="form-input amount-input"
                                     value={contributionAmount}
                                     onChange={(e) => setContributionAmount(e.target.value)}
