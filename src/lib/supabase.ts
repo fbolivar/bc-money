@@ -29,6 +29,8 @@ export type Profile = {
   birth_year: number | null;
   onboarding_completed: boolean;
   onboarding_step: number;
+  role: 'admin' | 'user';
+  status: 'active' | 'inactive' | 'banned';
   created_at: string;
   updated_at: string;
 };
@@ -97,6 +99,8 @@ export type Goal = {
   auto_contribute: boolean;
   contribution_amount: number | null;
   contribution_frequency: 'weekly' | 'biweekly' | 'monthly' | null;
+  target_mode: 'amount' | 'percentage';
+  target_percentage: number | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;

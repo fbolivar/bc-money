@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, User, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Send, Sparkles, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Goal, Budget, Category, AIConversation } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { format, subDays } from 'date-fns';
 import './Asesor.css';
@@ -21,131 +20,122 @@ interface Message {
     timestamp: Date;
 }
 
+interface ContextData {
+    profile: {
+        income_type?: string;
+        life_situation?: string;
+        risk_tolerance?: string;
+        investment_horizon?: string;
+    };
+    last30Days: {
+        income: number;
+        expenses: number;
+        savings: number;
+        savingsRate: number;
+        transactionCount: number;
+    };
+    goals: Array<{
+        name: string;
+        target: number;
+        current: number;
+        progress: string;
+    }>;
+    budgets: number;
+}
+
 export function Asesor() {
     const { user, profile } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const [context, setContext] = useState<any>(null);
+    const [context, setContext] = useState<ContextData | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const currency = profile?.currency || 'USD';
 
     useEffect(() => {
-        if (user) {
-            loadContext();
-            loadHistory();
-        }
-    }, [user]);
+        if (!user) return;
+
+        const loadData = async () => {
+            // Load Context
+            const now = new Date();
+            const thirtyDaysAgo = subDays(now, 30);
+
+            const [tx30, goals, budgets, history] = await Promise.all([
+                supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', format(thirtyDaysAgo, 'yyyy-MM-dd')),
+                supabase.from('goals').select('*').eq('user_id', user.id).eq('status', 'active'),
+                supabase.from('budgets').select('*').eq('user_id', user.id),
+                supabase.from('ai_conversations').select('*').eq('user_id', user.id).order('created_at', { ascending: true }).limit(20)
+            ]);
+
+            const tx30Data = tx30.data || [];
+            const income30 = tx30Data.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+            const expenses30 = tx30Data.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+
+            setContext({
+                profile: {
+                    income_type: profile?.income_type,
+                    life_situation: profile?.life_situation,
+                    risk_tolerance: profile?.risk_tolerance,
+                    investment_horizon: profile?.investment_horizon,
+                },
+                last30Days: {
+                    income: income30,
+                    expenses: expenses30,
+                    savings: income30 - expenses30,
+                    savingsRate: income30 > 0 ? ((income30 - expenses30) / income30 * 100) : 0,
+                    transactionCount: tx30Data.length,
+                },
+                goals: goals.data?.map(g => ({
+                    name: g.name,
+                    target: g.target_amount,
+                    current: g.current_amount,
+                    progress: ((Number(g.current_amount) / Number(g.target_amount)) * 100).toFixed(0),
+                })) || [],
+                budgets: budgets.data?.length || 0,
+            });
+
+            // Load History
+            if (history.data) {
+                setMessages(history.data.map(m => ({
+                    id: m.id,
+                    role: m.role as 'user' | 'assistant',
+                    content: m.content,
+                    structured: m.structured_response as Message['structured'],
+                    timestamp: new Date(m.created_at),
+                })));
+            }
+        };
+
+        loadData();
+    }, [user, profile]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const loadContext = async () => {
-        const now = new Date();
-        const thirtyDaysAgo = subDays(now, 30);
-        const ninetyDaysAgo = subDays(now, 90);
+    const generateAIResponse = async (): Promise<{ content: string; structured?: Message['structured'] }> => {
+        try {
+            const { data, error } = await supabase.functions.invoke('ai-advisor', {
+                body: {
+                    message: input.trim(),
+                    context: context
+                }
+            });
 
-        const [tx30, tx90, goals, budgets, categories] = await Promise.all([
-            supabase.from('transactions').select('*').eq('user_id', user!.id).gte('date', format(thirtyDaysAgo, 'yyyy-MM-dd')),
-            supabase.from('transactions').select('*').eq('user_id', user!.id).gte('date', format(ninetyDaysAgo, 'yyyy-MM-dd')),
-            supabase.from('goals').select('*').eq('user_id', user!.id).eq('status', 'active'),
-            supabase.from('budgets').select('*').eq('user_id', user!.id),
-            supabase.from('categories').select('*'),
-        ]);
+            if (error) throw error;
 
-        const tx30Data = tx30.data || [];
-        const income30 = tx30Data.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-        const expenses30 = tx30Data.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
-
-        setContext({
-            profile: {
-                income_type: profile?.income_type,
-                life_situation: profile?.life_situation,
-                risk_tolerance: profile?.risk_tolerance,
-                investment_horizon: profile?.investment_horizon,
-            },
-            last30Days: {
-                income: income30,
-                expenses: expenses30,
-                savings: income30 - expenses30,
-                savingsRate: income30 > 0 ? ((income30 - expenses30) / income30 * 100).toFixed(1) : 0,
-                transactionCount: tx30Data.length,
-            },
-            goals: goals.data?.map(g => ({
-                name: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
-                progress: ((Number(g.current_amount) / Number(g.target_amount)) * 100).toFixed(0),
-            })) || [],
-            budgets: budgets.data?.length || 0,
-        });
-    };
-
-    const loadHistory = async () => {
-        const { data } = await supabase
-            .from('ai_conversations')
-            .select('*')
-            .eq('user_id', user!.id)
-            .order('created_at', { ascending: true })
-            .limit(20);
-
-        if (data) {
-            setMessages(data.map(m => ({
-                id: m.id,
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
-                structured: m.structured_response as any,
-                timestamp: new Date(m.created_at),
-            })));
+            return {
+                content: data.content || "Lo siento, no pude generar una respuesta.",
+                structured: data.structured
+            };
+        } catch (error: any) {
+            console.error('Error invoking AI:', error);
+            return {
+                content: "Hubo un error al conectar con el sistema. Por favor intenta más tarde.",
+                structured: undefined
+            };
         }
-    };
-
-    const generateAIResponse = async (userMessage: string): Promise<{ content: string; structured?: any }> => {
-        // This is a mock AI response. In production, this would call your Supabase Edge Function
-        // which would then call OpenAI/Gemini API with the user's context.
-
-        const ctx = context;
-
-        // Simple rule-based responses for demo (replace with real AI call)
-        const responses = {
-            summary: [
-                `Tus ingresos de los últimos 30 días: ${currency} ${ctx?.last30Days?.income?.toLocaleString() || 0}`,
-                `Tus gastos de los últimos 30 días: ${currency} ${ctx?.last30Days?.expenses?.toLocaleString() || 0}`,
-                `Tasa de ahorro actual: ${ctx?.last30Days?.savingsRate || 0}%`,
-            ],
-            alerts: ctx?.last30Days?.savingsRate < 10
-                ? ['⚠️ Tu tasa de ahorro está por debajo del 10%. Considera revisar gastos no esenciales.']
-                : ['✅ Tu tasa de ahorro está en buen nivel. ¡Sigue así!'],
-            shortTermPlan: 'Mantén tu fondo de emergencia como prioridad. Revisa suscripciones que no uses.',
-            mediumTermPlan: 'Una vez completo tu fondo de emergencia, considera diversificar en ETFs de bajo costo.',
-            longTermPlan: 'Para retiro a largo plazo, considera maximizar cuentas con beneficios fiscales.',
-            nextAction: ctx?.goals?.length === 0
-                ? 'Crea tu primera meta de ahorro hoy.'
-                : `Aporta a tu meta "${ctx?.goals[0]?.name}" esta semana.`,
-        };
-
-        const content = `
-**📊 Resumen de tu Situación:**
-${responses.summary.map(s => `• ${s}`).join('\n')}
-
-**⚡ Alertas:**
-${responses.alerts.map(a => `• ${a}`).join('\n')}
-
-**📋 Plan Recomendado:**
-- **Corto Plazo (0-3 meses):** ${responses.shortTermPlan}
-- **Mediano Plazo (3-24 meses):** ${responses.mediumTermPlan}
-- **Largo Plazo (2-10 años):** ${responses.longTermPlan}
-
-**✅ Tu Próxima Acción:**
-${responses.nextAction}
-
----
-*Recuerda: esto es orientación educativa, no asesoría financiera profesional.*
-    `.trim();
-
-        return { content, structured: responses };
     };
 
     const handleSend = async () => {
@@ -172,7 +162,7 @@ ${responses.nextAction}
         });
 
         try {
-            const response = await generateAIResponse(userMessage);
+            const response = await generateAIResponse();
 
             const assistantMsg: Message = {
                 id: (Date.now() + 1).toString(),
@@ -222,7 +212,7 @@ ${responses.nextAction}
                                 </div>
                                 <div className="context-card">
                                     <span className="label">Tasa de Ahorro</span>
-                                    <span className="value">{context.last30Days?.savingsRate}%</span>
+                                    <span className="value">{context.last30Days?.savingsRate.toFixed(1)}%</span>
                                 </div>
                                 <div className="context-card">
                                     <span className="label">Metas Activas</span>
@@ -250,7 +240,7 @@ ${responses.nextAction}
                         </div>
                     </div>
 
-                    <div className="sidebar-section disclaimer">
+                    <div className="sidebar-section disclaimer" style={{ marginTop: 'auto' }}>
                         <AlertTriangle size={16} />
                         <p>Esto es orientación educativa, no asesoría financiera profesional.</p>
                     </div>

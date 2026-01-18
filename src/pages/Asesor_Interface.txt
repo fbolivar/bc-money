@@ -1,0 +1,22 @@
+interface ContextData {
+    profile: {
+        income_type?: string;
+        life_situation?: string;
+        risk_tolerance?: string;
+        investment_horizon?: string;
+    };
+    last30Days: {
+        income: number;
+        expenses: number;
+        savings: number;
+        savingsRate: string | number;
+        transactionCount: number;
+    };
+    goals: Array<{
+        name: string;
+        target: number;
+        current: number;
+        progress: string;
+    }>;
+    budgets: number;
+}

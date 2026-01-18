@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
-    Filter,
     Edit2,
     Trash2,
     ArrowUpRight,
     ArrowDownRight,
     X,
-    Calendar,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category } from '../lib/supabase';
@@ -21,10 +19,13 @@ import './Transacciones.css';
 export function Transacciones() {
     const { user, profile } = useAuth();
     const [searchParams] = useSearchParams();
+    const initialNewType = searchParams.get('new');
+    const isValidInitialType = initialNewType === 'income' || initialNewType === 'expense';
+
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] = useState(isValidInitialType);
     const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
     // Filters
@@ -36,7 +37,7 @@ export function Transacciones() {
 
     // Form state
     const [formData, setFormData] = useState({
-        type: 'expense' as 'income' | 'expense',
+        type: (isValidInitialType ? initialNewType : 'expense') as 'income' | 'expense',
         amount: '',
         category_id: '',
         description: '',
@@ -48,35 +49,30 @@ export function Transacciones() {
 
     const currency = profile?.currency || 'USD';
 
-    useEffect(() => {
-        if (user) {
-            fetchData();
-        }
+    const getTransactionsData = async (userId: string) => {
+        const [txRes, catRes] = await Promise.all([
+            supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+            supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`)
+        ]);
+        return { transactions: txRes.data || [], categories: catRes.data || [] };
+    };
 
-        // Check if opening modal for new transaction
-        const newType = searchParams.get('new');
-        if (newType === 'income' || newType === 'expense') {
-            setFormData(prev => ({ ...prev, type: newType }));
-            setShowModal(true);
-        }
-    }, [user, searchParams]);
-
-    const fetchData = async () => {
-        const { data: txData } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', user!.id)
-            .order('date', { ascending: false });
-
-        const { data: catData } = await supabase
-            .from('categories')
-            .select('*')
-            .or(`user_id.eq.${user!.id},is_system.eq.true`);
-
-        setTransactions(txData || []);
-        setCategories(catData || []);
+    const refreshData = async () => {
+        if (!user) return;
+        const { transactions, categories } = await getTransactionsData(user.id);
+        setTransactions(transactions);
+        setCategories(categories);
         setLoading(false);
     };
+
+    useEffect(() => {
+        if (!user) return;
+        getTransactionsData(user.id).then(({ transactions, categories }) => {
+            setTransactions(transactions);
+            setCategories(categories);
+            setLoading(false);
+        });
+    }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -107,7 +103,7 @@ export function Transacciones() {
         setShowModal(false);
         setEditingTx(null);
         resetForm();
-        fetchData();
+        refreshData();
     };
 
     const handleEdit = (tx: Transaction) => {
@@ -131,7 +127,7 @@ export function Transacciones() {
                 .from('transactions')
                 .delete()
                 .eq('id', id);
-            fetchData();
+            refreshData();
         }
     };
 
@@ -433,7 +429,7 @@ export function Transacciones() {
                                 <select
                                     className="form-select"
                                     value={formData.payment_method}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value as any }))}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value as typeof formData.payment_method }))}
                                 >
                                     <option value="debit">Débito</option>
                                     <option value="credit">Crédito</option>

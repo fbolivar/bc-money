@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Plus,
     Edit2,
@@ -38,13 +38,7 @@ export function Categorias() {
         icon: 'Tag'
     });
 
-    useEffect(() => {
-        if (user) {
-            fetchCategories();
-        }
-    }, [user]);
-
-    async function fetchCategories() {
+    const fetchCategories = useCallback(async () => {
         if (!user) return;
         try {
             const { data, error } = await supabase
@@ -60,7 +54,13 @@ export function Categorias() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [user]);
+
+    useEffect(() => {
+        if (user) {
+            fetchCategories();
+        }
+    }, [user, fetchCategories]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -275,7 +275,7 @@ export function Categorias() {
                                 <select
                                     className="form-select"
                                     value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as any })}
+                                    onChange={e => setFormData({ ...formData, type: e.target.value as CategoryFormData['type'] })}
                                 >
                                     <option value="expense">Gasto</option>
                                     <option value="income">Ingreso</option>

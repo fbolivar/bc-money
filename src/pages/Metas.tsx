@@ -29,6 +29,8 @@ export function Metas() {
         name: '',
         description: '',
         target_amount: '',
+        target_percentage: '',
+        target_mode: 'amount' as 'amount' | 'percentage',
         target_date: '',
         goal_type: 'savings',
         priority: 1,
@@ -36,29 +38,52 @@ export function Metas() {
 
     const currency = profile?.currency || 'USD';
 
-    useEffect(() => {
-        if (user) fetchGoals();
-    }, [user]);
-
-    const fetchGoals = async () => {
+    const getGoals = async (userId: string) => {
         const { data } = await supabase
             .from('goals')
             .select('*')
-            .eq('user_id', user!.id)
+            .eq('user_id', userId)
             .order('priority', { ascending: true });
-        setGoals(data || []);
+        return data || [];
+    };
+
+    const monthlyNetIncome = profile ? (
+        profile.income_type === 'hourly'
+            ? (profile.hourly_rate || 0) * (profile.hours_per_week || 0) * 4.33
+            : (profile.fixed_salary || 0)
+    ) * ((profile.net_income_percentage || 100) / 100) : 0;
+
+    const refreshGoals = async () => {
+        if (!user) return;
+        const data = await getGoals(user.id);
+        setGoals(data);
         setLoading(false);
     };
+
+    useEffect(() => {
+        if (!user) return;
+        getGoals(user.id).then(data => {
+            setGoals(data);
+            setLoading(false);
+        });
+    }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const goalType = GOAL_TYPES.find(t => t.value === formData.goal_type);
 
+        let finalAmount = parseFloat(formData.target_amount);
+        if (formData.target_mode === 'percentage') {
+            finalAmount = monthlyNetIncome * (parseFloat(formData.target_percentage) / 100);
+        }
+
         const data = {
             user_id: user!.id,
             name: formData.name,
             description: formData.description || null,
-            target_amount: parseFloat(formData.target_amount),
+            target_amount: finalAmount,
+            target_mode: formData.target_mode,
+            target_percentage: formData.target_mode === 'percentage' ? parseFloat(formData.target_percentage) : null,
             target_date: formData.target_date || null,
             goal_type: formData.goal_type,
             priority: formData.priority,
@@ -73,7 +98,7 @@ export function Metas() {
         }
 
         closeModal();
-        fetchGoals();
+        refreshGoals();
     };
 
     const handleContribute = async (e: React.FormEvent) => {
@@ -101,20 +126,30 @@ export function Metas() {
         setShowContributeModal(false);
         setContributionAmount('');
         setSelectedGoal(null);
-        fetchGoals();
+        refreshGoals();
     };
 
     const handleDelete = async (id: string) => {
         if (confirm('¿Eliminar esta meta?')) {
             await supabase.from('goals').delete().eq('id', id);
-            fetchGoals();
+            refreshGoals();
         }
     };
 
     const closeModal = () => {
         setShowModal(false);
         setSelectedGoal(null);
-        setFormData({ name: '', description: '', target_amount: '', target_date: '', goal_type: 'savings', priority: 1 });
+        setSelectedGoal(null);
+        setFormData({
+            name: '',
+            description: '',
+            target_amount: '',
+            target_percentage: '',
+            target_mode: 'amount',
+            target_date: '',
+            goal_type: 'savings',
+            priority: 1
+        });
     };
 
     const openEdit = (goal: Goal) => {
@@ -123,6 +158,8 @@ export function Metas() {
             name: goal.name,
             description: goal.description || '',
             target_amount: goal.target_amount.toString(),
+            target_percentage: goal.target_percentage?.toString() || '',
+            target_mode: (goal.target_mode as 'amount' | 'percentage') || 'amount',
             target_date: goal.target_date || '',
             goal_type: goal.goal_type,
             priority: goal.priority,
@@ -274,18 +311,63 @@ export function Metas() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Monto objetivo ({currency})</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={formData.target_amount}
-                                    onChange={(e) => setFormData(p => ({ ...p, target_amount: e.target.value }))}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                />
+                                <label className="form-label">Definir objetivo por</label>
+                                <div className="mode-toggle">
+                                    <button
+                                        type="button"
+                                        className={`toggle-btn ${formData.target_mode === 'amount' ? 'active' : ''}`}
+                                        onClick={() => setFormData(p => ({ ...p, target_mode: 'amount' }))}
+                                    >
+                                        Monto Fijo
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`toggle-btn ${formData.target_mode === 'percentage' ? 'active' : ''}`}
+                                        onClick={() => setFormData(p => ({ ...p, target_mode: 'percentage' }))}
+                                    >
+                                        % Ingreso Neto
+                                    </button>
+                                </div>
                             </div>
+
+                            {formData.target_mode === 'amount' ? (
+                                <div className="form-group">
+                                    <label className="form-label">Monto objetivo ({currency})</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={formData.target_amount}
+                                        onChange={(e) => setFormData(p => ({ ...p, target_amount: e.target.value }))}
+                                        placeholder="0.00"
+                                        min="0"
+                                        step="0.01"
+                                        required={formData.target_mode === 'amount'}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="form-group">
+                                    <label className="form-label">Porcentaje de Ingreso Neto ({currency} {monthlyNetIncome.toLocaleString()})</label>
+                                    <div className="flex gap-2 items-center">
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            value={formData.target_percentage}
+                                            onChange={(e) => setFormData(p => ({ ...p, target_percentage: e.target.value }))}
+                                            placeholder="Ej: 10"
+                                            min="0"
+                                            max="1000"
+                                            step="0.1"
+                                            required={formData.target_mode === 'percentage'}
+                                        />
+                                        <span className="text-lg font-bold">%</span>
+                                    </div>
+                                    {formData.target_percentage && (
+                                        <p className="helper-text mt-sm">
+                                            Equivale a: <strong>{currency} {(monthlyNetIncome * (parseFloat(formData.target_percentage) || 0) / 100).toLocaleString()}</strong>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label className="form-label">Fecha objetivo (opcional)</label>
@@ -338,7 +420,7 @@ export function Metas() {
                                     value={contributionAmount}
                                     onChange={(e) => setContributionAmount(e.target.value)}
                                     placeholder="0.00"
-                                    min="0.01"
+                                    min="0"
                                     step="0.01"
                                     required
                                     autoFocus

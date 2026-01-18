@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
 
-const navItems = [
+const baseNavItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/transacciones', icon: ArrowLeftRight, label: 'Transacciones' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
@@ -26,6 +26,7 @@ const navItems = [
 
 export function Sidebar() {
     const { signOut, profile } = useAuth();
+    const navItems = baseNavItems;
 
     return (
         <aside className="sidebar">
@@ -56,13 +57,15 @@ export function Sidebar() {
 
             <div className="sidebar-footer">
                 <div className="user-info">
-                    <div className="user-avatar">
-                        {profile?.full_name?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="user-details">
-                        <span className="user-name">{profile?.full_name || 'Usuario'}</span>
-                        <span className="user-email">{profile?.email}</span>
-                    </div>
+                    <NavLink to="/configuracion" className="user-info-link" title="Ir a mi perfil" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                        <div className="user-avatar">
+                            {profile?.full_name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                        <div className="user-details">
+                            <span className="user-name">{profile?.full_name || 'Usuario'}</span>
+                            <span className="user-email">{profile?.email}</span>
+                        </div>
+                    </NavLink>
                 </div>
                 <div className="sidebar-actions">
                     <NavLink to="/configuracion" className="nav-link">

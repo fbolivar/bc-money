@@ -23,32 +23,48 @@ export function Presupuestos() {
 
     const currency = profile?.currency || 'USD';
 
-    useEffect(() => {
-        if (user) fetchData();
-    }, [user]);
-
-    const fetchData = async () => {
+    const getBudgetsData = async (userId: string) => {
         const now = new Date();
         const monthStart = startOfMonth(now);
         const monthEnd = endOfMonth(now);
 
         const [budgetsRes, categoriesRes, transactionsRes] = await Promise.all([
-            supabase.from('budgets').select('*').eq('user_id', user!.id),
-            supabase.from('categories').select('*').or(`user_id.eq.${user!.id},is_system.eq.true`),
+            supabase.from('budgets').select('*').eq('user_id', userId),
+            supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
             supabase
                 .from('transactions')
                 .select('*')
-                .eq('user_id', user!.id)
+                .eq('user_id', userId)
                 .eq('type', 'expense')
                 .gte('date', format(monthStart, 'yyyy-MM-dd'))
                 .lte('date', format(monthEnd, 'yyyy-MM-dd')),
         ]);
 
-        setBudgets(budgetsRes.data || []);
-        setCategories(categoriesRes.data || []);
-        setTransactions(transactionsRes.data || []);
+        return {
+            budgets: budgetsRes.data || [],
+            categories: categoriesRes.data || [],
+            transactions: transactionsRes.data || []
+        };
+    };
+
+    const refreshData = async () => {
+        if (!user) return;
+        const { budgets, categories, transactions } = await getBudgetsData(user.id);
+        setBudgets(budgets);
+        setCategories(categories);
+        setTransactions(transactions);
         setLoading(false);
     };
+
+    useEffect(() => {
+        if (!user) return;
+        getBudgetsData(user.id).then(({ budgets, categories, transactions }) => {
+            setBudgets(budgets);
+            setCategories(categories);
+            setTransactions(transactions);
+            setLoading(false);
+        });
+    }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +85,7 @@ export function Presupuestos() {
         setShowModal(false);
         setEditingBudget(null);
         setFormData({ category_id: '', amount: '', period: 'monthly' });
-        fetchData();
+        refreshData();
     };
 
     const handleEdit = (budget: Budget) => {
@@ -85,7 +101,7 @@ export function Presupuestos() {
     const handleDelete = async (id: string) => {
         if (confirm('¿Eliminar este presupuesto?')) {
             await supabase.from('budgets').delete().eq('id', id);
-            fetchData();
+            refreshData();
         }
     };
 

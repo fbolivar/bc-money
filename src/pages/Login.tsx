@@ -100,10 +100,7 @@ export function Login() {
                 </form>
 
                 <div className="auth-footer">
-                    <p>
-                        ¿No tienes una cuenta?{' '}
-                        <Link to="/signup">Regístrate gratis</Link>
-                    </p>
+                    {/* Registration disabled for now */}
                 </div>
             </div>
 

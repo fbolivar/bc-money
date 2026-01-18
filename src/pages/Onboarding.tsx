@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     User,
@@ -228,7 +228,7 @@ export function Onboarding() {
                                         className="form-input"
                                         value={hourlyRate}
                                         onChange={(e) => setHourlyRate(Number(e.target.value))}
-                                        min={1}
+                                        min={0}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -238,8 +238,8 @@ export function Onboarding() {
                                         className="form-input"
                                         value={hoursPerWeek}
                                         onChange={(e) => setHoursPerWeek(Number(e.target.value))}
-                                        min={1}
-                                        max={80}
+                                        min={0}
+                                        max={168}
                                     />
                                 </div>
                             </div>
@@ -251,7 +251,7 @@ export function Onboarding() {
                                     className="form-input"
                                     value={fixedSalary}
                                     onChange={(e) => setFixedSalary(Number(e.target.value))}
-                                    min={1}
+                                    min={0}
                                 />
                             </div>
                         )}

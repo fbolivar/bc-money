@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
@@ -9,6 +10,7 @@ interface AuthContextType {
     session: Session | null;
     profile: Profile | null;
     loading: boolean;
+    isAdmin: boolean;
     signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
     signOut: () => Promise<void>;
@@ -23,6 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const isAdmin = profile?.role === 'admin';
+
     const fetchProfile = async (userId: string) => {
         const { data, error } = await supabase
             .from('profiles')
@@ -31,6 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .single();
 
         if (!error && data) {
+            if (data.status === 'banned') {
+                await supabase.auth.signOut();
+                setUser(null);
+                setSession(null);
+                setProfile(null);
+                return;
+            }
             setProfile(data as Profile);
         }
     };
@@ -42,31 +53,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id);
-            }
-            setLoading(false);
-        });
+        let mounted = true;
 
-        // Listen for auth changes
+        async function getInitialSession() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) throw error;
+
+                if (mounted) {
+                    setSession(session);
+                    setUser(session?.user ?? null);
+                    if (session?.user) {
+                        await fetchProfile(session.user.id);
+                    }
+                }
+            } catch (error) {
+                console.error('Error getting session:', error);
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        getInitialSession();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (_event, session) => {
+                if (!mounted) return;
+
                 setSession(session);
                 setUser(session?.user ?? null);
+
                 if (session?.user) {
                     await fetchProfile(session.user.id);
                 } else {
                     setProfile(null);
                 }
-                setLoading(false);
+
+                if (mounted) {
+                    setLoading(false);
+                }
             }
         );
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const signUp = async (email: string, password: string, fullName: string) => {
@@ -97,19 +132,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
     };
 
+    const value = useMemo(() => ({
+        user,
+        session,
+        profile,
+        loading,
+        isAdmin,
+        signUp,
+        signIn,
+        signOut,
+        refreshProfile,
+    }), [user, session, profile, loading, isAdmin]);
+
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                session,
-                profile,
-                loading,
-                signUp,
-                signIn,
-                signOut,
-                refreshProfile,
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

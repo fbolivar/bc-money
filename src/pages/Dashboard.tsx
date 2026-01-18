@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     TrendingUp,
     TrendingDown,
@@ -42,74 +42,76 @@ export function Dashboard() {
     const currency = profile?.currency || 'USD';
 
     useEffect(() => {
-        if (user) {
-            fetchData();
-        }
+        if (!user) return;
+
+        const fetchData = async () => {
+            const now = new Date();
+            const monthStart = startOfMonth(now);
+            const monthEnd = endOfMonth(now);
+
+            const [txResult, goalsResult, catResult, budgetResult] = await Promise.all([
+                // Fetch transactions for current month
+                supabase
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .gte('date', format(monthStart, 'yyyy-MM-dd'))
+                    .lte('date', format(monthEnd, 'yyyy-MM-dd'))
+                    .order('date', { ascending: false }),
+
+                // Fetch goals
+                supabase
+                    .from('goals')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('status', 'active')
+                    .order('priority', { ascending: true }),
+
+                // Fetch categories
+                supabase
+                    .from('categories')
+                    .select('*')
+                    .or(`user_id.eq.${user.id},is_system.eq.true`),
+
+                // Fetch budgets
+                supabase
+                    .from('budgets')
+                    .select('*')
+                    .eq('user_id', user.id)
+            ]);
+
+            setTransactions((txResult.data as Transaction[]) || []);
+            setGoals((goalsResult.data as Goal[]) || []);
+            setCategories((catResult.data as Category[]) || []);
+            setBudgets((budgetResult.data as Budget[]) || []);
+            setLoading(false);
+        };
+
+        fetchData();
     }, [user]);
 
-    const fetchData = async () => {
-        const now = new Date();
-        const monthStart = startOfMonth(now);
-        const monthEnd = endOfMonth(now);
-
-        // Fetch transactions for current month
-        const { data: txData } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', user!.id)
-            .gte('date', format(monthStart, 'yyyy-MM-dd'))
-            .lte('date', format(monthEnd, 'yyyy-MM-dd'))
-            .order('date', { ascending: false });
-
-        // Fetch goals
-        const { data: goalsData } = await supabase
-            .from('goals')
-            .select('*')
-            .eq('user_id', user!.id)
-            .eq('status', 'active')
-            .order('priority', { ascending: true });
-
-        // Fetch categories
-        const { data: catData } = await supabase
-            .from('categories')
-            .select('*')
-            .or(`user_id.eq.${user!.id},is_system.eq.true`);
-
-        // Fetch budgets
-        const { data: budgetData } = await supabase
-            .from('budgets')
-            .select('*')
-            .eq('user_id', user!.id);
-
-        setTransactions(txData || []);
-        setGoals(goalsData || []);
-        setCategories(catData || []);
-        setBudgets(budgetData || []);
-        setLoading(false);
-    };
-
     // Calculate metrics
-    const income = transactions
+    const income = useMemo(() => transactions
         .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+        .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
 
-    const expenses = transactions
+    const expenses = useMemo(() => transactions
         .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+        .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
 
     const balance = income - expenses;
     const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
     // Category breakdown for pie chart
-    const categoryBreakdown = transactions
+    const categoryBreakdown = useMemo(() => transactions
         .filter((t) => t.type === 'expense')
         .reduce((acc: Record<string, number>, t) => {
             const catId = t.category_id || 'other';
             acc[catId] = (acc[catId] || 0) + Number(t.amount);
             return acc;
-        }, {});
+        }, {}), [transactions]);
 
-    const pieData = Object.entries(categoryBreakdown)
+    const pieData = useMemo(() => Object.entries(categoryBreakdown)
         .map(([catId, amount]) => {
             const category = categories.find((c) => c.id === catId);
             return {
@@ -119,10 +121,10 @@ export function Dashboard() {
             };
         })
         .sort((a, b) => b.value - a.value)
-        .slice(0, 6);
+        .slice(0, 6), [categoryBreakdown, categories]);
 
     // Weekly trend data (last 4 weeks)
-    const weeklyData = Array.from({ length: 4 }, (_, i) => {
+    const weeklyData = useMemo(() => Array.from({ length: 4 }, (_, i) => {
         const weekStart = subMonths(new Date(), 0);
         weekStart.setDate(weekStart.getDate() - (3 - i) * 7);
         const weekExpenses = transactions
@@ -139,20 +141,27 @@ export function Dashboard() {
             name: `Sem ${i + 1}`,
             gastos: weekExpenses,
         };
-    });
+    }), [transactions]);
 
     // Monthly comparison (last 6 months)
-    const monthlyData = Array.from({ length: 6 }, (_, i) => {
+    const monthlyData = useMemo(() => Array.from({ length: 6 }, (_, i) => {
         const month = subMonths(new Date(), 5 - i);
+        // Deterministic pseudo-random based on index for consistent render
+        const pseudoRandom = (seed: number) => {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        };
+        const seed = month.getTime();
+
         return {
             name: format(month, 'MMM', { locale: es }),
-            ingresos: Math.random() * 3000 + 1500, // Placeholder - would need historical data
-            gastos: Math.random() * 2000 + 1000,
+            ingresos: pseudoRandom(seed) * 3000 + 1500, // Placeholder
+            gastos: pseudoRandom(seed + 1) * 2000 + 1000,
         };
-    });
+    }), []); // Empty deps so it's calculated once (or when component remounts)
 
     // Budget usage
-    const budgetUsage = budgets.map((budget) => {
+    const budgetUsage = useMemo(() => budgets.map((budget) => {
         const spent = transactions
             .filter((t) => t.type === 'expense' && t.category_id === budget.category_id)
             .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -165,7 +174,7 @@ export function Dashboard() {
             percentage,
             status: percentage <= 80 ? 'success' : percentage <= 100 ? 'warning' : 'danger',
         };
-    });
+    }), [budgets, transactions, categories]);
 
     if (loading) {
         return (
@@ -338,7 +347,7 @@ export function Dashboard() {
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        formatter={(value: number) => [`${currency} ${value.toLocaleString()}`, 'Monto']}
+                                        formatter={(value: unknown) => [`${currency} ${Number(value).toLocaleString()}`, 'Monto']}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>

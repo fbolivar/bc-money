@@ -36,27 +36,29 @@ export function Reportes() {
     const currency = profile?.currency || 'USD';
 
     useEffect(() => {
-        if (user) fetchData();
+        if (!user) return;
+
+        const fetchData = async () => {
+            const monthStart = startOfMonth(selectedMonth);
+            const monthEnd = endOfMonth(selectedMonth);
+
+            const [txRes, catRes] = await Promise.all([
+                supabase
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .gte('date', format(monthStart, 'yyyy-MM-dd'))
+                    .lte('date', format(monthEnd, 'yyyy-MM-dd')),
+                supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
+            ]);
+
+            setTransactions(txRes.data || []);
+            setCategories(catRes.data || []);
+            setLoading(false);
+        };
+
+        fetchData();
     }, [user, selectedMonth]);
-
-    const fetchData = async () => {
-        const monthStart = startOfMonth(selectedMonth);
-        const monthEnd = endOfMonth(selectedMonth);
-
-        const [txRes, catRes] = await Promise.all([
-            supabase
-                .from('transactions')
-                .select('*')
-                .eq('user_id', user!.id)
-                .gte('date', format(monthStart, 'yyyy-MM-dd'))
-                .lte('date', format(monthEnd, 'yyyy-MM-dd')),
-            supabase.from('categories').select('*').or(`user_id.eq.${user!.id},is_system.eq.true`),
-        ]);
-
-        setTransactions(txRes.data || []);
-        setCategories(catRes.data || []);
-        setLoading(false);
-    };
 
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
     const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
@@ -188,7 +190,7 @@ export function Reportes() {
                                 <YAxis type="category" dataKey="name" stroke="var(--color-text-tertiary)" fontSize={12} width={100} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px' }}
-                                    formatter={(value: number) => [`${currency} ${value.toLocaleString()}`, 'Monto']}
+                                    formatter={(value: unknown) => [`${currency} ${Number(value).toLocaleString()}`, 'Monto']}
                                 />
                                 <Bar dataKey="monto" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
                             </BarChart>
@@ -209,7 +211,7 @@ export function Reportes() {
                                             <Cell key={i} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(v: number) => [`${currency} ${v.toLocaleString()}`, 'Monto']} />
+                                    <Tooltip formatter={(v: unknown) => [`${currency} ${Number(v).toLocaleString()}`, 'Monto']} />
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="pie-legend">

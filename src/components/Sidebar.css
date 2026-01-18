@@ -77,6 +77,20 @@
     padding: var(--spacing-sm);
 }
 
+.user-info-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    transition: opacity 0.2s;
+}
+
+.user-info-link:hover {
+    opacity: 0.8;
+}
+
 .user-avatar {
     width: 40px;
     height: 40px;
@@ -88,6 +102,7 @@
     color: white;
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-md);
+    flex-shrink: 0;
 }
 
 .user-details {

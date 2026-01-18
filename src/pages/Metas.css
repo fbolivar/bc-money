@@ -172,3 +172,57 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-primary);
 }
+
+/* Modos de objetivo */
+.mode-toggle {
+    display: flex;
+    background-color: var(--color-surface-hover);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+}
+
+.mode-toggle .toggle-btn {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: calc(var(--radius-md) - 2px);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mode-toggle .toggle-btn:hover {
+    color: var(--color-text-primary);
+}
+
+.mode-toggle .toggle-btn.active {
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    font-weight: var(--font-weight-bold);
+}
+
+.flex {
+    display: flex;
+}
+
+.gap-2 {
+    gap: var(--spacing-sm);
+}
+
+.items-center {
+    align-items: center;
+}
+
+.font-bold {
+    font-weight: var(--font-weight-bold);
+}
+
+.helper-text {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
