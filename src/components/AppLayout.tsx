@@ -34,6 +34,9 @@ export function AppLayout() {
                 <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
                 <div className="page-content">
                     <Outlet />
+                    <footer className="app-footer">
+                        <p>Todos los derechos &copy; BC FactoryIA SAS 2026</p>
+                    </footer>
                 </div>
             </main>
         </div>

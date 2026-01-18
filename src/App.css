@@ -70,6 +70,18 @@
   overflow-y: auto;
   padding: var(--spacing-lg);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.app-footer {
+  margin-top: auto;
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-xs);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
 @media (max-width: 768px) {
