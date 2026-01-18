@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Budget, Category, Transaction } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import './Presupuestos.css';
 

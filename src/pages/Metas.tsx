@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, TrendingUp, Coins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { format, differenceInDays, differenceInMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Metas.css';

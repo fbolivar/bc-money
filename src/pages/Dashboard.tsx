@@ -25,7 +25,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Goal, Budget, Category } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';

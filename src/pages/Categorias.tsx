@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Category } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import './Categorias.css';
 
 interface CategoryFormData {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
 import { User, Shield, Lock, Save } from 'lucide-react';

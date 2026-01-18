@@ -12,7 +12,7 @@ import {
     Tags,
     X,
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import './Sidebar.css';
 
 const baseNavItems = [

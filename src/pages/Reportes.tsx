@@ -21,7 +21,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Reportes.css';

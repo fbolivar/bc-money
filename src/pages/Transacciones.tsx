@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'react-router-dom';
