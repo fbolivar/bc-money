@@ -63,7 +63,6 @@ export function Configuracion() {
                 setCurrentPassword('');
             }
         } catch (error: unknown) {
-            // Manejo estricto de errores para garantizar estabilidad
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
             setMessage({ type: 'error', text: 'Ocurrió un error inesperado: ' + errorMessage });
             console.error(error);
