@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, Tre
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { format, differenceInMonths, differenceInDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Metas.css';
 
@@ -16,8 +16,14 @@ const GOAL_TYPES = [
     { value: 'other', label: 'Otro', icon: Target, color: '#6B7280' },
 ];
 
+type SavingsPlan =
+    | { type: 'error'; message: string }
+    | { type: 'completed' }
+    | { type: 'plan'; days: number; months: number; monthly: number; weekly: number; remaining: number };
+
 export function Metas() {
     const { user, profile } = useAuth();
+    // ... (state hooks remain same)
     const [goals, setGoals] = useState<Goal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -107,22 +113,22 @@ export function Metas() {
         refreshGoals();
     };
 
-    const calculateSavingsPlan = (target: number, current: number, dateStr: string | null) => {
+    const calculateSavingsPlan = (target: number, current: number, dateStr: string | null): SavingsPlan | null => {
         if (!dateStr || !target) return null;
         const targetDate = new Date(dateStr);
         const today = new Date();
         const days = differenceInDays(targetDate, today);
         const months = days / 30;
 
-        if (days <= 0) return { error: 'La fecha debe ser futura' };
+        if (days <= 0) return { type: 'error', message: 'La fecha debe ser futura' };
 
         const remaining = Math.max(0, target - current);
-        if (remaining <= 0) return { completed: true };
+        if (remaining <= 0) return { type: 'completed' };
 
         const monthly = remaining / Math.max(months, 0.5); // Avoid division by zero, min half month
         const weekly = remaining / (days / 7);
 
-        return { days, months, monthly, weekly, remaining };
+        return { type: 'plan', days, months, monthly, weekly, remaining };
     };
 
     const handleContribute = async (e: React.FormEvent) => {
