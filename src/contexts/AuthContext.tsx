@@ -63,10 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }, 5000);
 
-        return () => {
-            mounted = false;
-            clearTimeout(safetyTimer);
-        };
 
         async function getInitialSession() {
             try {
