@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, Tre
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { format } from 'date-fns';
+import { format, differenceInMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Metas.css';
 
@@ -91,14 +91,38 @@ export function Metas() {
             color: goalType?.color || '#6B7280',
         };
 
+        // Logic to update status if target amount increases
+        let statusUpdate = {};
+        if (selectedGoal && finalAmount > Number(selectedGoal.current_amount)) {
+            statusUpdate = { status: 'active', completed_at: null };
+        }
+
         if (selectedGoal) {
-            await supabase.from('goals').update(data).eq('id', selectedGoal.id);
+            await supabase.from('goals').update({ ...data, ...statusUpdate }).eq('id', selectedGoal.id);
         } else {
             await supabase.from('goals').insert(data);
         }
 
         closeModal();
         refreshGoals();
+    };
+
+    const calculateSavingsPlan = (target: number, current: number, dateStr: string | null) => {
+        if (!dateStr || !target) return null;
+        const targetDate = new Date(dateStr);
+        const today = new Date();
+        const days = differenceInDays(targetDate, today);
+        const months = days / 30;
+
+        if (days <= 0) return { error: 'La fecha debe ser futura' };
+
+        const remaining = Math.max(0, target - current);
+        if (remaining <= 0) return { completed: true };
+
+        const monthly = remaining / Math.max(months, 0.5); // Avoid division by zero, min half month
+        const weekly = remaining / (days / 7);
+
+        return { days, months, monthly, weekly, remaining };
     };
 
     const handleContribute = async (e: React.FormEvent) => {
@@ -227,9 +251,22 @@ export function Metas() {
                                     </div>
 
                                     {goal.target_date && (
-                                        <p className="goal-date">
-                                            Meta: {format(new Date(goal.target_date), 'd MMM yyyy', { locale: es })}
-                                        </p>
+                                        <div className="goal-footer-info">
+                                            <p className="goal-date">
+                                                Meta: {format(new Date(goal.target_date), 'd MMM yyyy', { locale: es })}
+                                            </p>
+                                            {(() => {
+                                                const plan = calculateSavingsPlan(Number(goal.target_amount), Number(goal.current_amount), goal.target_date);
+                                                if (plan && !plan.error && !plan.completed) {
+                                                    return (
+                                                        <p className="goal-plan text-xs text-primary font-medium">
+                                                            Ahorra {currency} {plan.monthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mes
+                                                        </p>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
                                     )}
 
                                     <button
@@ -259,6 +296,14 @@ export function Metas() {
                                 <div className="goal-header">
                                     <div className="goal-icon" style={{ backgroundColor: goal.color }}>
                                         <Target size={24} color="white" />
+                                    </div>
+                                    <div className="goal-actions">
+                                        <button className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button className="btn btn-icon btn-ghost" onClick={() => handleDelete(goal.id)}>
+                                            <Trash2 size={14} />
+                                        </button>
                                     </div>
                                 </div>
                                 <h4 className="goal-name">{goal.name}</h4>
@@ -377,6 +422,39 @@ export function Metas() {
                                     value={formData.target_date}
                                     onChange={(e) => setFormData(p => ({ ...p, target_date: e.target.value }))}
                                 />
+                                {formData.target_date && formData.target_amount && (
+                                    <div className="savings-plan-preview mt-sm p-3 bg-surface-hover rounded-md border border-border">
+                                        {(() => {
+                                            const amount = parseFloat(formData.target_amount);
+                                            const current = selectedGoal ? Number(selectedGoal.current_amount) : 0;
+                                            const plan = calculateSavingsPlan(amount, current, formData.target_date);
+
+                                            if (plan?.error) return <span className="text-danger text-sm">{plan.error}</span>;
+                                            if (plan?.completed) return <span className="text-success text-sm">¡Meta alcanzada!</span>;
+                                            if (plan) {
+                                                return (
+                                                    <div className="text-sm">
+                                                        <p className="font-medium mb-1">Para lograrlo a tiempo necesitas ahorrar:</p>
+                                                        <div className="flex gap-4">
+                                                            <div>
+                                                                <span className="block text-xl font-bold text-primary">{currency} {plan.monthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                                <span className="text-secondary text-xs">al mes</span>
+                                                            </div>
+                                                            <div className="border-l border-border pl-4">
+                                                                <span className="block text-xl font-bold text-primary">{currency} {plan.weekly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                                <span className="text-secondary text-xs">semanal</span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs text-secondary mt-2">
+                                                            Faltan {Math.ceil(plan.months)} meses ({plan.days} días)
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="form-group">
