@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, TrendingUp, Coins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
@@ -44,14 +44,14 @@ export function Metas() {
 
     const currency = profile?.currency || 'USD';
 
-    const getGoals = async (userId: string) => {
+    const getGoals = useCallback(async (userId: string) => {
         const { data } = await supabase
             .from('goals')
             .select('*')
             .eq('user_id', userId)
             .order('priority', { ascending: true });
         return data || [];
-    };
+    }, []);
 
     const monthlyNetIncome = profile ? (
         profile.income_type === 'hourly'
@@ -75,7 +75,7 @@ export function Metas() {
             setGoals(data);
             setLoading(false);
         });
-    }, [user]);
+    }, [user, getGoals]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
