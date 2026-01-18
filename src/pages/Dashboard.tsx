@@ -44,50 +44,82 @@ export function Dashboard() {
     useEffect(() => {
         if (!user) return;
 
+        let mounted = true;
+
         const fetchData = async () => {
-            const now = new Date();
-            const monthStart = startOfMonth(now);
-            const monthEnd = endOfMonth(now);
+            try {
+                const now = new Date();
+                const monthStart = startOfMonth(now);
+                const monthEnd = endOfMonth(now);
 
-            const [txResult, goalsResult, catResult, budgetResult] = await Promise.all([
-                // Fetch transactions for current month
-                supabase
-                    .from('transactions')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .gte('date', format(monthStart, 'yyyy-MM-dd'))
-                    .lte('date', format(monthEnd, 'yyyy-MM-dd'))
-                    .order('date', { ascending: false }),
+                // Create a timeout promise to prevent infinite loading
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Dashboard data fetch timeout')), 10000)
+                );
 
-                // Fetch goals
-                supabase
-                    .from('goals')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .eq('status', 'active')
-                    .order('priority', { ascending: true }),
+                const dataPromise = Promise.all([
+                    // Fetch transactions for current month
+                    supabase
+                        .from('transactions')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .gte('date', format(monthStart, 'yyyy-MM-dd'))
+                        .lte('date', format(monthEnd, 'yyyy-MM-dd'))
+                        .order('date', { ascending: false }),
 
-                // Fetch categories
-                supabase
-                    .from('categories')
-                    .select('*')
-                    .or(`user_id.eq.${user.id},is_system.eq.true`),
+                    // Fetch goals
+                    supabase
+                        .from('goals')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .eq('status', 'active')
+                        .order('priority', { ascending: true }),
 
-                // Fetch budgets
-                supabase
-                    .from('budgets')
-                    .select('*')
-                    .eq('user_id', user.id)
-            ]);
+                    // Fetch categories
+                    supabase
+                        .from('categories')
+                        .select('*')
+                        .or(`user_id.eq.${user.id},is_system.eq.true`),
 
-            setTransactions((txResult.data as Transaction[]) || []);
-            setGoals((goalsResult.data as Goal[]) || []);
-            setCategories((catResult.data as Category[]) || []);
-            setBudgets((budgetResult.data as Budget[]) || []);
-            setLoading(false);
+                    // Fetch budgets
+                    supabase
+                        .from('budgets')
+                        .select('*')
+                        .eq('user_id', user.id)
+                ]);
+
+                // Race against timeout
+                const [txResult, goalsResult, catResult, budgetResult] = await Promise.race([
+                    dataPromise,
+                    timeoutPromise
+                ]) as any; // Cast to bypass timeout type or better type inference
+
+                if (mounted) {
+                    // Log errors if any
+                    if (txResult.error) console.error('Transactions error:', txResult.error);
+                    if (goalsResult.error) console.error('Goals error:', goalsResult.error);
+                    if (catResult.error) console.error('Categories error:', catResult.error);
+                    if (budgetResult.error) console.error('Budgets error:', budgetResult.error);
+
+                    setTransactions((txResult.data as Transaction[]) || []);
+                    setGoals((goalsResult.data as Goal[]) || []);
+                    setCategories((catResult.data as Category[]) || []);
+                    setBudgets((budgetResult.data as Budget[]) || []);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
         };
 
         fetchData();
+
+        return () => {
+            mounted = false;
+        };
     }, [user]);
 
     // Calculate metrics
