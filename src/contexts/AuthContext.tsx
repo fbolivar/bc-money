@@ -56,21 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let mounted = true;
 
-        // Timeout de seguridad: Si Supabase no responde en 3 segundos, forzamos la carga
-        // Esto evita que la app se quede congelada en "Cargando..." por problemas de red o caché
+        // Safety timer: 5 seconds max for auth check
         const safetyTimer = setTimeout(() => {
             if (mounted) {
-                console.warn('Verificación de autenticación tardó demasiado - forzando finalización');
                 setLoading(false);
             }
-        }, 3000);
+        }, 5000);
 
         async function getInitialSession() {
             try {
-                // Usamos Promise.race para evitar bloqueos si getSession nunca resuelve
                 const sessionPromise = supabase.auth.getSession();
                 const timeoutPromise = new Promise<{ data: { session: Session | null }, error: any }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Tiempo de espera agotado al obtener sesión')), 4000)
+                    setTimeout(() => reject(new Error('SessionTimeout')), 7000)
                 );
 
                 const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
@@ -84,12 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         try {
                             await fetchProfile(session.user.id);
                         } catch (err) {
-                            console.error('Error fetching profile:', err);
+                            console.warn('Profile fetch warning:', err);
                         }
                     }
                 }
             } catch (error) {
-                console.error('Error getting session:', error);
+                if (error instanceof Error && error.message === 'SessionTimeout') {
+                    // Silent timeout - flow continues to loading=false
+                } else {
+                    console.error('Error getting session:', error);
+                }
             } finally {
                 if (mounted) {
                     setLoading(false);
