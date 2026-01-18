@@ -10,6 +10,7 @@ type Tab = 'profile' | 'users';
 export function Configuracion() {
     const { user, profile, isAdmin } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('profile');
+    const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [updatingPassword, setUpdatingPassword] = useState(false);
@@ -18,6 +19,11 @@ export function Configuracion() {
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
+
+        if (!currentPassword) {
+            setMessage({ type: 'error', text: 'Debes ingresar tu contraseña actual' });
+            return;
+        }
 
         if (newPassword !== confirmPassword) {
             setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
@@ -30,16 +36,36 @@ export function Configuracion() {
 
         setUpdatingPassword(true);
 
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        try {
+            // 1. Verify current password by signing in
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user?.email || '',
+                password: currentPassword
+            });
 
-        if (error) {
-            setMessage({ type: 'error', text: 'Error: ' + error.message });
-        } else {
-            setMessage({ type: 'success', text: 'Contraseña actualizada correctamente' });
-            setNewPassword('');
-            setConfirmPassword('');
+            if (signInError) {
+                setMessage({ type: 'error', text: 'La contraseña actual es incorrecta' });
+                setUpdatingPassword(false);
+                return;
+            }
+
+            // 2. Update password
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+            if (error) {
+                setMessage({ type: 'error', text: 'Error: ' + error.message });
+            } else {
+                setMessage({ type: 'success', text: 'Contraseña actualizada correctamente' });
+                setNewPassword('');
+                setConfirmPassword('');
+                setCurrentPassword('');
+            }
+        } catch (error: any) {
+            setMessage({ type: 'error', text: 'Ocurrió un error inesperado' });
+            console.error(error);
+        } finally {
+            setUpdatingPassword(false);
         }
-        setUpdatingPassword(false);
     };
 
     return (
@@ -108,6 +134,21 @@ export function Configuracion() {
                             <h3>Seguridad</h3>
                             <div className="profile-card">
                                 <form onSubmit={handlePasswordChange} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div className="form-group">
+                                        <label>Contraseña Actual</label>
+                                        <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
+                                            <input
+                                                type="password"
+                                                value={currentPassword}
+                                                onChange={e => setCurrentPassword(e.target.value)}
+                                                placeholder="Ingresa tu contraseña actual"
+                                                className="form-input"
+                                                style={{ paddingLeft: '35px' }}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <div className="form-group">
                                             <label>Nueva Contraseña</label>
@@ -155,7 +196,7 @@ export function Configuracion() {
                                         <button
                                             type="submit"
                                             className="btn btn-primary"
-                                            disabled={updatingPassword || !newPassword}
+                                            disabled={updatingPassword || !newPassword || !currentPassword}
                                             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                                         >
                                             {updatingPassword ? 'Actualizando...' : <><Save size={18} /> Actualizar Contraseña</>}
