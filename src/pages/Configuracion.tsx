@@ -62,7 +62,7 @@ export function Configuracion() {
                 setConfirmPassword('');
                 setCurrentPassword('');
             }
-        } catch (error: any) {
+        } catch (error) {
             setMessage({ type: 'error', text: 'Ocurrió un error inesperado' });
             console.error(error);
         } finally {
