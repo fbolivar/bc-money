@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, Tre
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, differenceInMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Metas.css';
 
@@ -80,7 +80,14 @@ export function Metas() {
 
         let finalAmount = parseFloat(formData.target_amount);
         if (formData.target_mode === 'percentage') {
-            finalAmount = monthlyNetIncome * (parseFloat(formData.target_percentage) / 100);
+            const monthlyAmount = monthlyNetIncome * (parseFloat(formData.target_percentage) / 100);
+            let multiplier = 1;
+
+            if (formData.target_date) {
+                const months = Math.max(differenceInMonths(new Date(formData.target_date), new Date()), 1);
+                multiplier = months;
+            }
+            finalAmount = monthlyAmount * multiplier;
         }
 
         const data = {
@@ -413,9 +420,20 @@ export function Metas() {
                                         <span className="text-lg font-bold">%</span>
                                     </div>
                                     {formData.target_percentage && (
-                                        <p className="helper-text mt-sm">
-                                            Equivale a: <strong>{currency} {(monthlyNetIncome * (parseFloat(formData.target_percentage) || 0) / 100).toLocaleString()}</strong>
-                                        </p>
+                                        <div className="helper-text mt-sm">
+                                            <p className="text-sm">Ahorro mensual: <strong className="text-primary">{currency} {(monthlyNetIncome * (parseFloat(formData.target_percentage) || 0) / 100).toLocaleString()}</strong></p>
+
+                                            {formData.target_date && (
+                                                <div className="mt-2 p-2 bg-surface-hover rounded border border-border">
+                                                    <p className="text-xs text-secondary mb-1">
+                                                        Proyección ({Math.max(differenceInMonths(new Date(formData.target_date), new Date()), 1)} meses):
+                                                    </p>
+                                                    <p className="text-lg font-bold text-success">
+                                                        Total: {currency} {(monthlyNetIncome * (parseFloat(formData.target_percentage) || 0) / 100 * Math.max(differenceInMonths(new Date(formData.target_date), new Date()), 1)).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             )}
