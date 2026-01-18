@@ -5,7 +5,7 @@ import type { Profile } from '../lib/supabase';
 import { Shield, User, Ban, CheckCircle, Search, Filter, Plus, Trash2, Edit2, X, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import '../pages/Usuarios.css';
+import './UsersTab.css';
 
 export function UsersTab() {
     const { isAdmin, profile: currentProfile } = useAuth();
