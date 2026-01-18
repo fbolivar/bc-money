@@ -263,7 +263,7 @@ export function Metas() {
                                             </p>
                                             {(() => {
                                                 const plan = calculateSavingsPlan(Number(goal.target_amount), Number(goal.current_amount), goal.target_date);
-                                                if (plan && !plan.error && !plan.completed) {
+                                                if (plan && plan.type === 'plan') {
                                                     return (
                                                         <p className="goal-plan text-xs text-primary font-medium">
                                                             Ahorra {currency} {plan.monthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mes
@@ -435,9 +435,9 @@ export function Metas() {
                                             const current = selectedGoal ? Number(selectedGoal.current_amount) : 0;
                                             const plan = calculateSavingsPlan(amount, current, formData.target_date);
 
-                                            if (plan?.error) return <span className="text-danger text-sm">{plan.error}</span>;
-                                            if (plan?.completed) return <span className="text-success text-sm">¡Meta alcanzada!</span>;
-                                            if (plan) {
+                                            if (plan?.type === 'error') return <span className="text-danger text-sm">{plan.message}</span>;
+                                            if (plan?.type === 'completed') return <span className="text-success text-sm">¡Meta alcanzada!</span>;
+                                            if (plan?.type === 'plan') {
                                                 return (
                                                     <div className="text-sm">
                                                         <p className="font-medium mb-1">Para lograrlo a tiempo necesitas ahorrar:</p>
