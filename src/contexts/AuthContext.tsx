@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const isAdmin = profile?.role === 'admin';
 
-    const fetchProfile = async (userId: string) => {
+
+    const fetchProfile = useCallback(async (userId: string) => {
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -44,13 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             setProfile(data as Profile);
         }
-    };
+    }, []);
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (user) {
             await fetchProfile(user.id);
         }
-    };
+    }, [user, fetchProfile]);
 
     useEffect(() => {
         let mounted = true;
@@ -102,9 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             mounted = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [fetchProfile]);
 
-    const signUp = async (email: string, password: string, fullName: string) => {
+    const signUp = useCallback(async (email: string, password: string, fullName: string) => {
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -115,22 +116,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
         });
         return { error };
-    };
+    }, []);
 
-    const signIn = async (email: string, password: string) => {
+    const signIn = useCallback(async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
         return { error };
-    };
+    }, []);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         await supabase.auth.signOut();
         setUser(null);
         setSession(null);
         setProfile(null);
-    };
+    }, []);
 
     const value = useMemo(() => ({
         user,
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         refreshProfile,
-    }), [user, session, profile, loading, isAdmin]);
+    }), [user, session, profile, loading, isAdmin, signUp, signIn, signOut, refreshProfile]);
 
     return (
         <AuthContext.Provider value={value}>

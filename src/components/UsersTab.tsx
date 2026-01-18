@@ -84,9 +84,10 @@ export function UsersTab() {
             // Also remove from local list for immediate feedback
             setProfiles(prev => prev.filter(p => p.id !== userId));
             alert('Usuario eliminado correctamente.');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Delete error:', error);
-            alert('Error al eliminar usuario: ' + (error.message || 'Error desconocido'));
+            const message = error instanceof Error ? error.message : 'Error desconocido';
+            alert('Error al eliminar usuario: ' + message);
         }
     };
 
@@ -144,7 +145,7 @@ export function UsersTab() {
 
                     // 2. Update Auth Data if needed (Email/Password)
                     if (formData.password || formData.email !== editingUser.email) {
-                        const updates: any = { userId: editingUser.id };
+                        const updates: Record<string, unknown> = { userId: editingUser.id };
                         if (formData.password) updates.password = formData.password;
                         if (formData.email !== editingUser.email) updates.email = formData.email;
                         updates.currency = formData.currency;
@@ -160,9 +161,10 @@ export function UsersTab() {
                     alert('Usuario actualizado correctamente.');
                 }
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Submit error:', error);
-            alert('Error al guardar usuario: ' + (error.message || 'Intente nuevamente.'));
+            const message = error instanceof Error ? error.message : 'Intente nuevamente.';
+            alert('Error al guardar usuario: ' + message);
         } finally {
             setFormLoading(false);
         }
@@ -349,7 +351,7 @@ export function UsersTab() {
                                 <select
                                     className="form-select"
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value as 'user' | 'admin' })}
                                 >
                                     <option value="user">Usuario</option>
                                     <option value="admin">Administrador</option>

@@ -129,7 +129,7 @@ export function Asesor() {
                 content: data.content || "Lo siento, no pude generar una respuesta.",
                 structured: data.structured
             };
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error invoking AI:', error);
             return {
                 content: "Hubo un error al conectar con el sistema. Por favor intenta más tarde.",
