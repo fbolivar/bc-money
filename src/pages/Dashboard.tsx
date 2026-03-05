@@ -31,6 +31,22 @@ import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
+// Funcion de carga FUERA del componente (mismo patron que Transacciones)
+async function getDashboardData(userId: string) {
+    const [txRes, goalsRes, catRes, budgRes] = await Promise.all([
+        supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(500),
+        supabase.from('goals').select('*').eq('user_id', userId).order('priority', { ascending: true }),
+        supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
+        supabase.from('budgets').select('*').eq('user_id', userId),
+    ]);
+    return {
+        transactions: txRes.data || [],
+        goals: goalsRes.data || [],
+        categories: catRes.data || [],
+        budgets: budgRes.data || [],
+    };
+}
+
 export function Dashboard() {
     const { user, profile } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -43,86 +59,21 @@ export function Dashboard() {
 
     useEffect(() => {
         if (!user) return;
-
-        let mounted = true;
-
-        const fetchData = async () => {
-            try {
-                const now = new Date();
-                const monthStart = startOfMonth(now);
-                const monthEnd = endOfMonth(now);
-
-                // Create a timeout promise to prevent infinite loading
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Dashboard data fetch timeout')), 10000)
-                );
-
-                const dataPromise = Promise.all([
-                    // Fetch transactions for current month
-                    supabase
-                        .from('transactions')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .gte('date', format(monthStart, 'yyyy-MM-dd'))
-                        .lte('date', format(monthEnd, 'yyyy-MM-dd'))
-                        .order('date', { ascending: false }),
-
-                    // Fetch goals
-                    supabase
-                        .from('goals')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .eq('status', 'active')
-                        .order('priority', { ascending: true }),
-
-                    // Fetch categories
-                    supabase
-                        .from('categories')
-                        .select('*')
-                        .or(`user_id.eq.${user.id},is_system.eq.true`),
-
-                    // Fetch budgets
-                    supabase
-                        .from('budgets')
-                        .select('*')
-                        .eq('user_id', user.id)
-                ]);
-
-                // Race against timeout
-                const [txResult, goalsResult, catResult, budgetResult] = await Promise.race([
-                    dataPromise,
-                    timeoutPromise
-                ]) as any; // Cast to bypass timeout type or better type inference
-
-                if (mounted) {
-                    // Log errors if any
-                    if (txResult.error) console.error('Transactions error:', txResult.error);
-                    if (goalsResult.error) console.error('Goals error:', goalsResult.error);
-                    if (catResult.error) console.error('Categories error:', catResult.error);
-                    if (budgetResult.error) console.error('Budgets error:', budgetResult.error);
-
-                    setTransactions((txResult.data as Transaction[]) || []);
-                    setGoals((goalsResult.data as Goal[]) || []);
-                    setCategories((catResult.data as Category[]) || []);
-                    setBudgets((budgetResult.data as Budget[]) || []);
-                }
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        fetchData();
-
-        return () => {
-            mounted = false;
-        };
+        getDashboardData(user.id).then(({ transactions, goals, categories, budgets }) => {
+            setTransactions(transactions);
+            setGoals(goals);
+            setCategories(categories);
+            setBudgets(budgets);
+            setLoading(false);
+        });
     }, [user]);
 
-    // Calculate metrics
+    // Goals activas (status 'active' o null para compatibilidad con datos anteriores)
+    const activeGoals = useMemo(() => goals.filter(
+        (g) => g.status === 'active' || !g.status
+    ), [goals]);
+
+    // Metricas: usar TODAS las transacciones (no solo el mes actual)
     const income = useMemo(() => transactions
         .filter((t) => t.type === 'income')
         .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
@@ -134,7 +85,7 @@ export function Dashboard() {
     const balance = income - expenses;
     const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
-    // Category breakdown for pie chart
+    // Desglose por categoria (todas las transacciones)
     const categoryBreakdown = useMemo(() => transactions
         .filter((t) => t.type === 'expense')
         .reduce((acc: Record<string, number>, t) => {
@@ -155,44 +106,43 @@ export function Dashboard() {
         .sort((a, b) => b.value - a.value)
         .slice(0, 6), [categoryBreakdown, categories]);
 
-    // Weekly trend data (last 4 weeks)
-    const weeklyData = useMemo(() => Array.from({ length: 4 }, (_, i) => {
-        const weekStart = subMonths(new Date(), 0);
-        weekStart.setDate(weekStart.getDate() - (3 - i) * 7);
-        const weekExpenses = transactions
-            .filter((t) => {
-                const txDate = new Date(t.date);
-                return (
-                    t.type === 'expense' &&
-                    txDate >= weekStart &&
-                    txDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
-                );
-            })
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-        return {
-            name: `Sem ${i + 1}`,
-            gastos: weekExpenses,
-        };
-    }), [transactions]);
+    // Tendencia semanal (ultimas 4 semanas reales)
+    const weeklyData = useMemo(() => {
+        const today = new Date();
+        return Array.from({ length: 4 }, (_, i) => {
+            const weekEnd = new Date(today);
+            weekEnd.setDate(today.getDate() - i * 7);
+            const weekStart = new Date(weekEnd);
+            weekStart.setDate(weekEnd.getDate() - 7);
+            const weekExpenses = transactions
+                .filter((t) => {
+                    const txDate = new Date(t.date);
+                    return t.type === 'expense' && txDate >= weekStart && txDate < weekEnd;
+                })
+                .reduce((sum, t) => sum + Number(t.amount), 0);
+            return { name: `Sem ${4 - i}`, gastos: weekExpenses };
+        }).reverse();
+    }, [transactions]);
 
-    // Monthly comparison (last 6 months)
+    // Comparacion mensual (ultimos 6 meses con datos reales)
     const monthlyData = useMemo(() => Array.from({ length: 6 }, (_, i) => {
         const month = subMonths(new Date(), 5 - i);
-        // Deterministic pseudo-random based on index for consistent render
-        const pseudoRandom = (seed: number) => {
-            const x = Math.sin(seed) * 10000;
-            return x - Math.floor(x);
-        };
-        const seed = month.getTime();
+        const mStart = startOfMonth(month);
+        const mEnd = endOfMonth(month);
+
+        const monthTx = transactions.filter((t) => {
+            const d = new Date(t.date);
+            return d >= mStart && d <= mEnd;
+        });
 
         return {
             name: format(month, 'MMM', { locale: es }),
-            ingresos: pseudoRandom(seed) * 3000 + 1500, // Placeholder
-            gastos: pseudoRandom(seed + 1) * 2000 + 1000,
+            ingresos: monthTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
+            gastos: monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0),
         };
-    }), []); // Empty deps so it's calculated once (or when component remounts)
+    }), [transactions]);
 
-    // Budget usage
+    // Uso de presupuesto (todas las transacciones)
     const budgetUsage = useMemo(() => budgets.map((budget) => {
         const spent = transactions
             .filter((t) => t.type === 'expense' && t.category_id === budget.category_id)
@@ -235,7 +185,7 @@ export function Dashboard() {
             <div className="metrics-grid">
                 <div className="metric-card">
                     <div className="metric-header">
-                        <span className="metric-label">Balance del Mes</span>
+                        <span className="metric-label">Balance General</span>
                         <div className={`metric-badge ${balance >= 0 ? 'positive' : 'negative'}`}>
                             {balance >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                         </div>
@@ -310,9 +260,9 @@ export function Dashboard() {
                         <span className="metric-label">Metas Activas</span>
                         <Target size={18} className="metric-icon" />
                     </div>
-                    {goals.length > 0 ? (
+                    {activeGoals.length > 0 ? (
                         <div className="goals-preview">
-                            {goals.slice(0, 2).map((goal) => {
+                            {activeGoals.slice(0, 2).map((goal) => {
                                 const progress = (Number(goal.current_amount) / Number(goal.target_amount)) * 100;
                                 return (
                                     <div key={goal.id} className="goal-item">
@@ -394,7 +344,7 @@ export function Dashboard() {
                             </div>
                         </div>
                     ) : (
-                        <p className="no-data">No hay gastos este mes</p>
+                        <p className="no-data">No hay gastos registrados</p>
                     )}
                 </div>
 
@@ -493,7 +443,7 @@ export function Dashboard() {
                     </div>
                 ) : (
                     <p className="no-data">
-                        No hay transacciones este mes.{' '}
+                        No hay transacciones aún.{' '}
                         <Link to="/transacciones">Registra tu primera transacción</Link>
                     </p>
                 )}

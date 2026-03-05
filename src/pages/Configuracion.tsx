@@ -2,19 +2,44 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
-import { User, Shield, Lock, Save } from 'lucide-react';
+import { User, Shield, Lock, Save, DollarSign } from 'lucide-react';
 import './Configuracion.css';
+
+const CURRENCIES = [
+    { value: 'USD', label: 'USD - Dólar estadounidense' },
+    { value: 'COP', label: 'COP - Peso colombiano' },
+    { value: 'EUR', label: 'EUR - Euro' },
+    { value: 'MXN', label: 'MXN - Peso mexicano' },
+];
 
 type Tab = 'profile' | 'users';
 
 export function Configuracion() {
-    const { user, profile, isAdmin } = useAuth();
+    const { user, profile, isAdmin, refreshProfile } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('profile');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [updatingPassword, setUpdatingPassword] = useState(false);
+    const [savingCurrency, setSavingCurrency] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const handleCurrencyChange = async (newCurrency: string) => {
+        if (!user || newCurrency === profile?.currency) return;
+        setSavingCurrency(true);
+        setMessage(null);
+        const { error } = await supabase
+            .from('profiles')
+            .update({ currency: newCurrency })
+            .eq('id', user.id);
+        if (error) {
+            setMessage({ type: 'error', text: 'Error al actualizar la moneda: ' + error.message });
+        } else {
+            setMessage({ type: 'success', text: 'Moneda actualizada correctamente' });
+            await refreshProfile();
+        }
+        setSavingCurrency(false);
+    };
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,114 +126,129 @@ export function Configuracion() {
                 </div>
 
                 <div className="config-content">
-                    <div className="profile-section">
-                        <h3>Información del Usuario</h3>
-                        <div className="profile-card">
-                            <div className="profile-avatar-large">
-                                {profile?.full_name?.[0]?.toUpperCase() || '?'}
-                            </div>
-                            <div className="profile-details">
-                                <div className="form-group">
-                                    <label>Nombre Completo</label>
-                                    <div className="value-display">{profile?.full_name}</div>
-                                </div>
-                                <div className="form-group">
-                                    <label>Correo Electrónico</label>
-                                    <div className="value-display">{user?.email}</div>
-                                </div>
-                                <div className="form-group">
-                                    <label>Moneda</label>
-                                    <div className="value-display">{profile?.currency}</div>
-                                </div>
-                                <div className="form-group">
-                                    <label>Rol</label>
-                                    <div className="value-display cap">
-                                        {profile?.role === 'admin' ? (
-                                            <span className="flex items-center gap-1 text-primary">
-                                                <Shield size={16} /> Administrador
-                                            </span>
-                                        ) : 'Usuario'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="profile-section" style={{ marginTop: '2rem' }}>
-                            <h3>Seguridad</h3>
+                    {activeTab === 'profile' && (
+                        <div className="profile-section">
+                            <h3>Información del Usuario</h3>
                             <div className="profile-card">
-                                <form onSubmit={handlePasswordChange} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className="profile-avatar-large">
+                                    {profile?.full_name?.[0]?.toUpperCase() || '?'}
+                                </div>
+                                <div className="profile-details">
                                     <div className="form-group">
-                                        <label>Contraseña Actual</label>
+                                        <label>Nombre Completo</label>
+                                        <div className="value-display">{profile?.full_name}</div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Correo Electrónico</label>
+                                        <div className="value-display">{user?.email}</div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Moneda</label>
                                         <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                            <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
-                                            <input
-                                                type="password"
-                                                value={currentPassword}
-                                                onChange={e => setCurrentPassword(e.target.value)}
-                                                placeholder="Ingresa tu contraseña actual"
+                                            <DollarSign size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+                                            <select
                                                 className="form-input"
-                                                style={{ paddingLeft: '35px' }}
-                                            />
+                                                style={{ paddingLeft: '35px', cursor: 'pointer' }}
+                                                value={profile?.currency || 'USD'}
+                                                onChange={(e) => handleCurrencyChange(e.target.value)}
+                                                disabled={savingCurrency}
+                                            >
+                                                {CURRENCIES.map(c => (
+                                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
+                                    <div className="form-group">
+                                        <label>Rol</label>
+                                        <div className="value-display cap">
+                                            {profile?.role === 'admin' ? (
+                                                <span className="flex items-center gap-1 text-primary">
+                                                    <Shield size={16} /> Administrador
+                                                </span>
+                                            ) : 'Usuario'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="profile-section" style={{ marginTop: '2rem' }}>
+                                <h3>Seguridad</h3>
+                                <div className="profile-card">
+                                    <form onSubmit={handlePasswordChange} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         <div className="form-group">
-                                            <label>Nueva Contraseña</label>
+                                            <label>Contraseña Actual</label>
                                             <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                                 <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
                                                 <input
                                                     type="password"
-                                                    value={newPassword}
-                                                    onChange={e => setNewPassword(e.target.value)}
-                                                    placeholder="Mínimo 6 caracteres"
+                                                    value={currentPassword}
+                                                    onChange={e => setCurrentPassword(e.target.value)}
+                                                    placeholder="Ingresa tu contraseña actual"
                                                     className="form-input"
                                                     style={{ paddingLeft: '35px' }}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Confirmar Contraseña</label>
-                                            <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                                <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
-                                                <input
-                                                    type="password"
-                                                    value={confirmPassword}
-                                                    onChange={e => setConfirmPassword(e.target.value)}
-                                                    placeholder="Repetir contraseña"
-                                                    className="form-input"
-                                                    style={{ paddingLeft: '35px' }}
-                                                />
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div className="form-group">
+                                                <label>Nueva Contraseña</label>
+                                                <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                    <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
+                                                    <input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={e => setNewPassword(e.target.value)}
+                                                        placeholder="Mínimo 6 caracteres"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '35px' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Confirmar Contraseña</label>
+                                                <div className="input-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                    <Lock size={18} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
+                                                    <input
+                                                        type="password"
+                                                        value={confirmPassword}
+                                                        onChange={e => setConfirmPassword(e.target.value)}
+                                                        placeholder="Repetir contraseña"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '35px' }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {message && (
-                                        <div className={`message ${message.type}`} style={{
-                                            padding: '0.75rem',
-                                            borderRadius: 'var(--radius)',
-                                            backgroundColor: message.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                                            color: message.type === 'error' ? 'var(--expense)' : 'var(--income)',
-                                            fontSize: '0.9rem'
-                                        }}>
-                                            {message.text}
+                                        {message && (
+                                            <div className={`message ${message.type}`} style={{
+                                                padding: '0.75rem',
+                                                borderRadius: 'var(--radius)',
+                                                backgroundColor: message.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                                color: message.type === 'error' ? 'var(--expense)' : 'var(--income)',
+                                                fontSize: '0.9rem'
+                                            }}>
+                                                {message.text}
+                                            </div>
+                                        )}
+
+                                        <div style={{ alignSelf: 'flex-start' }}>
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary"
+                                                disabled={updatingPassword || !newPassword || !currentPassword}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                            >
+                                                {updatingPassword ? 'Actualizando...' : <><Save size={18} /> Actualizar Contraseña</>}
+                                            </button>
                                         </div>
-                                    )}
-
-                                    <div style={{ alignSelf: 'flex-start' }}>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary"
-                                            disabled={updatingPassword || !newPassword || !currentPassword}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                        >
-                                            {updatingPassword ? 'Actualizando...' : <><Save size={18} /> Actualizar Contraseña</>}
-                                        </button>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {activeTab === 'users' && isAdmin && (
                         <UsersTab />

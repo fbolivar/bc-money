@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Budget, Category, Transaction } from '../lib/supabase';
@@ -23,7 +23,7 @@ export function Presupuestos() {
 
     const currency = profile?.currency || 'USD';
 
-    const getBudgetsData = async (userId: string) => {
+    const getBudgetsData = useCallback(async (userId: string) => {
         const now = new Date();
         const monthStart = startOfMonth(now);
         const monthEnd = endOfMonth(now);
@@ -45,16 +45,16 @@ export function Presupuestos() {
             categories: categoriesRes.data || [],
             transactions: transactionsRes.data || []
         };
-    };
+    }, []);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         if (!user) return;
         const { budgets, categories, transactions } = await getBudgetsData(user.id);
         setBudgets(budgets);
         setCategories(categories);
         setTransactions(transactions);
         setLoading(false);
-    };
+    }, [user, getBudgetsData]);
 
     useEffect(() => {
         if (!user) return;
@@ -105,31 +105,23 @@ export function Presupuestos() {
         }
     };
 
-    const getBudgetData = () => {
-        return budgets.map((budget) => {
-            const category = categories.find((c) => c.id === budget.category_id);
-            const spent = transactions
-                .filter((t) => t.category_id === budget.category_id)
-                .reduce((sum, t) => sum + Number(t.amount), 0);
-            const percentage = (spent / Number(budget.amount)) * 100;
-            const status = percentage <= 80 ? 'success' : percentage <= 100 ? 'warning' : 'danger';
-            const remaining = Number(budget.amount) - spent;
+    const budgetData = useMemo(() => budgets.map((budget) => {
+        const category = categories.find((c) => c.id === budget.category_id);
+        const spent = transactions
+            .filter((t) => t.category_id === budget.category_id)
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+        const percentage = (spent / Number(budget.amount)) * 100;
+        const status = percentage <= 80 ? 'success' : percentage <= 100 ? 'warning' : 'danger';
+        const remaining = Number(budget.amount) - spent;
 
-            return {
-                ...budget,
-                category,
-                spent,
-                percentage,
-                status,
-                remaining,
-            };
-        });
-    };
+        return { ...budget, category, spent, percentage, status, remaining };
+    }), [budgets, categories, transactions]);
 
-    const budgetData = getBudgetData();
-    const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
-    const totalSpent = budgetData.reduce((sum, b) => sum + b.spent, 0);
-    const totalPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const { totalBudget, totalSpent, totalPercentage } = useMemo(() => {
+        const total = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
+        const spent = budgetData.reduce((sum, b) => sum + b.spent, 0);
+        return { totalBudget: total, totalSpent: spent, totalPercentage: total > 0 ? (spent / total) * 100 : 0 };
+    }, [budgets, budgetData]);
 
     if (loading) {
         return <div className="loading-container"><div className="loading-spinner"></div></div>;

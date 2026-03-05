@@ -3,8 +3,22 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create client even if env vars are missing - will show errors at usage time
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+// Create client with optimized settings for concurrent usage
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  db: {
+    schema: 'public',
+  },
+  global: {
+    headers: {
+      'x-app-name': 'bc-money',
+    },
+  },
+});
 
 // Check if properly configured
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Plus,
     Search,
@@ -49,21 +49,21 @@ export function Transacciones() {
 
     const currency = profile?.currency || 'USD';
 
-    const getTransactionsData = async (userId: string) => {
+    const getTransactionsData = useCallback(async (userId: string) => {
         const [txRes, catRes] = await Promise.all([
-            supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+            supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(1000),
             supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`)
         ]);
         return { transactions: txRes.data || [], categories: catRes.data || [] };
-    };
+    }, []);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         if (!user) return;
         const { transactions, categories } = await getTransactionsData(user.id);
         setTransactions(transactions);
         setCategories(categories);
         setLoading(false);
-    };
+    }, [user, getTransactionsData]);
 
     useEffect(() => {
         if (!user) return;
@@ -144,8 +144,8 @@ export function Transacciones() {
         });
     };
 
-    // Filter transactions
-    const filteredTransactions = transactions.filter((tx) => {
+    // Filter transactions (memoized)
+    const filteredTransactions = useMemo(() => transactions.filter((tx) => {
         const matchesSearch = !searchTerm ||
             tx.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             tx.merchant?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -156,16 +156,18 @@ export function Transacciones() {
         const matchesDateTo = !dateTo || tx.date <= dateTo;
 
         return matchesSearch && matchesType && matchesCategory && matchesDateFrom && matchesDateTo;
-    });
+    }), [transactions, searchTerm, typeFilter, categoryFilter, dateFrom, dateTo]);
 
-    // Calculate totals
-    const totalIncome = filteredTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
-
-    const totalExpense = filteredTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+    // Calculate totals (memoized)
+    const { totalIncome, totalExpense } = useMemo(() => {
+        let income = 0;
+        let expense = 0;
+        for (const t of filteredTransactions) {
+            if (t.type === 'income') income += Number(t.amount);
+            else if (t.type === 'expense') expense += Number(t.amount);
+        }
+        return { totalIncome: income, totalExpense: expense };
+    }, [filteredTransactions]);
 
     if (loading) {
         return <div className="loading-container"><div className="loading-spinner"></div></div>;

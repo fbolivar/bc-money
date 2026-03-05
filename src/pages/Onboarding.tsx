@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import {
     User,
     DollarSign,
@@ -34,12 +34,12 @@ const LIFE_SITUATIONS = [
 ];
 
 export function Onboarding() {
-    const { user, refreshProfile } = useAuth();
+    const { user, loading: authLoading, refreshProfile } = useAuth();
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    // Form state
+    // Form state - all hooks must be before any conditional returns
     const [lifeSituation, setLifeSituation] = useState('first_job');
     const [currency, setCurrency] = useState('USD');
     const [incomeType, setIncomeType] = useState<'hourly' | 'fixed'>('hourly');
@@ -49,7 +49,6 @@ export function Onboarding() {
     const [payFrequency, setPayFrequency] = useState<'weekly' | 'biweekly' | 'monthly'>('biweekly');
     const [netPercentage, setNetPercentage] = useState(75);
 
-    // Calculated values
     const [essentialExpenses, setEssentialExpenses] = useState({
         housing: 600,
         utilities: 100,
@@ -58,6 +57,19 @@ export function Onboarding() {
         phone: 50,
     });
     const [emergencyFundGoal, setEmergencyFundGoal] = useState(300);
+
+    if (authLoading) {
+        return (
+            <div className="loading-screen">
+                <div className="loading-spinner"></div>
+                <p>Cargando...</p>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
 
     const estimatedGrossMonthly = incomeType === 'hourly'
         ? hourlyRate * hoursPerWeek * 4.33
@@ -112,6 +124,7 @@ export function Onboarding() {
                     target_amount: emergencyFundGoal,
                     current_amount: 0,
                     goal_type: 'emergency_fund',
+                    status: 'active',
                     priority: 1,
                     icon: 'shield',
                     color: '#10B981',

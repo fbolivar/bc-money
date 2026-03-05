@@ -102,6 +102,15 @@
     justify-content: center;
 }
 
+.menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+}
+
 @media (max-width: 768px) {
     .topbar {
         padding: 0 var(--spacing-md);

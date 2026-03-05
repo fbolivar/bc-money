@@ -15,6 +15,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
+    authError: string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,148 +25,134 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     const isAdmin = profile?.role === 'admin';
 
-
     const fetchProfile = useCallback(async (userId: string) => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
 
-        if (!error && data) {
-            if (data.status === 'banned') {
-                await supabase.auth.signOut();
+            if (error) {
+                console.error('Error fetching profile:', error.message);
+                setAuthError('Error al cargar el perfil');
+                return;
+            }
+
+            if (data?.status === 'banned') {
+                await supabase.auth.signOut().catch(() => null);
                 setUser(null);
                 setSession(null);
                 setProfile(null);
+                setAuthError('Tu cuenta ha sido suspendida');
                 return;
             }
-            setProfile(data as Profile);
+
+            if (data) {
+                setProfile(data as Profile);
+                setAuthError(null);
+            }
+        } catch (err: unknown) {
+            console.error('Exception fetching profile:', err);
+            setAuthError('Error inesperado al cargar el perfil');
         }
     }, []);
 
-    const refreshProfile = useCallback(async () => {
-        if (user) {
-            await fetchProfile(user.id);
-        }
-    }, [user, fetchProfile]);
-
+    // Inicializacion unica con getSession (refresca tokens expirados)
     useEffect(() => {
-        let mounted = true;
+        const fallbackTimer = setTimeout(() => setLoading(false), 5000);
 
-        // Safety timer: 5 seconds max for auth check
-        const safetyTimer = setTimeout(() => {
-            if (mounted) {
-                setLoading(false);
+        // getSession() refresca el JWT si esta expirado, LUEGO cargamos perfil
+        supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+            if (s?.user) {
+                setSession(s);
+                setUser(s.user);
+                await fetchProfile(s.user.id);
             }
-        }, 5000);
+            clearTimeout(fallbackTimer);
+            setLoading(false);
+        }).catch(() => {
+            clearTimeout(fallbackTimer);
+            setLoading(false);
+        });
 
-
-        async function getInitialSession() {
-            try {
-                const sessionPromise = supabase.auth.getSession();
-                const timeoutPromise = new Promise<{ data: { session: Session | null }, error: any }>((_, reject) =>
-                    setTimeout(() => reject(new Error('SessionTimeout')), 7000)
-                );
-
-                const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
-
-                if (error) throw error;
-
-                if (mounted) {
-                    setSession(session);
-                    setUser(session?.user ?? null);
-                    if (session?.user) {
-                        try {
-                            await fetchProfile(session.user.id);
-                        } catch (err) {
-                            console.warn('Profile fetch warning:', err);
-                        }
-                    }
-                }
-            } catch (error) {
-                if (error instanceof Error && error.message === 'SessionTimeout') {
-                    // Silent timeout - flow continues to loading=false
-                } else {
-                    console.error('Error getting session:', error);
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        getInitialSession();
-
+        // Solo escuchar cambios POSTERIORES al inicial
+        // INITIAL_SESSION se ignora porque getSession() ya lo maneja arriba
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                if (!mounted) return;
+            (event, newSession) => {
+                if (event === 'INITIAL_SESSION') return;
 
-                setSession(session);
-                setUser(session?.user ?? null);
+                setSession(newSession);
 
-                if (session?.user) {
-                    await fetchProfile(session.user.id).catch(err => console.error(err));
-                } else {
+                // Estabilizar referencia: solo actualizar user si cambio el ID
+                // Esto evita que TOKEN_REFRESHED reinicie los effects del Dashboard
+                setUser(prev => {
+                    const newUser = newSession?.user ?? null;
+                    if (prev?.id === newUser?.id) return prev;
+                    return newUser;
+                });
+
+                if (!newSession?.user) {
                     setProfile(null);
-                }
-
-                if (mounted) {
-                    setLoading(false);
                 }
             }
         );
 
         return () => {
-            mounted = false;
-            clearTimeout(safetyTimer);
+            clearTimeout(fallbackTimer);
             subscription.unsubscribe();
         };
     }, [fetchProfile]);
 
+    // Cargar perfil despues de login (cuando user cambia y no hay profile)
+    useEffect(() => {
+        if (!user || profile) return;
+        fetchProfile(user.id);
+    }, [user, profile, fetchProfile]);
+
+    const refreshProfile = useCallback(async () => {
+        if (user) await fetchProfile(user.id);
+    }, [user, fetchProfile]);
+
     const signUp = useCallback(async (email: string, password: string, fullName: string) => {
+        setAuthError(null);
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: {
-                data: {
-                    full_name: fullName,
-                },
-            },
+            options: { data: { full_name: fullName } },
         });
+        if (error) setAuthError(error.message);
         return { error };
     }, []);
 
     const signIn = useCallback(async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        setAuthError(null);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) setAuthError(error.message);
         return { error };
     }, []);
 
     const signOut = useCallback(async () => {
-        await supabase.auth.signOut();
-        setUser(null);
-        setSession(null);
-        setProfile(null);
+        try {
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.error('Error during signOut:', err);
+        } finally {
+            setUser(null);
+            setSession(null);
+            setProfile(null);
+            setAuthError(null);
+        }
     }, []);
 
     const value = useMemo(() => ({
-        user,
-        session,
-        profile,
-        loading,
-        isAdmin,
-        signUp,
-        signIn,
-        signOut,
-        refreshProfile,
-    }), [user, session, profile, loading, isAdmin, signUp, signIn, signOut, refreshProfile]);
+        user, session, profile, loading, isAdmin,
+        signUp, signIn, signOut, refreshProfile, authError,
+    }), [user, session, profile, loading, isAdmin, signUp, signIn, signOut, refreshProfile, authError]);
 
     return (
         <AuthContext.Provider value={value}>
@@ -173,5 +160,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         </AuthContext.Provider>
     );
 }
-
-

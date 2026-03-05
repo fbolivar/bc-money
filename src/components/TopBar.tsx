@@ -1,9 +1,9 @@
+import { memo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Sun, Moon, Bell, Search, Menu } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { Bell, Search, Menu } from 'lucide-react';
 import './TopBar.css';
 
-const pageTitles: Record<string, string> = {
+const PAGE_TITLES: Record<string, string> = {
     '/': 'Dashboard',
     '/transacciones': 'Transacciones',
     '/presupuestos': 'Presupuestos',
@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
     '/reportes': 'Reportes',
     '/asesor': 'Asesor Financiero',
     '/configuracion': 'Configuración',
+    '/categorias': 'Categorías',
     '/onboarding': 'Configuración Inicial',
 };
 
@@ -18,15 +19,14 @@ interface TopBarProps {
     onMenuClick: () => void;
 }
 
-export function TopBar({ onMenuClick }: TopBarProps) {
-    const { theme, toggleTheme } = useTheme();
+export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
     const location = useLocation();
-    const pageTitle = pageTitles[location.pathname] || 'BC Money';
+    const pageTitle = PAGE_TITLES[location.pathname] || 'BC Money';
 
     return (
         <header className="topbar">
             <div className="topbar-left">
-                <button className="menu-btn lg:hidden mr-2 p-2" onClick={onMenuClick} style={{ display: 'none' }}>
+                <button className="menu-btn" onClick={onMenuClick}>
                     <Menu size={24} />
                 </button>
                 <h1 className="topbar-title">{pageTitle}</h1>
@@ -46,15 +46,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
                     <Bell size={20} />
                     <span className="notification-badge">3</span>
                 </button>
-
-                <button
-                    className="topbar-btn"
-                    onClick={toggleTheme}
-                    title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
-                >
-                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                </button>
             </div>
         </header>
     );
-}
+});

@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
 import { AppLayout } from './components/AppLayout';
 
 // Lazy loading components
@@ -27,35 +26,33 @@ function LoadingFallback() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
-              {/* Protected routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/transacciones" element={<Transacciones />} />
-                <Route path="/presupuestos" element={<Presupuestos />} />
-                <Route path="/metas" element={<Metas />} />
-                <Route path="/categorias" element={<Categorias />} />
-                <Route path="/configuracion" element={<Configuracion />} />
-                <Route path="/reportes" element={<Reportes />} />
-                <Route path="/asesor" element={<Asesor />} />
-              </Route>
+            {/* Protected routes */}
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/transacciones" element={<Transacciones />} />
+              <Route path="/presupuestos" element={<Presupuestos />} />
+              <Route path="/metas" element={<Metas />} />
+              <Route path="/categorias" element={<Categorias />} />
+              <Route path="/configuracion" element={<Configuracion />} />
+              <Route path="/reportes" element={<Reportes />} />
+              <Route path="/asesor" element={<Asesor />} />
+            </Route>
 
-              {/* Catch all */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

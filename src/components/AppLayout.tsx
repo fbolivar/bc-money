@@ -1,11 +1,15 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppLayout() {
     const { user, loading, profile } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+    const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
 
     if (loading) {
         return (
@@ -20,18 +24,15 @@ export function AppLayout() {
         return <Navigate to="/login" replace />;
     }
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    // Redirect to onboarding if not completed
     if (profile && !profile.onboarding_completed) {
         return <Navigate to="/onboarding" replace />;
     }
 
     return (
         <div className="app-layout">
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
-                <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
+                <TopBar onMenuClick={openSidebar} />
                 <div className="page-content">
                     <Outlet />
                     <footer className="app-footer">

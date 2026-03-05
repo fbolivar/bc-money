@@ -83,29 +83,6 @@
   --topbar-height: 64px;
 }
 
-/* Dark Mode */
-[data-theme="dark"] {
-  --color-background: #111827;
-  --color-surface: #1F2937;
-  --color-surface-hover: #374151;
-  --color-border: #374151;
-  --color-border-light: #4B5563;
-
-  --color-text-primary: #F9FAFB;
-  --color-text-secondary: #D1D5DB;
-  --color-text-tertiary: #9CA3AF;
-
-  --color-primary-light: rgba(16, 185, 129, 0.2);
-  --color-secondary-light: rgba(59, 130, 246, 0.2);
-  --color-danger-light: rgba(239, 68, 68, 0.2);
-  --color-warning-light: rgba(245, 158, 11, 0.2);
-  --color-success-light: rgba(16, 185, 129, 0.2);
-
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-}
-
 /* ========== Global Reset ========== */
 *,
 *::before,

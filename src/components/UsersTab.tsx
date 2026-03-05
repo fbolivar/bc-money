@@ -39,6 +39,7 @@ export function UsersTab() {
 
         if (error) {
             console.error('Error fetching profiles:', error);
+            alert('Error al cargar la lista de usuarios. Asegúrate de tener permisos de administrador.');
         } else {
             setProfiles(data as Profile[]);
         }

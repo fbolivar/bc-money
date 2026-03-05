@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -15,7 +16,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import './Sidebar.css';
 
-const baseNavItems = [
+const NAV_ITEMS = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/transacciones', icon: ArrowLeftRight, label: 'Transacciones' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
@@ -23,16 +24,21 @@ const baseNavItems = [
     { path: '/metas', icon: Target, label: 'Metas' },
     { path: '/reportes', icon: FileText, label: 'Reportes' },
     { path: '/asesor', icon: Bot, label: 'Asesor IA' },
-];
+] as const;
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+const isMobile = () => window.innerWidth <= 768;
+
+export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { signOut, profile } = useAuth();
-    const navItems = baseNavItems;
+
+    const handleNavClick = useCallback(() => {
+        if (isMobile()) onClose();
+    }, [onClose]);
 
     return (
         <>
@@ -47,21 +53,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     opacity: isOpen ? 1 : 0,
                     pointerEvents: isOpen ? 'auto' : 'none',
                     transition: 'opacity 0.3s ease',
-                    display: 'block' // Always render but handle with opacity/pointerEvents
+                    display: 'block',
                 }}
             />
-            <aside
-                className={`sidebar ${isOpen ? 'open' : ''}`}
-                style={{
-                    ...(window.innerWidth <= 768 ? {
-                        position: 'fixed',
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-                    } : {})
-                }}
-            >
+            <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="sidebar-logo">
                         <DollarSign size={28} />
@@ -75,18 +70,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <nav className="sidebar-nav">
                     <div className="nav-section">
                         <span className="nav-section-title">MENÚ PRINCIPAL</span>
-                        {navItems.map((item) => (
+                        {NAV_ITEMS.map((item) => (
                             <NavLink
                                 key={item.path}
                                 to={item.path}
                                 className={({ isActive }) =>
                                     `nav-link ${isActive ? 'nav-link-active' : ''}`
                                 }
-                                onClick={() => {
-                                    if (window.innerWidth <= 768) {
-                                        onClose();
-                                    }
-                                }}
+                                onClick={handleNavClick}
                             >
                                 <item.icon size={20} />
                                 <span>{item.label}</span>
@@ -108,7 +99,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </NavLink>
                     </div>
                     <div className="sidebar-actions">
-                        <NavLink to="/configuracion" className="nav-link" onClick={() => window.innerWidth <= 768 && onClose()}>
+                        <NavLink to="/configuracion" className="nav-link" onClick={handleNavClick}>
                             <Settings size={20} />
                             <span>Configuración</span>
                         </NavLink>
@@ -121,4 +112,4 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </aside>
         </>
     );
-}
+});
