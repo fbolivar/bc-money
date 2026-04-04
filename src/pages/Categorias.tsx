@@ -400,9 +400,9 @@ export function Categorias() {
                 type="button"
                 className="fab-add"
                 onClick={() => { resetForm(); setIsModalOpen(true); }}
-                title="Nueva Categoría"
             >
-                <Plus size={24} />
+                <Plus size={20} />
+                Crear
             </button>
 
             {/* Delete Confirmation Modal */}
