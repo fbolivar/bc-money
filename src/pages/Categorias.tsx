@@ -130,7 +130,8 @@ export function Categorias() {
 
         try {
             if (editingCategory) {
-                const { error } = await supabase
+                // Try to update directly
+                const { data, error } = await supabase
                     .from('categories')
                     .update({
                         name: formData.name,
@@ -138,10 +139,32 @@ export function Categorias() {
                         color: formData.color,
                         icon: formData.icon
                     })
-                    .eq('id', editingCategory.id);
+                    .eq('id', editingCategory.id)
+                    .select();
 
                 if (error) throw error;
-                showToast('Categoría actualizada correctamente', 'success');
+
+                // If update returned no rows (RLS blocked it for system categories),
+                // create a personal copy with the new data
+                if (!data || data.length === 0) {
+                    const { error: insertError } = await supabase
+                        .from('categories')
+                        .insert([{
+                            user_id: user.id,
+                            name: formData.name,
+                            type: formData.type,
+                            color: formData.color,
+                            icon: formData.icon,
+                            is_system: false,
+                            is_essential: editingCategory.is_essential,
+                            sort_order: editingCategory.sort_order
+                        }]);
+
+                    if (insertError) throw insertError;
+                    showToast('Categoría personalizada creada', 'success');
+                } else {
+                    showToast('Categoría actualizada correctamente', 'success');
+                }
             } else {
                 const { error } = await supabase
                     .from('categories')
@@ -243,7 +266,6 @@ export function Categorias() {
             </div>
 
             <div className="categories-grid">
-                {/* Income Categories */}
                 <div className="category-group">
                     <div className="category-group-header">
                         <TrendingUp className="text-emerald-500" />
@@ -269,7 +291,6 @@ export function Categorias() {
                     </div>
                 </div>
 
-                {/* Expense Categories */}
                 <div className="category-group">
                     <div className="category-group-header">
                         <TrendingDown className="text-red-500" />
@@ -302,95 +323,86 @@ export function Categorias() {
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
-                            <button className="close-btn" onClick={() => setIsModalOpen(false)}>
+                            <button type="button" className="close-btn" onClick={() => setIsModalOpen(false)}>
                                 <X size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>Nombre</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                    placeholder="Ej: Alimentación"
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Tipo</label>
-                                <select
-                                    className="form-select"
-                                    value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as CategoryFormData['type'] })}
-                                >
-                                    <option value="expense">Gasto</option>
-                                    <option value="income">Ingreso</option>
-                                    <option value="both">Ambos</option>
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Icono</label>
-                                <div className="icon-grid">
-                                    {ICON_NAMES.map(name => (
-                                        <button
-                                            key={name}
-                                            type="button"
-                                            className={`icon-swatch ${formData.icon === name ? 'selected' : ''}`}
-                                            onClick={() => setFormData({ ...formData, icon: name })}
-                                            title={name}
-                                        >
-                                            <CategoryIcon name={name} size={18} />
-                                        </button>
-                                    ))}
+                        <div className="modal-body">
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label>Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                        placeholder="Ej: Alimentación"
+                                        autoFocus
+                                    />
                                 </div>
-                            </div>
 
-                            <div className="form-group">
-                                <label>Color</label>
-                                <div className="color-grid">
-                                    {DEFAULT_COLORS.map(color => (
-                                        <div
-                                            key={color}
-                                            className={`color-swatch ${formData.color === color ? 'selected' : ''}`}
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => setFormData({ ...formData, color })}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Preview */}
-                            <div className="form-group">
-                                <label>Vista previa</label>
-                                <div className="category-preview">
-                                    <div
-                                        className="category-icon"
-                                        style={{ backgroundColor: `${formData.color}20`, color: formData.color }}
+                                <div className="form-group">
+                                    <label>Tipo</label>
+                                    <select
+                                        className="form-select"
+                                        value={formData.type}
+                                        onChange={e => setFormData({ ...formData, type: e.target.value as CategoryFormData['type'] })}
+                                        title="Tipo de categoría"
                                     >
-                                        <CategoryIcon name={formData.icon} />
-                                    </div>
-                                    <span className="category-name">{formData.name || 'Nombre'}</span>
+                                        <option value="expense">Gasto</option>
+                                        <option value="income">Ingreso</option>
+                                        <option value="both">Ambos</option>
+                                    </select>
                                 </div>
-                            </div>
 
-                            <div className="modal-actions">
-                                <button
-                                    type="button"
-                                    className="btn-cancel"
-                                    onClick={() => setIsModalOpen(false)}
-                                >
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="btn-submit" disabled={saving}>
-                                    {saving ? 'Guardando...' : editingCategory ? 'Guardar Cambios' : 'Crear Categoría'}
-                                </button>
-                            </div>
-                        </form>
+                                <div className="form-group">
+                                    <label>Icono</label>
+                                    <div className="icon-grid">
+                                        {ICON_NAMES.map(name => (
+                                            <button
+                                                key={name}
+                                                type="button"
+                                                className={`icon-swatch ${formData.icon === name ? 'selected' : ''}`}
+                                                onClick={() => setFormData({ ...formData, icon: name })}
+                                                title={name}
+                                            >
+                                                <CategoryIcon name={name} size={18} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Color</label>
+                                    <div className="color-grid">
+                                        {DEFAULT_COLORS.map(color => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                className={`color-swatch ${formData.color === color ? 'selected' : ''}`}
+                                                style={{ backgroundColor: color }}
+                                                onClick={() => setFormData({ ...formData, color })}
+                                                title={color}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button
+                                        type="button"
+                                        className="btn-cancel"
+                                        onClick={() => setIsModalOpen(false)}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" className="btn-submit" disabled={saving}>
+                                        {saving ? 'Guardando...' : editingCategory ? 'Guardar' : 'Crear'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}
@@ -418,10 +430,10 @@ export function Categorias() {
                             Esta acción no se puede deshacer.
                         </p>
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setDeleteConfirm(null)}>
+                            <button type="button" className="btn-cancel" onClick={() => setDeleteConfirm(null)}>
                                 Cancelar
                             </button>
-                            <button className="btn-delete" onClick={() => handleDelete(deleteConfirm)}>
+                            <button type="button" className="btn-delete" onClick={() => handleDelete(deleteConfirm)}>
                                 <Trash2 size={16} />
                                 Eliminar
                             </button>
