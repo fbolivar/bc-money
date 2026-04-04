@@ -146,6 +146,7 @@ export function Categorias() {
                 .from('categories')
                 .delete()
                 .eq('id', category.id);
+
             if (error) throw error;
             setDeleteConfirm(null);
             showToast('Categoría eliminada', 'success');
