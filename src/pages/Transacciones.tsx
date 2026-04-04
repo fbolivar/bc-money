@@ -9,7 +9,7 @@ import {
     X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Category } from '../lib/supabase';
+import type { Transaction, Category, Account } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,6 +24,7 @@ export function Transacciones() {
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(isValidInitialType);
     const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -40,6 +41,7 @@ export function Transacciones() {
         type: (isValidInitialType ? initialNewType : 'expense') as 'income' | 'expense',
         amount: '',
         category_id: '',
+        account_id: '',
         description: '',
         date: format(new Date(), 'yyyy-MM-dd'),
         is_essential: false,
@@ -50,26 +52,29 @@ export function Transacciones() {
     const currency = profile?.currency || 'USD';
 
     const getTransactionsData = useCallback(async (userId: string) => {
-        const [txRes, catRes] = await Promise.all([
+        const [txRes, catRes, accRes] = await Promise.all([
             supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(1000),
-            supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`)
+            supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
+            supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
         ]);
-        return { transactions: txRes.data || [], categories: catRes.data || [] };
+        return { transactions: txRes.data || [], categories: catRes.data || [], accounts: accRes.data || [] };
     }, []);
 
     const refreshData = useCallback(async () => {
         if (!user) return;
-        const { transactions, categories } = await getTransactionsData(user.id);
-        setTransactions(transactions);
-        setCategories(categories);
+        const data = await getTransactionsData(user.id);
+        setTransactions(data.transactions);
+        setCategories(data.categories);
+        setAccounts(data.accounts);
         setLoading(false);
     }, [user, getTransactionsData]);
 
     useEffect(() => {
         if (!user) return;
-        getTransactionsData(user.id).then(({ transactions, categories }) => {
-            setTransactions(transactions);
-            setCategories(categories);
+        getTransactionsData(user.id).then(data => {
+            setTransactions(data.transactions);
+            setCategories(data.categories);
+            setAccounts(data.accounts);
             setLoading(false);
         });
     }, [user]);
@@ -82,6 +87,7 @@ export function Transacciones() {
             type: formData.type,
             amount: parseFloat(formData.amount),
             category_id: formData.category_id || null,
+            account_id: formData.account_id || null,
             description: formData.description || null,
             date: formData.date,
             is_essential: formData.is_essential,
@@ -112,6 +118,7 @@ export function Transacciones() {
             type: tx.type as 'income' | 'expense',
             amount: tx.amount.toString(),
             category_id: tx.category_id || '',
+            account_id: tx.account_id || '',
             description: tx.description || '',
             date: tx.date,
             is_essential: tx.is_essential,
@@ -136,6 +143,7 @@ export function Transacciones() {
             type: 'expense',
             amount: '',
             category_id: '',
+            account_id: '',
             description: '',
             date: format(new Date(), 'yyyy-MM-dd'),
             is_essential: false,
@@ -276,6 +284,7 @@ export function Transacciones() {
                             <th>Fecha</th>
                             <th>Descripción</th>
                             <th>Categoría</th>
+                            <th>Cuenta</th>
                             <th>Tipo</th>
                             <th className="text-right">Monto</th>
                             <th>Acciones</th>
@@ -285,6 +294,7 @@ export function Transacciones() {
                         {filteredTransactions.length > 0 ? (
                             filteredTransactions.map((tx) => {
                                 const category = categories.find(c => c.id === tx.category_id);
+                                const account = accounts.find(a => a.id === tx.account_id);
                                 return (
                                     <tr key={tx.id}>
                                         <td>{format(new Date(tx.date), 'd MMM yyyy', { locale: es })}</td>
@@ -302,6 +312,7 @@ export function Transacciones() {
                                                 {category?.name || 'Sin categoría'}
                                             </span>
                                         </td>
+                                        <td>{account?.name || '—'}</td>
                                         <td>
                                             <span className={`type-badge ${tx.type}`}>
                                                 {tx.type === 'income' ? 'Ingreso' : 'Gasto'}
@@ -331,7 +342,7 @@ export function Transacciones() {
                             })
                         ) : (
                             <tr>
-                                <td colSpan={6} className="text-center">
+                                <td colSpan={7} className="text-center">
                                     No hay transacciones que mostrar
                                 </td>
                             </tr>
@@ -413,6 +424,20 @@ export function Transacciones() {
                                         required
                                     />
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Cuenta</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.account_id}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, account_id: e.target.value }))}
+                                >
+                                    <option value="">Sin cuenta</option>
+                                    {accounts.map(acc => (
+                                        <option key={acc.id} value={acc.id}>{acc.name}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group">

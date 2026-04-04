@@ -79,6 +79,7 @@ export type Transaction = {
   amount: number;
   type: 'income' | 'expense' | 'transfer';
   category_id: string | null;
+  account_id: string | null;
   description: string | null;
   notes: string | null;
   merchant: string | null;

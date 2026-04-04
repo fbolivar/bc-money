@@ -24,7 +24,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Goal, Budget, Category } from '../lib/supabase';
+import type { Transaction, Goal, Budget, Category, Account } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,17 +33,19 @@ import './Dashboard.css';
 
 // Funcion de carga FUERA del componente (mismo patron que Transacciones)
 async function getDashboardData(userId: string) {
-    const [txRes, goalsRes, catRes, budgRes] = await Promise.all([
+    const [txRes, goalsRes, catRes, budgRes, accRes] = await Promise.all([
         supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(500),
         supabase.from('goals').select('*').eq('user_id', userId).order('priority', { ascending: true }),
         supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
         supabase.from('budgets').select('*').eq('user_id', userId),
+        supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
     ]);
     return {
         transactions: txRes.data || [],
         goals: goalsRes.data || [],
         categories: catRes.data || [],
         budgets: budgRes.data || [],
+        accounts: accRes.data || [],
     };
 }
 
@@ -54,19 +56,27 @@ export function Dashboard() {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [accountFilter, setAccountFilter] = useState<string>('all');
 
     const currency = profile?.currency || 'USD';
 
     useEffect(() => {
         if (!user) return;
-        getDashboardData(user.id).then(({ transactions, goals, categories, budgets }) => {
-            setTransactions(transactions);
-            setGoals(goals);
-            setCategories(categories);
-            setBudgets(budgets);
+        getDashboardData(user.id).then(data => {
+            setTransactions(data.transactions);
+            setGoals(data.goals);
+            setCategories(data.categories);
+            setBudgets(data.budgets);
+            setAccounts(data.accounts);
             setLoading(false);
         });
     }, [user]);
+
+    const filteredTx = useMemo(() =>
+        accountFilter === 'all' ? transactions : transactions.filter(t => t.account_id === accountFilter),
+        [transactions, accountFilter]
+    );
 
     // Goals activas (status 'active' o null para compatibilidad con datos anteriores)
     const activeGoals = useMemo(() => goals.filter(
@@ -74,25 +84,25 @@ export function Dashboard() {
     ), [goals]);
 
     // Metricas: usar TODAS las transacciones (no solo el mes actual)
-    const income = useMemo(() => transactions
+    const income = useMemo(() => filteredTx
         .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
+        .reduce((sum, t) => sum + Number(t.amount), 0), [filteredTx]);
 
-    const expenses = useMemo(() => transactions
+    const expenses = useMemo(() => filteredTx
         .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
+        .reduce((sum, t) => sum + Number(t.amount), 0), [filteredTx]);
 
     const balance = income - expenses;
     const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
     // Desglose por categoria (todas las transacciones)
-    const categoryBreakdown = useMemo(() => transactions
+    const categoryBreakdown = useMemo(() => filteredTx
         .filter((t) => t.type === 'expense')
         .reduce((acc: Record<string, number>, t) => {
             const catId = t.category_id || 'other';
             acc[catId] = (acc[catId] || 0) + Number(t.amount);
             return acc;
-        }, {}), [transactions]);
+        }, {}), [filteredTx]);
 
     const pieData = useMemo(() => Object.entries(categoryBreakdown)
         .map(([catId, amount]) => {
@@ -114,7 +124,7 @@ export function Dashboard() {
             weekEnd.setDate(today.getDate() - i * 7);
             const weekStart = new Date(weekEnd);
             weekStart.setDate(weekEnd.getDate() - 7);
-            const weekExpenses = transactions
+            const weekExpenses = filteredTx
                 .filter((t) => {
                     const txDate = new Date(t.date);
                     return t.type === 'expense' && txDate >= weekStart && txDate < weekEnd;
@@ -122,7 +132,7 @@ export function Dashboard() {
                 .reduce((sum, t) => sum + Number(t.amount), 0);
             return { name: `Sem ${4 - i}`, gastos: weekExpenses };
         }).reverse();
-    }, [transactions]);
+    }, [filteredTx]);
 
     // Comparacion mensual (ultimos 6 meses con datos reales)
     const monthlyData = useMemo(() => Array.from({ length: 6 }, (_, i) => {
@@ -130,7 +140,7 @@ export function Dashboard() {
         const mStart = startOfMonth(month);
         const mEnd = endOfMonth(month);
 
-        const monthTx = transactions.filter((t) => {
+        const monthTx = filteredTx.filter((t) => {
             const d = new Date(t.date);
             return d >= mStart && d <= mEnd;
         });
@@ -140,11 +150,11 @@ export function Dashboard() {
             ingresos: monthTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
             gastos: monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0),
         };
-    }), [transactions]);
+    }), [filteredTx]);
 
     // Uso de presupuesto (todas las transacciones)
     const budgetUsage = useMemo(() => budgets.map((budget) => {
-        const spent = transactions
+        const spent = filteredTx
             .filter((t) => t.type === 'expense' && t.category_id === budget.category_id)
             .reduce((sum, t) => sum + Number(t.amount), 0);
         const percentage = (spent / Number(budget.amount)) * 100;
@@ -156,7 +166,7 @@ export function Dashboard() {
             percentage,
             status: percentage <= 80 ? 'success' : percentage <= 100 ? 'warning' : 'danger',
         };
-    }), [budgets, transactions, categories]);
+    }), [budgets, filteredTx, categories]);
 
     if (loading) {
         return (
@@ -169,6 +179,21 @@ export function Dashboard() {
 
     return (
         <div className="dashboard animate-fadeIn">
+            {/* Account Filter */}
+            {accounts.length > 0 && (
+                <div className="account-filter">
+                    <select
+                        className="account-filter-select"
+                        value={accountFilter}
+                        onChange={e => setAccountFilter(e.target.value)}
+                        title="Filtrar por cuenta"
+                    >
+                        <option value="all">Todas las cuentas</option>
+                        {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                </div>
+            )}
+
             {/* Quick Actions */}
             <div className="quick-actions">
                 <Link to="/transacciones?new=income" className="quick-action-btn income">
@@ -410,9 +435,9 @@ export function Dashboard() {
                         Ver todas <ArrowUpRight size={16} />
                     </Link>
                 </div>
-                {transactions.length > 0 ? (
+                {filteredTx.length > 0 ? (
                     <div className="transactions-list">
-                        {transactions.slice(0, 5).map((tx) => {
+                        {filteredTx.slice(0, 5).map((tx) => {
                             const category = categories.find((c) => c.id === tx.category_id);
                             return (
                                 <div key={tx.id} className="transaction-item">

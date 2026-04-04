@@ -20,7 +20,7 @@ import {
     Cell,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Category } from '../lib/supabase';
+import type { Transaction, Category, Account } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -30,8 +30,10 @@ export function Reportes() {
     const { user, profile } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
+    const [accountFilter, setAccountFilter] = useState<string>('all');
 
     const currency = profile?.currency || 'USD';
 
@@ -42,7 +44,7 @@ export function Reportes() {
             const monthStart = startOfMonth(selectedMonth);
             const monthEnd = endOfMonth(selectedMonth);
 
-            const [txRes, catRes] = await Promise.all([
+            const [txRes, catRes, accRes] = await Promise.all([
                 supabase
                     .from('transactions')
                     .select('*')
@@ -50,23 +52,27 @@ export function Reportes() {
                     .gte('date', format(monthStart, 'yyyy-MM-dd'))
                     .lte('date', format(monthEnd, 'yyyy-MM-dd')),
                 supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
+                supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
             ]);
 
             setTransactions(txRes.data || []);
             setCategories(catRes.data || []);
+            setAccounts(accRes.data || []);
             setLoading(false);
         };
 
         fetchData();
     }, [user, selectedMonth]);
 
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+    const filteredTx = accountFilter === 'all' ? transactions : transactions.filter(t => t.account_id === accountFilter);
+
+    const income = filteredTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+    const expenses = filteredTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
     const savings = income - expenses;
     const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
     // Category breakdown
-    const categoryData = transactions
+    const categoryData = filteredTx
         .filter(t => t.type === 'expense')
         .reduce((acc: Record<string, number>, t) => {
             const catId = t.category_id || 'other';
@@ -88,7 +94,7 @@ export function Reportes() {
     // Export to CSV
     const exportCSV = () => {
         const headers = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Monto'];
-        const rows = transactions.map(t => {
+        const rows = filteredTx.map(t => {
             const cat = categories.find(c => c.id === t.category_id);
             return [
                 t.date,
@@ -132,6 +138,17 @@ export function Reportes() {
                         <ChevronRight size={20} />
                     </button>
                 </div>
+                {accounts.length > 0 && (
+                    <select
+                        className="account-filter-select"
+                        value={accountFilter}
+                        onChange={e => setAccountFilter(e.target.value)}
+                        title="Filtrar por cuenta"
+                    >
+                        <option value="all">Todas las cuentas</option>
+                        {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                )}
                 <button className="btn btn-secondary" onClick={exportCSV}>
                     <Download size={18} />
                     Exportar CSV
@@ -232,7 +249,7 @@ export function Reportes() {
 
             {/* Transactions Table */}
             <div className="transactions-section">
-                <h3>Detalle de Transacciones ({transactions.length})</h3>
+                <h3>Detalle de Transacciones ({filteredTx.length})</h3>
                 <div className="transactions-table-container">
                     <table className="table">
                         <thead>
@@ -245,8 +262,8 @@ export function Reportes() {
                             </tr>
                         </thead>
                         <tbody>
-                            {transactions.length > 0 ? (
-                                transactions.map(tx => {
+                            {filteredTx.length > 0 ? (
+                                filteredTx.map(tx => {
                                     const cat = categories.find(c => c.id === tx.category_id);
                                     return (
                                         <tr key={tx.id}>

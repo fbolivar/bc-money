@@ -4,6 +4,24 @@
     gap: var(--spacing-xl);
 }
 
+.account-filter {
+    display: flex;
+    justify-content: flex-end;
+}
+.account-filter-select {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+.account-filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
 .quick-actions {
     display: flex;
     gap: var(--spacing-md);
