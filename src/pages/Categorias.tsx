@@ -395,6 +395,16 @@ export function Categorias() {
                 </div>
             )}
 
+            {/* Floating Action Button */}
+            <button
+                type="button"
+                className="fab-add"
+                onClick={() => { resetForm(); setIsModalOpen(true); }}
+                title="Nueva Categoría"
+            >
+                <Plus size={24} />
+            </button>
+
             {/* Delete Confirmation Modal */}
             {deleteConfirm && (
                 <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
