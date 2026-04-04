@@ -451,30 +451,25 @@ function CategoryCard({
                 >
                     <CategoryIcon name={category.icon} />
                 </div>
-                <div className="category-details">
-                    <span className="category-name">{category.name}</span>
-                    {category.is_system && <span className="system-badge">Sistema</span>}
-                </div>
+                <span className="category-name">{category.name}</span>
             </div>
             <div className="category-actions">
-                {!category.is_system && (
-                    <>
-                        <button
-                            onClick={() => onEdit(category)}
-                            className="category-action-btn edit"
-                            title="Editar"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button
-                            onClick={() => onDelete(category)}
-                            className="category-action-btn delete"
-                            title="Eliminar"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </>
-                )}
+                <button
+                    type="button"
+                    onClick={() => onEdit(category)}
+                    className="category-action-btn edit"
+                    title="Editar"
+                >
+                    <Edit2 size={16} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onDelete(category)}
+                    className="category-action-btn delete"
+                    title="Eliminar"
+                >
+                    <Trash2 size={16} />
+                </button>
             </div>
         </div>
     );
