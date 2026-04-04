@@ -1,12 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Plus,
     Edit2,
     Trash2,
     X,
-    Tag,
     TrendingUp,
     TrendingDown,
+    Search,
+    AlertTriangle,
+    ShoppingCart,
+    Home,
+    Car,
+    Utensils,
+    Heart,
+    Briefcase,
+    GraduationCap,
+    Plane,
+    Gamepad2,
+    Music,
+    Shirt,
+    Wifi,
+    Smartphone,
+    Gift,
+    DollarSign,
+    CreditCard,
+    PiggyBank,
+    Tag,
+    Zap,
+    Coffee,
+    Book,
+    Shield,
+    type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Category } from '../lib/supabase';
@@ -25,18 +49,41 @@ const DEFAULT_COLORS = [
     '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#64748B'
 ];
 
+const ICON_MAP: Record<string, LucideIcon> = {
+    Tag, ShoppingCart, Home, Car, Utensils, Heart, Briefcase,
+    GraduationCap, Plane, Gamepad2, Music, Shirt, Wifi,
+    Smartphone, Gift, DollarSign, CreditCard, PiggyBank,
+    Zap, Coffee, Book, Shield,
+};
+
+const ICON_NAMES = Object.keys(ICON_MAP);
+
+function CategoryIcon({ name, size = 20 }: { name: string; size?: number }) {
+    const Icon = ICON_MAP[name] || Tag;
+    return <Icon size={size} />;
+}
+
 export function Categorias() {
     const { user } = useAuth();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState<Category | null>(null);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [formData, setFormData] = useState<CategoryFormData>({
         name: '',
         type: 'expense',
         color: '#3B82F6',
         icon: 'Tag'
     });
+
+    const showToast = useCallback((message: string, type: 'success' | 'error') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
 
     const fetchCategories = useCallback(async () => {
         if (!user) return;
@@ -45,6 +92,7 @@ export function Categorias() {
                 .from('categories')
                 .select('*')
                 .or(`user_id.eq.${user.id},is_system.eq.true`)
+                .order('sort_order', { ascending: true })
                 .order('name');
 
             if (error) throw error;
@@ -57,14 +105,28 @@ export function Categorias() {
     }, [user]);
 
     useEffect(() => {
-        if (user) {
-            fetchCategories();
-        }
+        if (user) fetchCategories();
     }, [user, fetchCategories]);
+
+    const filteredCategories = useMemo(() => {
+        if (!searchTerm) return categories;
+        const term = searchTerm.toLowerCase();
+        return categories.filter(c => c.name.toLowerCase().includes(term));
+    }, [categories, searchTerm]);
+
+    const incomeCategories = useMemo(
+        () => filteredCategories.filter(c => c.type === 'income' || c.type === 'both'),
+        [filteredCategories]
+    );
+    const expenseCategories = useMemo(
+        () => filteredCategories.filter(c => c.type === 'expense' || c.type === 'both'),
+        [filteredCategories]
+    );
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!user) return;
+        if (!user || saving) return;
+        setSaving(true);
 
         try {
             if (editingCategory) {
@@ -79,6 +141,7 @@ export function Categorias() {
                     .eq('id', editingCategory.id);
 
                 if (error) throw error;
+                showToast('Categoría actualizada correctamente', 'success');
             } else {
                 const { error } = await supabase
                     .from('categories')
@@ -94,6 +157,7 @@ export function Categorias() {
                     }]);
 
                 if (error) throw error;
+                showToast('Categoría creada correctamente', 'success');
             }
 
             setIsModalOpen(false);
@@ -101,35 +165,33 @@ export function Categorias() {
             fetchCategories();
         } catch (error) {
             console.error('Error saving category:', error);
-            alert('Error al guardar la categoría');
+            showToast('Error al guardar la categoría', 'error');
+        } finally {
+            setSaving(false);
         }
     }
 
-    async function handleDelete(id: string) {
-        if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
-
+    async function handleDelete(category: Category) {
         try {
             const { error } = await supabase
                 .from('categories')
                 .delete()
-                .eq('id', id);
+                .eq('id', category.id);
 
             if (error) throw error;
+            setDeleteConfirm(null);
+            showToast('Categoría eliminada correctamente', 'success');
             fetchCategories();
         } catch (error) {
             console.error('Error deleting category:', error);
-            alert('Error al eliminar la categoría');
+            showToast('Error al eliminar. Puede tener transacciones asociadas.', 'error');
+            setDeleteConfirm(null);
         }
     }
 
     function resetForm() {
         setEditingCategory(null);
-        setFormData({
-            name: '',
-            type: 'expense',
-            color: '#3B82F6',
-            icon: 'Tag'
-        });
+        setFormData({ name: '', type: 'expense', color: '#3B82F6', icon: 'Tag' });
     }
 
     function openEditModal(category: Category) {
@@ -143,13 +205,17 @@ export function Categorias() {
         setIsModalOpen(true);
     }
 
-    const incomeCategories = categories.filter(c => c.type === 'income' || c.type === 'both');
-    const expenseCategories = categories.filter(c => c.type === 'expense' || c.type === 'both');
-
     if (loading) return <div className="loading-screen">Cargando...</div>;
 
     return (
         <div className="categories-container">
+            {/* Toast */}
+            {toast && (
+                <div className={`cat-toast ${toast.type}`}>
+                    {toast.message}
+                </div>
+            )}
+
             <div className="categories-header">
                 <div className="categories-title">
                     <h1>Categorías</h1>
@@ -157,14 +223,23 @@ export function Categorias() {
                 </div>
                 <button
                     className="add-category-btn"
-                    onClick={() => {
-                        resetForm();
-                        setIsModalOpen(true);
-                    }}
+                    onClick={() => { resetForm(); setIsModalOpen(true); }}
                 >
                     <Plus size={20} />
-                    Nueva Categoría
+                    <span className="btn-text">Nueva Categoría</span>
                 </button>
+            </div>
+
+            {/* Search */}
+            <div className="categories-search">
+                <Search size={18} className="search-icon" />
+                <input
+                    type="text"
+                    placeholder="Buscar categorías..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="search-input"
+                />
             </div>
 
             <div className="categories-grid">
@@ -173,37 +248,24 @@ export function Categorias() {
                     <div className="category-group-header">
                         <TrendingUp className="text-emerald-500" />
                         <h2>Ingresos</h2>
+                        <span className="category-count">{incomeCategories.length}</span>
                     </div>
                     <div className="categories-list">
-                        {incomeCategories.map(category => (
-                            <div key={category.id} className="category-card">
-                                <div className="category-info">
-                                    <div
-                                        className="category-icon"
-                                        style={{ backgroundColor: `${category.color}20`, color: category.color }}
-                                    >
-                                        <Tag size={20} />
-                                    </div>
-                                    <span className="category-name">{category.name}</span>
-                                </div>
-                                <div className="category-actions">
-                                    <button
-                                        onClick={() => openEditModal(category)}
-                                        className="category-action-btn edit"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    {!category.is_system && (
-                                        <button
-                                            onClick={() => handleDelete(category.id)}
-                                            className="category-action-btn delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
+                        {incomeCategories.length === 0 ? (
+                            <div className="empty-state">
+                                <TrendingUp size={32} />
+                                <p>No hay categorías de ingresos</p>
                             </div>
-                        ))}
+                        ) : (
+                            incomeCategories.map(category => (
+                                <CategoryCard
+                                    key={category.id}
+                                    category={category}
+                                    onEdit={openEditModal}
+                                    onDelete={setDeleteConfirm}
+                                />
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -212,45 +274,32 @@ export function Categorias() {
                     <div className="category-group-header">
                         <TrendingDown className="text-red-500" />
                         <h2>Gastos</h2>
+                        <span className="category-count">{expenseCategories.length}</span>
                     </div>
                     <div className="categories-list">
-                        {expenseCategories.map(category => (
-                            <div key={category.id} className="category-card">
-                                <div className="category-info">
-                                    <div
-                                        className="category-icon"
-                                        style={{ backgroundColor: `${category.color}20`, color: category.color }}
-                                    >
-                                        <Tag size={20} />
-                                    </div>
-                                    <span className="category-name">{category.name}</span>
-                                </div>
-                                <div className="category-actions">
-                                    <button
-                                        onClick={() => openEditModal(category)}
-                                        className="category-action-btn edit"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    {!category.is_system && (
-                                        <button
-                                            onClick={() => handleDelete(category.id)}
-                                            className="category-action-btn delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
+                        {expenseCategories.length === 0 ? (
+                            <div className="empty-state">
+                                <TrendingDown size={32} />
+                                <p>No hay categorías de gastos</p>
                             </div>
-                        ))}
+                        ) : (
+                            expenseCategories.map(category => (
+                                <CategoryCard
+                                    key={category.id}
+                                    category={category}
+                                    onEdit={openEditModal}
+                                    onDelete={setDeleteConfirm}
+                                />
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Add/Edit Modal */}
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
                             <button className="close-btn" onClick={() => setIsModalOpen(false)}>
@@ -267,6 +316,7 @@ export function Categorias() {
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     required
                                     placeholder="Ej: Alimentación"
+                                    autoFocus
                                 />
                             </div>
 
@@ -284,6 +334,23 @@ export function Categorias() {
                             </div>
 
                             <div className="form-group">
+                                <label>Icono</label>
+                                <div className="icon-grid">
+                                    {ICON_NAMES.map(name => (
+                                        <button
+                                            key={name}
+                                            type="button"
+                                            className={`icon-swatch ${formData.icon === name ? 'selected' : ''}`}
+                                            onClick={() => setFormData({ ...formData, icon: name })}
+                                            title={name}
+                                        >
+                                            <CategoryIcon name={name} size={18} />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
                                 <label>Color</label>
                                 <div className="color-grid">
                                     {DEFAULT_COLORS.map(color => (
@@ -297,6 +364,20 @@ export function Categorias() {
                                 </div>
                             </div>
 
+                            {/* Preview */}
+                            <div className="form-group">
+                                <label>Vista previa</label>
+                                <div className="category-preview">
+                                    <div
+                                        className="category-icon"
+                                        style={{ backgroundColor: `${formData.color}20`, color: formData.color }}
+                                    >
+                                        <CategoryIcon name={formData.icon} />
+                                    </div>
+                                    <span className="category-name">{formData.name || 'Nombre'}</span>
+                                </div>
+                            </div>
+
                             <div className="modal-actions">
                                 <button
                                     type="button"
@@ -305,14 +386,86 @@ export function Categorias() {
                                 >
                                     Cancelar
                                 </button>
-                                <button type="submit" className="btn-submit">
-                                    {editingCategory ? 'Guardar Cambios' : 'Crear Categoría'}
+                                <button type="submit" className="btn-submit" disabled={saving}>
+                                    {saving ? 'Guardando...' : editingCategory ? 'Guardar Cambios' : 'Crear Categoría'}
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm && (
+                <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+                    <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
+                        <div className="delete-modal-icon">
+                            <AlertTriangle size={48} />
+                        </div>
+                        <h2>Eliminar Categoría</h2>
+                        <p>
+                            ¿Estás seguro de eliminar <strong>{deleteConfirm.name}</strong>?
+                            Esta acción no se puede deshacer.
+                        </p>
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setDeleteConfirm(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-delete" onClick={() => handleDelete(deleteConfirm)}>
+                                <Trash2 size={16} />
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function CategoryCard({
+    category,
+    onEdit,
+    onDelete,
+}: {
+    category: Category;
+    onEdit: (c: Category) => void;
+    onDelete: (c: Category) => void;
+}) {
+    return (
+        <div className="category-card">
+            <div className="category-info">
+                <div
+                    className="category-icon"
+                    style={{ backgroundColor: `${category.color}20`, color: category.color }}
+                >
+                    <CategoryIcon name={category.icon} />
+                </div>
+                <div className="category-details">
+                    <span className="category-name">{category.name}</span>
+                    {category.is_system && <span className="system-badge">Sistema</span>}
+                </div>
+            </div>
+            <div className="category-actions">
+                {!category.is_system && (
+                    <>
+                        <button
+                            onClick={() => onEdit(category)}
+                            className="category-action-btn edit"
+                            title="Editar"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button
+                            onClick={() => onDelete(category)}
+                            className="category-action-btn delete"
+                            title="Eliminar"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
     );
 }
