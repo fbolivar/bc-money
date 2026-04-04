@@ -129,6 +129,22 @@ export type Goal = {
   completed_at: string | null;
 };
 
+export type Account = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'checking' | 'savings' | 'credit_card' | 'cash' | 'crypto' | 'investment';
+  currency: string;
+  balance: number;
+  color: string;
+  icon: string;
+  institution: string | null;
+  account_number: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;

@@ -1,0 +1,436 @@
+.cuentas-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Toast */
+.cta-toast {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    z-index: 2000;
+    animation: ctaSlide 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.cta-toast.success { background: #059669; color: white; }
+.cta-toast.error { background: #DC2626; color: white; }
+@keyframes ctaSlide {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Header */
+.cuentas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+.cuentas-header h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+.cuentas-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.toggle-balance-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.toggle-balance-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--primary);
+}
+
+/* Summary */
+.cuentas-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.summary-card.total {
+    background: linear-gradient(135deg, #10B981, #059669);
+    border: none;
+    color: white;
+}
+.summary-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+.summary-card.total .summary-label { color: rgba(255,255,255,0.85); }
+.summary-card.count .summary-label { color: var(--text-secondary); }
+.summary-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.summary-card.count .summary-amount { color: var(--text-primary); }
+
+/* Search */
+.cuentas-search {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.cuentas-search .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+.cuentas-search .search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+.cuentas-search .search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Empty */
+.cuentas-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+.cuentas-empty h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 1rem 0 0.5rem;
+}
+.cuentas-empty p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+.empty-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #10B981;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.empty-add-btn:hover { background: #059669; }
+
+/* Accounts Grid */
+.cuentas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.account-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.account-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.account-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.account-card-actions {
+    display: flex;
+    gap: 0.2rem;
+}
+.acc-action-btn {
+    background: none;
+    border: none;
+    padding: 0.35rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-radius: 0.375rem;
+    transition: all 0.15s;
+}
+.acc-action-btn.edit:hover { color: #10B981; background: rgba(16,185,129,0.1); }
+.acc-action-btn.delete:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+
+.account-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.account-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.account-type {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.account-institution {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.account-card-footer {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+.account-balance {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.account-balance.negative { color: #EF4444; }
+
+/* FAB */
+.cuentas-container .fab-add {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    height: 48px;
+    padding: 0 1.25rem;
+    border-radius: 2rem;
+    background: #10B981;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 100;
+    transition: all 0.15s;
+}
+.cuentas-container .fab-add:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+/* Modal */
+.cuentas-container .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+.cuentas-container .modal-content {
+    background: #ffffff;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.cuentas-container .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.25rem 0.75rem;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 1;
+}
+.cuentas-container .modal-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+.cuentas-container .close-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0.35rem;
+    border-radius: 50%;
+}
+.cuentas-container .close-btn:hover { background: #f0f0f0; }
+
+/* Form */
+.cuentas-container .modal-form {
+    padding: 0 1.25rem 1.25rem;
+}
+.form-row {
+    margin-bottom: 0.75rem;
+}
+.form-row.two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+.cuentas-container .form-group {
+    margin-bottom: 0.75rem;
+}
+.cuentas-container .form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #555;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.cuentas-container .form-input,
+.cuentas-container .form-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+}
+.cuentas-container .form-input:focus,
+.cuentas-container .form-select:focus {
+    outline: none;
+    border-color: #10B981;
+}
+
+/* Icon/Color grid */
+.cuentas-container .icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.cuentas-container .icon-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    border: 2px solid #e5e5e5;
+    background: #fafafa;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.15s;
+}
+.cuentas-container .icon-swatch:hover { border-color: #10B981; color: #10B981; }
+.cuentas-container .icon-swatch.selected { border-color: #10B981; background: #ecfdf5; color: #10B981; }
+
+.cuentas-container .color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.cuentas-container .color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    padding: 0;
+    transition: transform 0.15s;
+}
+.cuentas-container .color-swatch.selected {
+    border-color: #1a1a1a;
+    transform: scale(1.15);
+}
+
+/* Modal actions */
+.cuentas-container .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.cuentas-container .btn-cancel,
+.cuentas-container .btn-submit,
+.cuentas-container .btn-delete {
+    flex: 1;
+    padding: 0.7rem;
+    border-radius: 0.6rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: all 0.15s;
+}
+.cuentas-container .btn-cancel { background: #f0f0f0; color: #333; }
+.cuentas-container .btn-cancel:hover { background: #e0e0e0; }
+.cuentas-container .btn-submit { background: #10B981; color: white; }
+.cuentas-container .btn-submit:hover { background: #059669; }
+.cuentas-container .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.cuentas-container .btn-delete { background: #EF4444; color: white; }
+.cuentas-container .btn-delete:hover { background: #DC2626; }
+
+/* Delete modal */
+.cuentas-container .delete-modal {
+    text-align: center;
+    max-width: 380px;
+    padding: 2rem 1.5rem;
+}
+.cuentas-container .delete-modal h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 1rem 0 0.5rem;
+}
+.cuentas-container .delete-modal p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cuentas-container { padding: 1rem; }
+    .cuentas-summary { grid-template-columns: 1fr; }
+    .cuentas-grid { grid-template-columns: 1fr; }
+    .form-row.two-cols { grid-template-columns: 1fr; }
+    .cta-toast { left: 1rem; right: 1rem; }
+}

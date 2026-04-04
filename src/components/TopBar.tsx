@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/asesor': 'Asesor Financiero',
     '/configuracion': 'Configuración',
     '/categorias': 'Categorías',
+    '/cuentas': 'Cuentas',
     '/onboarding': 'Configuración Inicial',
 };
 

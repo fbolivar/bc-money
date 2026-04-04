@@ -11,6 +11,7 @@ import {
     LogOut,
     DollarSign,
     Tags,
+    Landmark,
     X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -19,6 +20,7 @@ import './Sidebar.css';
 const NAV_ITEMS = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/transacciones', icon: ArrowLeftRight, label: 'Transacciones' },
+    { path: '/cuentas', icon: Landmark, label: 'Cuentas' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
     { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
     { path: '/metas', icon: Target, label: 'Metas' },
