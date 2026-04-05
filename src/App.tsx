@@ -23,6 +23,7 @@ const Hogar = lazy(() => import('./pages/Hogar').then(module => ({ default: modu
 const Suscripciones = lazy(() => import('./pages/Suscripciones').then(module => ({ default: module.Suscripciones })));
 const Patrimonio = lazy(() => import('./pages/Patrimonio').then(module => ({ default: module.Patrimonio })));
 const Calendario = lazy(() => import('./pages/Calendario').then(module => ({ default: module.Calendario })));
+const PlanDeudas = lazy(() => import('./pages/PlanDeudas').then(module => ({ default: module.PlanDeudas })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
 
 function LoadingFallback() {
@@ -60,6 +61,7 @@ function App() {
               <Route path="/suscripciones" element={<Suscripciones />} />
               <Route path="/patrimonio" element={<Patrimonio />} />
               <Route path="/calendario" element={<Calendario />} />
+              <Route path="/plan-deudas" element={<PlanDeudas />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
 

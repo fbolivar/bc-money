@@ -308,3 +308,11 @@ tr.selected td { background: var(--color-primary-light) !important; }
     .pagination { flex-direction: column; gap: 0.5rem; }
     .tx-toast { left: 1rem; right: 1rem; }
 }
+
+/* Chart section */
+.tx-chart-section { display: flex; flex-direction: column; gap: 0.75rem; }
+.tx-chart-container { display: flex; align-items: center; gap: 1.5rem; background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-md); }
+.tx-chart-legend { display: flex; flex-direction: column; gap: 0.4rem; }
+.tx-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); }
+.tx-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+@media (max-width: 768px) { .tx-chart-container { flex-direction: column; } }

@@ -293,3 +293,14 @@
 @media (max-width: 480px) {
     .dash-metrics { grid-template-columns: 1fr; }
 }
+
+/* Upcoming Payments */
+.dash-upcoming { background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-md); }
+.dash-upcoming h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; }
+.dash-upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.dash-upcoming-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: var(--radius-lg); background: var(--color-surface-hover); font-size: 0.85rem; }
+.dash-upcoming-item.debt svg { color: #EF4444; }
+.dash-upcoming-item.sub svg { color: #8B5CF6; }
+.dui-name { flex: 1; font-weight: 600; color: var(--color-text-primary); }
+.dui-amount { font-weight: 700; }
+.dui-date { font-size: 0.7rem; color: var(--color-text-tertiary); }

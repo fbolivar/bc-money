@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Bell, Menu, ShieldAlert, CreditCard, Wallet, X } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bell, Menu, ShieldAlert, CreditCard, Wallet, X, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { differenceInDays, startOfMonth, endOfMonth, format } from 'date-fns';
@@ -23,6 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/suscripciones': 'Suscripciones',
     '/patrimonio': 'Patrimonio Neto',
     '/calendario': 'Calendario Financiero',
+    '/plan-deudas': 'Planificador de Deudas',
     '/onboarding': 'Configuración Inicial',
 };
 
@@ -40,7 +41,16 @@ interface TopBarProps {
 
 export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
     const location = useLocation();
+    const navigate = useNavigate();
     const { user, profile } = useAuth();
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearch = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            navigate(`/transacciones?q=${encodeURIComponent(searchQuery.trim())}`);
+            setSearchQuery('');
+        }
+    };
     const pageTitle = PAGE_TITLES[location.pathname] || 'BC Money';
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -143,6 +153,12 @@ export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
             </div>
 
             <div className="topbar-right">
+                <div className="search-box">
+                    <Search size={16} className="search-icon" />
+                    <input type="text" className="search-input" placeholder="Buscar... (Enter)"
+                        value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearch} title="Buscar transacciones" />
+                </div>
                 <div className="alerts-wrapper" ref={dropdownRef}>
                     <button
                         className={`topbar-btn ${alerts.length > 0 ? 'has-alerts' : ''}`}

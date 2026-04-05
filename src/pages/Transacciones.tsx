@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     Plus, Search, Edit2, Trash2, ArrowUpRight, ArrowDownRight, X,
-    Upload, Copy, ChevronLeft, ChevronRight, CheckSquare, Square,
+    Upload, Copy, ChevronLeft, ChevronRight, CheckSquare, Square, BarChart3,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category, Account, Goal } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -18,6 +19,7 @@ export function Transacciones() {
     const [searchParams] = useSearchParams();
     const initialNewType = searchParams.get('new');
     const isValidInitialType = initialNewType === 'income' || initialNewType === 'expense';
+    const initialSearch = searchParams.get('q') || '';
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -32,7 +34,7 @@ export function Transacciones() {
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [dateFrom, setDateFrom] = useState('');
@@ -188,6 +190,21 @@ export function Transacciones() {
         return { totalIncome: income, totalExpense: expense };
     }, [filteredTransactions]);
 
+    // Category chart data
+    const chartData = useMemo(() => {
+        const breakdown: Record<string, number> = {};
+        for (const t of filteredTransactions) {
+            if (t.type !== 'expense') continue;
+            const k = t.category_id || 'other';
+            breakdown[k] = (breakdown[k] || 0) + Number(t.amount);
+        }
+        return Object.entries(breakdown)
+            .map(([id, value]) => { const c = categories.find(x => x.id === id); return { name: c?.name || 'Otros', value, color: c?.color || '#94A3B8' }; })
+            .sort((a, b) => b.value - a.value).slice(0, 6);
+    }, [filteredTransactions, categories]);
+
+    const [showChart, setShowChart] = useState(false);
+
     // Reset page when filters change
     useEffect(() => { setPage(0); }, [searchTerm, typeFilter, categoryFilter, dateFrom, dateTo]);
 
@@ -203,6 +220,30 @@ export function Transacciones() {
                 <div className="summary-card expense"><ArrowDownRight size={24} /><div><span className="label">Gastos</span><span className="value">{currency} {totalExpense.toLocaleString()}</span></div></div>
                 <div className="summary-card balance"><div><span className="label">Balance</span><span className={`value ${totalIncome - totalExpense >= 0 ? 'positive' : 'negative'}`}>{currency} {(totalIncome - totalExpense).toLocaleString()}</span></div></div>
             </div>
+
+            {/* Chart Toggle */}
+            {chartData.length > 0 && (
+                <div className="tx-chart-section">
+                    <button type="button" className="btn btn-ghost" onClick={() => setShowChart(!showChart)}>
+                        <BarChart3 size={16} /> {showChart ? 'Ocultar gráfica' : 'Ver gráfica por categoría'}
+                    </button>
+                    {showChart && (
+                        <div className="tx-chart-container">
+                            <ResponsiveContainer width="100%" height={200}>
+                                <PieChart>
+                                    <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                                        {chartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                                    </Pie>
+                                    <Tooltip formatter={(v: unknown) => [`${currency} ${Number(v).toLocaleString()}`, 'Monto']} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="tx-chart-legend">
+                                {chartData.map((e, i) => <div key={i} className="tx-legend-item"><span className="tx-legend-dot" style={{ backgroundColor: e.color }}></span><span>{e.name}: {currency} {e.value.toLocaleString()}</span></div>)}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Toolbar */}
             <div className="toolbar">

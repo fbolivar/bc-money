@@ -8,7 +8,7 @@ import {
     ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Goal, Budget, Category, Account } from '../lib/supabase';
+import type { Transaction, Goal, Budget, Category, Account, Debt, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -16,17 +16,20 @@ import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
 async function getDashboardData(userId: string) {
-    const [txRes, goalsRes, catRes, budgRes, accRes] = await Promise.all([
+    const [txRes, goalsRes, catRes, budgRes, accRes, debtRes, subRes] = await Promise.all([
         supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(500),
         supabase.from('goals').select('*').eq('user_id', userId).order('priority', { ascending: true }),
         supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
         supabase.from('budgets').select('*').eq('user_id', userId),
         supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
+        supabase.from('debts').select('*').eq('user_id', userId).eq('status', 'active'),
+        supabase.from('subscriptions').select('*').eq('user_id', userId).eq('status', 'active'),
     ]);
     return {
         transactions: txRes.data || [], goals: goalsRes.data || [],
         categories: catRes.data || [], budgets: budgRes.data || [],
-        accounts: accRes.data || [],
+        accounts: accRes.data || [], debts: debtRes.data || [],
+        subscriptions: subRes.data || [],
     };
 }
 
@@ -42,6 +45,8 @@ export function Dashboard() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [debts, setDebts] = useState<Debt[]>([]);
+    const [subs, setSubs] = useState<Subscription[]>([]);
     const [accountFilter, setAccountFilter] = useState<string>('all');
 
     const currency = profile?.currency || 'USD';
@@ -51,7 +56,8 @@ export function Dashboard() {
         getDashboardData(user.id).then(data => {
             setTransactions(data.transactions); setGoals(data.goals);
             setCategories(data.categories); setBudgets(data.budgets);
-            setAccounts(data.accounts); setLoading(false);
+            setAccounts(data.accounts); setDebts(data.debts);
+            setSubs(data.subscriptions); setLoading(false);
         });
     }, [user]);
 
@@ -261,6 +267,31 @@ export function Dashboard() {
             </div>
 
             {/* Quick Actions */}
+            {/* Upcoming Payments */}
+            {(debts.length > 0 || subs.length > 0) && (
+                <div className="dash-upcoming">
+                    <h3>Próximos Pagos</h3>
+                    <div className="dash-upcoming-list">
+                        {debts.filter(d => d.payment_day).slice(0, 3).map(d => (
+                            <div key={d.id} className="dash-upcoming-item debt">
+                                <CreditCard size={16} />
+                                <span className="dui-name">{d.name}</span>
+                                <span className="dui-amount">{d.installment_amount ? fmtMoney(d.installment_amount, d.currency) : '—'}</span>
+                                <span className="dui-date">Día {d.payment_day}</span>
+                            </div>
+                        ))}
+                        {subs.slice(0, 3).map(s => (
+                            <div key={s.id} className="dash-upcoming-item sub">
+                                <Activity size={16} />
+                                <span className="dui-name">{s.name}</span>
+                                <span className="dui-amount">{fmtMoney(s.amount, s.currency)}</span>
+                                <span className="dui-date">{format(new Date(s.next_billing_date), 'd MMM', { locale: es })}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="dash-quick-actions">
                 <Link to="/transacciones?new=income" className="dqa-btn income"><Plus size={16} /> Registrar Ingreso</Link>
                 <Link to="/transacciones?new=expense" className="dqa-btn expense"><Plus size={16} /> Registrar Gasto</Link>
