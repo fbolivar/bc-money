@@ -40,23 +40,25 @@
 }
 
 .quick-action-btn.income {
-    background-color: var(--color-success-light);
-    color: var(--color-success);
+    background: var(--gradient-success);
+    color: white;
+    box-shadow: 0 4px 12px rgb(16 185 129 / 0.3);
 }
 
 .quick-action-btn.income:hover {
-    background-color: var(--color-success);
-    color: white;
+    box-shadow: 0 6px 20px rgb(16 185 129 / 0.4);
+    transform: translateY(-1px);
 }
 
 .quick-action-btn.expense {
-    background-color: var(--color-danger-light);
-    color: var(--color-danger);
+    background: var(--gradient-danger);
+    color: white;
+    box-shadow: 0 4px 12px rgb(239 68 68 / 0.3);
 }
 
 .quick-action-btn.expense:hover {
-    background-color: var(--color-danger);
-    color: white;
+    box-shadow: 0 6px 20px rgb(239 68 68 / 0.4);
+    transform: translateY(-1px);
 }
 
 .metrics-grid {
@@ -79,9 +81,37 @@
 
 .metric-card {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border: none;
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.metrics-grid .metric-card:nth-child(1) {
+    background: var(--gradient-success);
+    color: white;
+}
+.metrics-grid .metric-card:nth-child(1) .metric-label,
+.metrics-grid .metric-card:nth-child(1) .metric-value span,
+.metrics-grid .metric-card:nth-child(1) .metric-icon,
+.metrics-grid .metric-card:nth-child(1) .metric-detail span {
+    color: white !important;
+}
+
+.metrics-grid .metric-card:nth-child(2) {
+    background: var(--gradient-info);
+    color: white;
+}
+.metrics-grid .metric-card:nth-child(2) .metric-label,
+.metrics-grid .metric-card:nth-child(2) .metric-value span,
+.metrics-grid .metric-card:nth-child(2) .metric-icon {
+    color: white !important;
 }
 
 .metric-header {
@@ -251,9 +281,10 @@
 
 .chart-card {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border: none;
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
 }
 
 .chart-card.wide {
@@ -302,9 +333,10 @@
 
 .recent-section {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border: none;
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
 }
 
 .section-header {
