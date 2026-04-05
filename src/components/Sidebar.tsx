@@ -4,7 +4,7 @@ import {
     LayoutDashboard, ArrowLeftRight, Wallet, Target, FileText, Settings, LogOut,
     DollarSign, Tags, Landmark, CircleDollarSign, ShieldCheck, PawPrint,
     ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
-    StickyNote, Upload, X,
+    StickyNote, Upload, BarChart3, X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import './Sidebar.css';
@@ -27,6 +27,7 @@ const NAV_SECTIONS = [
             { path: '/deudas', icon: CircleDollarSign, label: 'Deudas' },
             { path: '/suscripciones', icon: Repeat, label: 'Suscripciones' },
             { path: '/plan-deudas', icon: Calculator, label: 'Plan Deudas' },
+            { path: '/inversiones', icon: BarChart3, label: 'Inversiones' },
         ],
     },
     {

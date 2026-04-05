@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'react-router-dom';
+import { SkeletonTable } from '../components/Skeleton';
 import './Transacciones.css';
 
 const PAGE_SIZE = 25;
@@ -247,7 +248,7 @@ export function Transacciones() {
     // Reset page when filters change
     useEffect(() => { setPage(0); }, [searchTerm, typeFilter, categoryFilter, dateFrom, dateTo]);
 
-    if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
+    if (loading) return <div className="page-content"><SkeletonTable rows={8} /></div>;
 
     return (
         <div className="transacciones-page animate-fadeIn">

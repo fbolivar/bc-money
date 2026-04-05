@@ -291,6 +291,23 @@ export type HomeMaintenance = {
   created_at: string;
 };
 
+export type Investment = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'stock' | 'crypto' | 'bond' | 'fund' | 'real_estate' | 'commodity' | 'other';
+  symbol: string | null;
+  quantity: number;
+  purchase_price: number;
+  current_price: number | null;
+  currency: string;
+  purchase_date: string;
+  notes: string | null;
+  color: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NetWorthSnapshot = {
   id: string;
   user_id: string;

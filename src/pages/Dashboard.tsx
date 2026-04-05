@@ -13,6 +13,7 @@ import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { SkeletonDashboard } from '../components/Skeleton';
 import './Dashboard.css';
 
 async function getDashboardData(userId: string) {
@@ -115,7 +116,7 @@ export function Dashboard() {
     const totalAccountBalance = accounts.reduce((s, a) => s + Number(a.balance), 0);
 
     if (loading) {
-        return <div className="loading-container"><div className="loading-spinner"></div><p>Cargando tu dashboard...</p></div>;
+        return <div className="page-content"><SkeletonDashboard /></div>;
     }
 
     return (

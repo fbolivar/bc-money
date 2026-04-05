@@ -1,0 +1,40 @@
+@keyframes skPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.sk-line { height: 12px; background: var(--color-border, #E2E8F0); border-radius: 6px; animation: skPulse 1.5s ease-in-out infinite; }
+.sk-line.tall { height: 20px; }
+.sk-line.w15 { width: 15%; }
+.sk-line.w20 { width: 20%; }
+.sk-line.w30 { width: 30%; }
+.sk-line.w40 { width: 40%; }
+.sk-line.w60 { width: 60%; }
+.sk-line.w80 { width: 80%; }
+.sk-line.w100 { width: 100%; }
+.sk-circle { width: 40px; height: 40px; border-radius: 10px; background: var(--color-border, #E2E8F0); animation: skPulse 1.5s ease-in-out infinite; flex-shrink: 0; }
+
+.skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; padding: 1rem 0; }
+.skeleton-card { background: var(--color-surface, #fff); border-radius: var(--radius-xl, 1.25rem); padding: 1.25rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.75rem; }
+.sk-row { display: flex; align-items: center; gap: 0.75rem; }
+.sk-lines { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
+
+.skeleton-table { background: var(--color-surface, #fff); border-radius: var(--radius-xl, 1.25rem); padding: 1.25rem; box-shadow: var(--shadow-sm); }
+.sk-table-header, .sk-table-row { display: flex; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--color-border-light, #F1F5F9); }
+.sk-table-header { opacity: 0.5; }
+
+.skeleton-dash { display: flex; flex-direction: column; gap: 1.5rem; padding: 0.5rem 0; }
+.sk-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.sk-metric { height: 100px; background: var(--color-border, #E2E8F0); border-radius: var(--radius-xl, 1.25rem); animation: skPulse 1.5s ease-in-out infinite; }
+.sk-charts { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1rem; }
+.sk-chart { height: 250px; background: var(--color-surface, #fff); border-radius: var(--radius-xl, 1.25rem); box-shadow: var(--shadow-sm); animation: skPulse 1.5s ease-in-out infinite; }
+.sk-chart.wide { height: 180px; }
+
+.skeleton-page { display: flex; flex-direction: column; gap: 1rem; }
+.sk-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; }
+
+@media (max-width: 768px) {
+    .sk-metrics { grid-template-columns: 1fr 1fr; }
+    .sk-charts { grid-template-columns: 1fr; }
+    .skeleton-grid { grid-template-columns: 1fr; }
+}

@@ -26,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/plan-deudas': 'Planificador de Deudas',
     '/notas': 'Notas Financieras',
     '/importar': 'Importar Extractos',
+    '/inversiones': 'Inversiones',
     '/onboarding': 'Configuración Inicial',
 };
 

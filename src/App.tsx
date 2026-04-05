@@ -26,6 +26,7 @@ const Calendario = lazy(() => import('./pages/Calendario').then(module => ({ def
 const PlanDeudas = lazy(() => import('./pages/PlanDeudas').then(module => ({ default: module.PlanDeudas })));
 const Notas = lazy(() => import('./pages/Notas').then(module => ({ default: module.Notas })));
 const ImportarExtractos = lazy(() => import('./pages/ImportarExtractos').then(module => ({ default: module.ImportarExtractos })));
+const Inversiones = lazy(() => import('./pages/Inversiones').then(module => ({ default: module.Inversiones })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
 
 function LoadingFallback() {
@@ -66,6 +67,7 @@ function App() {
               <Route path="/plan-deudas" element={<PlanDeudas />} />
               <Route path="/notas" element={<Notas />} />
               <Route path="/importar" element={<ImportarExtractos />} />
+              <Route path="/inversiones" element={<Inversiones />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
 
