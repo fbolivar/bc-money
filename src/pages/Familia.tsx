@@ -57,15 +57,23 @@ export function Familia() {
     async function createFamily(e: React.FormEvent) {
         e.preventDefault();
         if (!user || !familyName.trim()) return;
-        const { data: fam, error } = await supabase.from('families').insert({ name: familyName, owner_id: user.id }).select().single();
-        if (error) { showToast('Error al crear familia', 'error'); return; }
-        // Add self as owner member
-        await supabase.from('family_members').insert({ family_id: fam.id, user_id: user.id, role: 'owner', status: 'active' });
-        // Update profile with family_id
-        await supabase.from('profiles').update({ family_id: fam.id }).eq('id', user.id);
-        setIsCreateModal(false); setFamilyName('');
-        showToast('Familia creada', 'success');
-        await refreshProfile(); fetchData();
+        try {
+            // Step 1: Insert family
+            const { data: fam, error: e1 } = await supabase.from('families').insert({ name: familyName, owner_id: user.id }).select();
+            if (e1 || !fam || fam.length === 0) { showToast(`Error: ${e1?.message || 'No se pudo crear'}`, 'error'); return; }
+            const familyId = fam[0].id;
+            // Step 2: Add self as owner member
+            const { error: e2 } = await supabase.from('family_members').insert({ family_id: familyId, user_id: user.id, role: 'owner', status: 'active' });
+            if (e2) { showToast(`Error miembro: ${e2.message}`, 'error'); return; }
+            // Step 3: Update profile
+            const { error: e3 } = await supabase.from('profiles').update({ family_id: familyId }).eq('id', user.id);
+            if (e3) { showToast(`Error perfil: ${e3.message}`, 'error'); return; }
+            setIsCreateModal(false); setFamilyName('');
+            showToast('Familia creada exitosamente', 'success');
+            await refreshProfile(); fetchData();
+        } catch (err) {
+            showToast(`Error inesperado: ${err}`, 'error');
+        }
     }
 
     async function inviteMember(e: React.FormEvent) {
