@@ -306,3 +306,58 @@
 .onboarding-actions .btn:only-child {
     margin-left: auto;
 }
+/* Responsive */
+@media (max-width: 768px) {
+    .onboarding-page {
+        padding: 1rem;
+        align-items: flex-start;
+    }
+    .onboarding-container {
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+    }
+    .onboarding-progress {
+        margin-bottom: 1.5rem;
+    }
+    .onboarding-progress::before {
+        left: 30px;
+        right: 30px;
+    }
+    .step-icon {
+        width: 32px;
+        height: 32px;
+    }
+    .step-title {
+        font-size: 0.6rem;
+    }
+    .onboarding-content {
+        min-height: auto;
+    }
+    .onboarding-step h2 {
+        font-size: 1.25rem;
+    }
+    .income-inputs {
+        grid-template-columns: 1fr;
+    }
+    .situation-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .expenses-grid {
+        grid-template-columns: 1fr;
+    }
+    .goal-options {
+        flex-direction: column;
+    }
+    .goal-option {
+        width: 100%;
+        text-align: center;
+    }
+    .onboarding-actions {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+    .onboarding-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

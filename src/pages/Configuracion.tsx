@@ -298,7 +298,7 @@ export function Configuracion() {
                                     </p>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                <div className="alerts-grid">
                                     <div className="form-group">
                                         <label>Días aviso garantías</label>
                                         <input

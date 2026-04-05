@@ -264,3 +264,39 @@
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
 }
+/* Responsive */
+@media (max-width: 768px) {
+    .metas-page .toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .metas-page .toolbar .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .goals-grid {
+        grid-template-columns: 1fr;
+    }
+    .goal-type-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .goal-card {
+        padding: var(--spacing-md);
+    }
+    .modal .modal-body {
+        padding: var(--spacing-md);
+    }
+    .modal .form-row {
+        grid-template-columns: 1fr;
+    }
+    .flex.gap-4 {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .border-l {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--color-border);
+        padding-top: 0.75rem;
+    }
+}

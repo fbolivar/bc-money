@@ -122,3 +122,35 @@
 .mb-4 {
   margin-bottom: 1rem;
 }
+/* Touch-friendly targets and small screen improvements */
+@media (max-width: 768px) {
+  .btn, button[type="submit"], button[type="button"] {
+    min-height: 44px;
+  }
+  .form-input, .form-select, select, input[type="text"], input[type="number"], input[type="date"], input[type="password"], input[type="email"] {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  .modal {
+    max-height: 90vh;
+    margin: 0.5rem;
+  }
+  table {
+    font-size: 0.8rem;
+  }
+  table th, table td {
+    padding: 0.5rem 0.4rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .page-content {
+    padding: 0.75rem;
+  }
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  h2 {
+    font-size: 1.2rem !important;
+  }
+}
