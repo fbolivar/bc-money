@@ -12,7 +12,7 @@ const Transacciones = lazy(() => import('./pages/Transacciones').then(module => 
 const Presupuestos = lazy(() => import('./pages/Presupuestos').then(module => ({ default: module.Presupuestos })));
 const Metas = lazy(() => import('./pages/Metas').then(module => ({ default: module.Metas })));
 const Reportes = lazy(() => import('./pages/Reportes').then(module => ({ default: module.Reportes })));
-const Asesor = lazy(() => import('./pages/Asesor').then(module => ({ default: module.Asesor })));
+
 const Categorias = lazy(() => import('./pages/Categorias').then(module => ({ default: module.Categorias })));
 const Cuentas = lazy(() => import('./pages/Cuentas').then(module => ({ default: module.Cuentas })));
 const Deudas = lazy(() => import('./pages/Deudas').then(module => ({ default: module.Deudas })));
@@ -56,7 +56,7 @@ function App() {
               <Route path="/hogar" element={<Hogar />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
-              <Route path="/asesor" element={<Asesor />} />
+
             </Route>
 
             {/* Catch all */}

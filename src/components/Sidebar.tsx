@@ -6,7 +6,6 @@ import {
     Wallet,
     Target,
     FileText,
-    Bot,
     Settings,
     LogOut,
     DollarSign,
@@ -35,7 +34,6 @@ const NAV_ITEMS = [
     { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
     { path: '/metas', icon: Target, label: 'Metas' },
     { path: '/reportes', icon: FileText, label: 'Reportes' },
-    { path: '/asesor', icon: Bot, label: 'Asesor IA' },
 ] as const;
 
 interface SidebarProps {
