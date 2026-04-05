@@ -23,10 +23,8 @@ interface AccountFormData {
 const ACCOUNT_TYPES: { value: Account['type']; label: string }[] = [
     { value: 'checking', label: 'Cuenta Corriente' },
     { value: 'savings', label: 'Cuenta de Ahorro' },
-    { value: 'credit_card', label: 'Tarjeta de Crédito' },
     { value: 'cash', label: 'Efectivo' },
     { value: 'crypto', label: 'Criptomonedas' },
-    { value: 'investment', label: 'Inversión' },
 ];
 
 const TYPE_LABELS: Record<string, string> = Object.fromEntries(
