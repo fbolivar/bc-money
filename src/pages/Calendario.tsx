@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, CreditCard, ShieldCheck, Repeat, Wrench, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CreditCard, ShieldCheck, Repeat, Wrench, Clock, Plus, X, Bell, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Debt, Warranty, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -11,16 +11,16 @@ interface CalendarEvent {
     id: string;
     date: Date;
     title: string;
-    type: 'debt' | 'warranty' | 'subscription' | 'maintenance';
+    type: 'debt' | 'warranty' | 'subscription' | 'maintenance' | 'custom';
     amount?: number;
     currency?: string;
 }
 
 function fmt(n: number, c: string) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n); }
 
-const TYPE_ICONS = { debt: CreditCard, warranty: ShieldCheck, subscription: Repeat, maintenance: Wrench };
-const TYPE_COLORS = { debt: '#EF4444', warranty: '#3B82F6', subscription: '#8B5CF6', maintenance: '#06B6D4' };
-const TYPE_LABELS = { debt: 'Pago deuda', warranty: 'Vence garantía', subscription: 'Cobro suscripción', maintenance: 'Mantenimiento' };
+const TYPE_ICONS: Record<string, typeof CreditCard> = { debt: CreditCard, warranty: ShieldCheck, subscription: Repeat, maintenance: Wrench, custom: Bell };
+const TYPE_COLORS: Record<string, string> = { debt: '#EF4444', warranty: '#3B82F6', subscription: '#8B5CF6', maintenance: '#06B6D4', custom: '#F59E0B' };
+const TYPE_LABELS: Record<string, string> = { debt: 'Pago deuda', warranty: 'Vence garantía', subscription: 'Cobro suscripción', maintenance: 'Mantenimiento', custom: 'Recordatorio' };
 
 export function Calendario() {
     const { user, profile } = useAuth();
@@ -28,16 +28,19 @@ export function Calendario() {
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newEvent, setNewEvent] = useState({ title: '', date: '', amount: '', notes: '' });
 
     const currency = profile?.currency || 'COP';
 
     const fetchEvents = useCallback(async () => {
         if (!user) return;
-        const [debtsRes, warRes, subRes, maintRes] = await Promise.all([
+        const [debtsRes, warRes, subRes, maintRes, customRes] = await Promise.all([
             supabase.from('debts').select('id,name,payment_day,installment_amount,currency').eq('user_id', user.id).eq('status', 'active'),
             supabase.from('warranties').select('id,product_name,warranty_end_date').eq('user_id', user.id),
             supabase.from('subscriptions').select('id,name,next_billing_date,amount,currency').eq('user_id', user.id).eq('status', 'active'),
             supabase.from('home_maintenance').select('id,name,next_date,cost,currency').eq('user_id', user.id).eq('status', 'scheduled'),
+            supabase.from('calendar_events').select('*').eq('user_id', user.id),
         ]);
 
         const evts: CalendarEvent[] = [];
@@ -68,11 +71,34 @@ export function Calendario() {
             evts.push({ id: `m-${mt.id}`, date: new Date(mt.next_date), title: mt.name, type: 'maintenance', amount: mt.cost, currency: mt.currency });
         }
 
+        // Custom events
+        for (const ce of (customRes.data || [])) {
+            evts.push({ id: `c-${ce.id}`, date: new Date(ce.date), title: ce.title, type: 'custom', amount: ce.amount, currency: ce.currency });
+        }
+
         setEvents(evts);
         setLoading(false);
     }, [user]);
 
     useEffect(() => { if (user) fetchEvents(); }, [user, fetchEvents]);
+
+    const addCustomEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+        await supabase.from('calendar_events').insert({
+            user_id: user.id, title: newEvent.title, date: newEvent.date,
+            amount: newEvent.amount ? parseFloat(newEvent.amount) : null, notes: newEvent.notes || null,
+        });
+        setShowAddModal(false);
+        setNewEvent({ title: '', date: '', amount: '', notes: '' });
+        fetchEvents();
+    };
+
+    const deleteCustomEvent = async (id: string) => {
+        const realId = id.replace('c-', '');
+        await supabase.from('calendar_events').delete().eq('id', realId);
+        fetchEvents();
+    };
 
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -97,6 +123,9 @@ export function Calendario() {
         <div className="calendario-page animate-fadeIn">
             <div className="cal-header">
                 <div><h1>Calendario Financiero</h1><p>Pagos, vencimientos y cobros programados</p></div>
+                <button type="button" className="btn btn-primary" onClick={() => { setNewEvent({ title: '', date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'), amount: '', notes: '' }); setShowAddModal(true); }}>
+                    <Plus size={16} /> Evento
+                </button>
             </div>
 
             <div className="cal-layout">
@@ -152,6 +181,7 @@ export function Calendario() {
                                                     <span className="cal-event-type">{TYPE_LABELS[e.type]}</span>
                                                 </div>
                                                 {e.amount && <span className="cal-event-amount">{fmt(e.amount, e.currency || currency)}</span>}
+                                                {e.id.startsWith('c-') && <button type="button" className="cal-del-btn" title="Eliminar" onClick={() => deleteCustomEvent(e.id)}><Trash2 size={12} /></button>}
                                             </div>
                                         );
                                     })}
@@ -183,6 +213,25 @@ export function Calendario() {
                     </div>
                 </div>
             </div>
+
+            {/* Add Event Modal */}
+            {showAddModal && (
+                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                    <div className="cal-modal" onClick={e => e.stopPropagation()}>
+                        <div className="cal-modal-header"><h3>Nuevo Evento</h3><button type="button" title="Cerrar" onClick={() => setShowAddModal(false)}><X size={18} /></button></div>
+                        <form onSubmit={addCustomEvent} className="cal-modal-form">
+                            <div className="form-group"><label>Título</label><input type="text" className="form-input" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} required placeholder="Ej: Pago seguro" /></div>
+                            <div className="form-group"><label>Fecha</label><input type="date" className="form-input" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} required /></div>
+                            <div className="form-group"><label>Monto (opcional)</label><input type="number" className="form-input" value={newEvent.amount} onChange={e => setNewEvent({ ...newEvent, amount: e.target.value })} min="0" step="0.01" /></div>
+                            <div className="form-group"><label>Notas</label><input type="text" className="form-input" value={newEvent.notes} onChange={e => setNewEvent({ ...newEvent, notes: e.target.value })} placeholder="Opcional" /></div>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowAddModal(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Crear</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

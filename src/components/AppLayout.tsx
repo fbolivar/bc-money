@@ -1,11 +1,13 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppLayout() {
     const { user, loading, profile } = useAuth();
+    useKeyboardShortcuts();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);

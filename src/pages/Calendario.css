@@ -45,3 +45,16 @@
     .cal-weekday { font-size: 0.6rem; }
     .cal-day-num { font-size: 0.75rem; }
 }
+
+/* Calendar Modal */
+.cal-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+.cal-modal { background: var(--color-surface); border-radius: var(--radius-xl); width: 100%; max-width: 400px; box-shadow: var(--shadow-xl); }
+.cal-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.25rem 0.5rem; }
+.cal-modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+.cal-modal-header button { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; }
+.cal-modal-form { padding: 0.5rem 1.25rem 1.25rem; }
+.cal-modal-form .form-group { margin-bottom: 0.75rem; }
+.cal-modal-form label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.3rem; }
+.cal-del-btn { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; padding: 0.2rem; border-radius: 4px; flex-shrink: 0; }
+.cal-del-btn:hover { color: #EF4444; background: rgba(239,68,68,0.1); }

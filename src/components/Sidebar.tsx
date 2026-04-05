@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard, ArrowLeftRight, Wallet, Target, FileText, Settings, LogOut,
     DollarSign, Tags, Landmark, CircleDollarSign, ShieldCheck, PawPrint,
-    ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator, X,
+    ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
+    StickyNote, Upload, X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import './Sidebar.css';
@@ -43,6 +44,8 @@ const NAV_SECTIONS = [
             { path: '/patrimonio', icon: TrendingUp, label: 'Patrimonio' },
             { path: '/calendario', icon: CalendarDays, label: 'Calendario' },
             { path: '/reportes', icon: FileText, label: 'Reportes' },
+            { path: '/notas', icon: StickyNote, label: 'Notas' },
+            { path: '/importar', icon: Upload, label: 'Importar' },
         ],
     },
 ] as const;

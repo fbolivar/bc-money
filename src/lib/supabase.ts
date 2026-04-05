@@ -329,3 +329,15 @@ export type AIConversation = {
   context_snapshot: Record<string, unknown> | null;
   created_at: string;
 };
+
+export type FinancialNote = {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  color: string;
+  pinned: boolean;
+  tags: string[] | null;
+  created_at: string;
+  updated_at: string;
+};

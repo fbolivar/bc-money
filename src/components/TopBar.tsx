@@ -24,6 +24,8 @@ const PAGE_TITLES: Record<string, string> = {
     '/patrimonio': 'Patrimonio Neto',
     '/calendario': 'Calendario Financiero',
     '/plan-deudas': 'Planificador de Deudas',
+    '/notas': 'Notas Financieras',
+    '/importar': 'Importar Extractos',
     '/onboarding': 'Configuración Inicial',
 };
 

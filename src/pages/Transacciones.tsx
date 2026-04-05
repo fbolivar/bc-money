@@ -70,7 +70,46 @@ export function Transacciones() {
         setAccounts(data.accounts); setGoals(data.goals); setLoading(false);
     }, [user, getTransactionsData]);
 
-    useEffect(() => { if (user) refreshData(); }, [user]);
+    // Auto-generate recurring transactions for current month
+    const autoGenRecurring = useCallback(async (userId: string, txList: Transaction[]) => {
+        const currentMonth = format(new Date(), 'yyyy-MM');
+        const recurring = txList.filter(t => t.is_recurring);
+        const templateMap = new Map<string, Transaction>();
+        // Get unique recurring by description+type+amount (latest as template)
+        for (const t of recurring) {
+            const key = `${t.type}-${t.amount}-${t.category_id}-${t.description}`;
+            if (!templateMap.has(key) || t.date > (templateMap.get(key)!.date)) templateMap.set(key, t);
+        }
+        let created = 0;
+        for (const [, tmpl] of templateMap) {
+            // Check if already exists this month
+            const exists = txList.some(t => t.is_recurring && t.date.startsWith(currentMonth) &&
+                t.type === tmpl.type && Number(t.amount) === Number(tmpl.amount) && t.category_id === tmpl.category_id);
+            if (exists) continue;
+            // Create for current month
+            const day = tmpl.date.split('-')[2] || '01';
+            const newDate = `${currentMonth}-${day}`;
+            await supabase.from('transactions').insert({
+                user_id: userId, type: tmpl.type, amount: tmpl.amount,
+                category_id: tmpl.category_id, account_id: tmpl.account_id,
+                description: tmpl.description, date: newDate, is_essential: tmpl.is_essential,
+                is_recurring: true, payment_method: tmpl.payment_method,
+            });
+            created++;
+        }
+        if (created > 0) showToast(`${created} transacciones recurrentes generadas`, 'success');
+        return created;
+    }, [showToast]);
+
+    useEffect(() => {
+        if (!user) return;
+        refreshData().then(() => {
+            // Run auto-gen after initial load
+            getTransactionsData(user.id).then(data => {
+                autoGenRecurring(user.id, data.transactions).then(count => { if (count > 0) refreshData(); });
+            });
+        });
+    }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
