@@ -147,6 +147,40 @@ export type Account = {
   updated_at: string;
 };
 
+export type Debt = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'mortgage' | 'personal_loan' | 'credit_card' | 'informal' | 'car_loan' | 'student_loan' | 'other';
+  creditor: string | null;
+  original_amount: number;
+  remaining_amount: number;
+  interest_rate: number;
+  currency: string;
+  total_installments: number | null;
+  paid_installments: number;
+  installment_amount: number | null;
+  payment_day: number | null;
+  start_date: string;
+  end_date: string | null;
+  status: 'active' | 'paid_off' | 'defaulted';
+  color: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DebtPayment = {
+  id: string;
+  debt_id: string;
+  user_id: string;
+  amount: number;
+  payment_date: string;
+  installment_number: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;
