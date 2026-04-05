@@ -181,6 +181,26 @@ export type DebtPayment = {
   created_at: string;
 };
 
+export type Warranty = {
+  id: string;
+  user_id: string;
+  product_name: string;
+  brand: string | null;
+  model: string | null;
+  serial_number: string | null;
+  category: 'appliance' | 'electronics' | 'vehicle' | 'furniture' | 'clothing' | 'tools' | 'other';
+  purchase_date: string;
+  warranty_end_date: string;
+  purchase_price: number | null;
+  currency: string;
+  store: string | null;
+  color: string;
+  notes: string | null;
+  status: 'active' | 'expired' | 'claimed';
+  created_at: string;
+  updated_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;
