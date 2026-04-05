@@ -1,0 +1,101 @@
+.mascotas-container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+.pet-toast { position: fixed; top: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 500; font-size: 0.875rem; z-index: 2000; animation: petSlide 0.3s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.pet-toast.success { background: #059669; color: white; }
+.pet-toast.error { background: #DC2626; color: white; }
+@keyframes petSlide { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.pet-alerts { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+.pet-alert { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.875rem; }
+.pet-alert.urgent { background: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+
+.mascotas-header { margin-bottom: 1.5rem; }
+.mascotas-header h1 { font-size: 1.875rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+.mascotas-header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+.mascotas-summary { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.ms-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 0.75rem 1.25rem; display: flex; flex-direction: column; align-items: center; min-width: 100px; }
+.ms-card.total { background: linear-gradient(135deg, #F59E0B, #D97706); border: none; color: white; }
+.ms-num { font-size: 1.3rem; font-weight: 700; }
+.ms-label { font-size: 0.7rem; color: var(--text-secondary); }
+.ms-card.total .ms-label { color: rgba(255,255,255,0.85); }
+
+.mascotas-search { position: relative; margin-bottom: 1.5rem; }
+.mascotas-search .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
+.mascotas-search .search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 0.95rem; }
+.mascotas-search .search-input:focus { outline: none; border-color: #F59E0B; }
+
+.mascotas-empty { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+.mascotas-empty h3 { font-size: 1.1rem; color: var(--text-primary); margin: 1rem 0 0.5rem; }
+.mascotas-empty p { font-size: 0.9rem; margin-bottom: 1.5rem; }
+.empty-add-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: #F59E0B; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; }
+.empty-add-btn:hover { background: #D97706; }
+
+/* Pet List */
+.pets-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.pet-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; overflow: hidden; }
+.pet-card-main { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; cursor: pointer; transition: background 0.15s; }
+.pet-card-main:hover { background: var(--bg-hover, #fafafa); }
+.pet-icon { width: 52px; height: 52px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pet-info { flex: 1; min-width: 0; }
+.pet-info h3 { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.pet-meta { font-size: 0.8rem; color: var(--text-secondary); }
+.pet-cost { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); white-space: nowrap; }
+.pet-card-actions { display: flex; align-items: center; gap: 0.2rem; color: var(--text-secondary); }
+.pc-btn { background: none; border: none; padding: 0.35rem; cursor: pointer; color: var(--text-secondary); border-radius: 0.375rem; }
+.pc-btn:hover { color: #F59E0B; background: rgba(245,158,11,0.1); }
+.pc-btn.add { color: #10B981; }
+.pc-btn.add:hover { background: rgba(16,185,129,0.1); }
+.pc-btn.del:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+
+/* Events */
+.pet-events { border-top: 1px solid var(--border-color); padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg-hover, #fafafa); }
+.no-events { text-align: center; color: var(--text-secondary); font-size: 0.85rem; padding: 0.5rem; }
+.event-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border-radius: 0.5rem; border: 1px solid var(--border-color); }
+.ev-icon { color: var(--text-secondary); flex-shrink: 0; }
+.ev-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.ev-name { font-weight: 600; font-size: 0.85rem; color: var(--text-primary); }
+.ev-meta { font-size: 0.7rem; color: var(--text-secondary); }
+.ev-next { font-size: 0.7rem; color: #F59E0B; font-weight: 500; }
+.ev-cost { font-weight: 600; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; }
+.ev-actions { display: flex; gap: 0.15rem; }
+
+/* FAB */
+.mascotas-container .fab-add { position: fixed; bottom: 1.5rem; right: 1.5rem; height: 48px; padding: 0 1.25rem; border-radius: 2rem; background: #F59E0B; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 16px rgba(0,0,0,0.25); z-index: 100; }
+.mascotas-container .fab-add:hover { background: #D97706; transform: translateY(-2px); }
+
+/* Modal */
+.mascotas-container .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+.mascotas-container .modal-content { background: #fff; border-radius: 1rem; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.mascotas-container .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.25rem 0.75rem; position: sticky; top: 0; background: #fff; z-index: 1; }
+.mascotas-container .modal-header h2 { font-size: 1.2rem; font-weight: 600; color: #1a1a1a; }
+.mascotas-container .close-btn { background: none; border: none; color: #666; cursor: pointer; padding: 0.35rem; border-radius: 50%; }
+.mascotas-container .modal-form { padding: 0 1.25rem 1.25rem; }
+.form-row.two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.mascotas-container .form-group { margin-bottom: 0.75rem; }
+.mascotas-container .form-group label { display: block; margin-bottom: 0.3rem; color: #555; font-size: 0.8rem; font-weight: 600; }
+.mascotas-container .form-input, .mascotas-container .form-select { width: 100%; padding: 0.6rem 0.75rem; border-radius: 0.5rem; border: 1px solid #ddd; background: #fafafa; color: #1a1a1a; font-size: 0.95rem; }
+.mascotas-container .form-input:focus, .mascotas-container .form-select:focus { outline: none; border-color: #F59E0B; }
+.mascotas-container .color-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.mascotas-container .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; padding: 0; }
+.mascotas-container .color-swatch.selected { border-color: #1a1a1a; transform: scale(1.15); }
+.mascotas-container .modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.mascotas-container .btn-cancel, .mascotas-container .btn-submit, .mascotas-container .btn-delete { flex: 1; padding: 0.7rem; border-radius: 0.6rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.mascotas-container .btn-cancel { background: #f0f0f0; color: #333; }
+.mascotas-container .btn-submit { background: #F59E0B; color: white; }
+.mascotas-container .btn-submit:hover { background: #D97706; }
+.mascotas-container .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.mascotas-container .btn-delete { background: #EF4444; color: white; }
+.mascotas-container .delete-modal { text-align: center; max-width: 380px; padding: 2rem 1.5rem; }
+.mascotas-container .delete-modal h2 { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin: 1rem 0 0.5rem; }
+.mascotas-container .delete-modal p { color: #666; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+    .mascotas-container { padding: 1rem; }
+    .mascotas-summary { flex-direction: row; flex-wrap: wrap; }
+    .ms-card { flex: 1; min-width: 70px; }
+    .pet-card-main { flex-wrap: wrap; }
+    .pet-cost { width: 100%; text-align: right; }
+    .form-row.two-cols { grid-template-columns: 1fr; }
+    .pet-toast { left: 1rem; right: 1rem; }
+}

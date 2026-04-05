@@ -201,6 +201,36 @@ export type Warranty = {
   updated_at: string;
 };
 
+export type Pet = {
+  id: string;
+  user_id: string;
+  name: string;
+  species: 'dog' | 'cat' | 'bird' | 'fish' | 'rabbit' | 'hamster' | 'reptile' | 'other';
+  breed: string | null;
+  birth_date: string | null;
+  weight: number | null;
+  color: string;
+  photo_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PetEvent = {
+  id: string;
+  pet_id: string;
+  user_id: string;
+  type: 'vaccine' | 'vet_visit' | 'grooming' | 'medication' | 'surgery' | 'food' | 'accessory' | 'insurance' | 'other';
+  name: string;
+  date: string;
+  next_date: string | null;
+  cost: number | null;
+  currency: string;
+  veterinary: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;

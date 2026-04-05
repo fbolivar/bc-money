@@ -17,6 +17,7 @@ const Categorias = lazy(() => import('./pages/Categorias').then(module => ({ def
 const Cuentas = lazy(() => import('./pages/Cuentas').then(module => ({ default: module.Cuentas })));
 const Deudas = lazy(() => import('./pages/Deudas').then(module => ({ default: module.Deudas })));
 const Garantias = lazy(() => import('./pages/Garantias').then(module => ({ default: module.Garantias })));
+const Mascotas = lazy(() => import('./pages/Mascotas').then(module => ({ default: module.Mascotas })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
 
 function LoadingFallback() {
@@ -48,6 +49,7 @@ function App() {
               <Route path="/cuentas" element={<Cuentas />} />
               <Route path="/deudas" element={<Deudas />} />
               <Route path="/garantias" element={<Garantias />} />
+              <Route path="/mascotas" element={<Mascotas />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
               <Route path="/asesor" element={<Asesor />} />

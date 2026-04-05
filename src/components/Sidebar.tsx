@@ -14,6 +14,7 @@ import {
     Landmark,
     CircleDollarSign,
     ShieldCheck,
+    PawPrint,
     X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
     { path: '/cuentas', icon: Landmark, label: 'Cuentas' },
     { path: '/deudas', icon: CircleDollarSign, label: 'Deudas' },
     { path: '/garantias', icon: ShieldCheck, label: 'Garantías' },
+    { path: '/mascotas', icon: PawPrint, label: 'Mascotas' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
     { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
     { path: '/metas', icon: Target, label: 'Metas' },
