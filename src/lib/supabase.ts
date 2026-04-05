@@ -231,6 +231,33 @@ export type PetEvent = {
   created_at: string;
 };
 
+export type ShoppingList = {
+  id: string;
+  user_id: string;
+  name: string;
+  status: 'active' | 'completed' | 'archived';
+  budget_limit: number | null;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ShoppingItem = {
+  id: string;
+  list_id: string;
+  user_id: string;
+  name: string;
+  category: 'food' | 'cleaning' | 'personal' | 'pharmacy' | 'electronics' | 'clothing' | 'home' | 'pets' | 'other';
+  quantity: number;
+  unit: string;
+  estimated_price: number | null;
+  actual_price: number | null;
+  is_checked: boolean;
+  priority: 'low' | 'normal' | 'high';
+  notes: string | null;
+  created_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;

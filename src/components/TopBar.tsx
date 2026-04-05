@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/deudas': 'Deudas',
     '/garantias': 'Garantías',
     '/mascotas': 'Mascotas',
+    '/compras': 'Lista de Compras',
     '/onboarding': 'Configuración Inicial',
 };
 

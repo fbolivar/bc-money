@@ -15,6 +15,7 @@ import {
     CircleDollarSign,
     ShieldCheck,
     PawPrint,
+    ShoppingCart,
     X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
     { path: '/deudas', icon: CircleDollarSign, label: 'Deudas' },
     { path: '/garantias', icon: ShieldCheck, label: 'Garantías' },
     { path: '/mascotas', icon: PawPrint, label: 'Mascotas' },
+    { path: '/compras', icon: ShoppingCart, label: 'Compras' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
     { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
     { path: '/metas', icon: Target, label: 'Metas' },
