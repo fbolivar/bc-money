@@ -54,6 +54,7 @@ export type Profile = {
   onboarding_step: number;
   role: 'admin' | 'user';
   status: 'active' | 'inactive' | 'banned';
+  family_id: string | null;
   alert_warranty_days: number;
   alert_debt_days: number;
   alert_budget_pct: number;
@@ -288,6 +289,23 @@ export type HomeMaintenance = {
   provider: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string | null;
+  created_at: string;
+};
+
+export type Family = {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at: string;
+};
+
+export type FamilyMember = {
+  id: string;
+  family_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  invited_email: string | null;
+  status: 'pending' | 'active' | 'rejected';
   created_at: string;
 };
 

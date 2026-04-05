@@ -3,7 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
 import { createBackup, restoreBackup } from '../lib/backup';
-import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle, Moon, Sun } from 'lucide-react';
+import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle, Moon, Sun, BellRing } from 'lucide-react';
+import { requestNotificationPermission, canNotify } from '../lib/notifications';
 import './Configuracion.css';
 
 const CURRENCIES = [
@@ -394,6 +395,26 @@ export function Configuracion() {
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
                                         Recibe notificaciones de garantías, deudas y presupuestos en la campana
                                     </p>
+                                </div>
+
+                                <div className="profile-card" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <BellRing size={20} />
+                                        <div>
+                                            <span style={{ fontWeight: 600 }}>Notificaciones Push</span>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0 }}>
+                                                {canNotify() ? 'Activadas — recibirás alertas incluso fuera de la app' : 'Permite recibir alertas cuando no estés en la app'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {!canNotify() && (
+                                        <button type="button" className="btn btn-primary" onClick={async () => {
+                                            const ok = await requestNotificationPermission();
+                                            if (ok) setMessage({ type: 'success', text: 'Notificaciones push activadas' });
+                                            else setMessage({ type: 'error', text: 'Permiso denegado. Actívalo desde la configuración del navegador.' });
+                                        }}>Activar</button>
+                                    )}
+                                    {canNotify() && <span style={{ color: '#10B981', fontWeight: 600, fontSize: '0.85rem' }}>Activas</span>}
                                 </div>
 
                                 <div className="alerts-grid">

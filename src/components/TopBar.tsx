@@ -27,6 +27,8 @@ const PAGE_TITLES: Record<string, string> = {
     '/notas': 'Notas Financieras',
     '/importar': 'Importar Extractos',
     '/inversiones': 'Inversiones',
+    '/familia': 'Familia',
+    '/api': 'API REST',
     '/onboarding': 'Configuración Inicial',
 };
 

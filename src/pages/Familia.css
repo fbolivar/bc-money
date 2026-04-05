@@ -1,0 +1,46 @@
+.familia-page { display: flex; flex-direction: column; gap: 1.5rem; }
+.fam-toast { position: fixed; top: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 500; font-size: 0.875rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.fam-toast.success { background: #059669; color: white; }
+.fam-toast.error { background: #DC2626; color: white; }
+.fam-header h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 0.25rem; }
+.fam-header p { color: var(--color-text-secondary); font-size: 0.9rem; }
+
+.fam-empty { text-align: center; padding: 4rem 2rem; color: var(--color-text-secondary); }
+.fam-empty h3 { margin: 1rem 0 0.5rem; color: var(--color-text-primary); }
+.fam-empty p { margin-bottom: 1.5rem; }
+
+.fam-info-card { background: var(--gradient-primary); border-radius: var(--radius-xl); padding: 1.5rem; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.fam-info-header { display: flex; align-items: center; gap: 1rem; }
+.fam-info-header h2 { color: white; font-size: 1.25rem; margin-bottom: 0.15rem; }
+.fam-info-header span { font-size: 0.85rem; opacity: 0.8; }
+.fam-info-actions { display: flex; gap: 0.5rem; }
+
+.fam-pending { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; background: #FEF3C7; color: #92400E; border-radius: var(--radius-xl); font-size: 0.9rem; }
+.fam-pending span { flex: 1; }
+
+.fam-members { background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-md); }
+.fam-members h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; }
+.fam-member { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--color-border-light); }
+.fam-member:last-child { border-bottom: none; }
+.fam-member.pending { opacity: 0.6; }
+.fam-member-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+.fam-member-info { flex: 1; }
+.fam-member-name { display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-text-primary); }
+.fam-member-role { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--color-text-tertiary); }
+.fam-remove-btn { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; padding: 0.35rem; border-radius: 0.375rem; }
+.fam-remove-btn:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+
+.fam-shared-info { background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm); }
+.fam-shared-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.fam-shared-info p { font-size: 0.85rem; color: var(--color-text-secondary); }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+.fam-modal { background: var(--color-surface); border-radius: var(--radius-xl); width: 100%; max-width: 420px; box-shadow: var(--shadow-xl); }
+.fam-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.25rem 0.5rem; }
+.fam-modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+.fam-modal-header button { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; }
+.fam-modal-form { padding: 0.5rem 1.25rem 1.25rem; }
+.fam-modal-form .form-group { margin-bottom: 0.75rem; }
+.fam-modal-form label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.3rem; }
+
+@media (max-width: 768px) { .fam-info-card { flex-direction: column; text-align: center; } .fam-info-header { flex-direction: column; } }
