@@ -258,6 +258,35 @@ export type ShoppingItem = {
   created_at: string;
 };
 
+export type HomeItem = {
+  id: string;
+  user_id: string;
+  name: string;
+  area: 'kitchen' | 'bathroom' | 'bedroom' | 'living' | 'garage' | 'garden' | 'laundry' | 'exterior' | 'general';
+  brand: string | null;
+  model: string | null;
+  install_date: string | null;
+  color: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export type HomeMaintenance = {
+  id: string;
+  item_id: string | null;
+  user_id: string;
+  type: 'repair' | 'cleaning' | 'inspection' | 'replacement' | 'installation' | 'painting' | 'plumbing' | 'electrical' | 'other';
+  name: string;
+  date: string;
+  next_date: string | null;
+  cost: number | null;
+  currency: string;
+  provider: string | null;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  notes: string | null;
+  created_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;
