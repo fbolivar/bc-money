@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
-import { User, Shield, Lock, Save, DollarSign, Bell } from 'lucide-react';
+import { createBackup, restoreBackup } from '../lib/backup';
+import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle } from 'lucide-react';
 import './Configuracion.css';
 
 const CURRENCIES = [
@@ -12,7 +13,7 @@ const CURRENCIES = [
     { value: 'MXN', label: 'MXN - Peso mexicano' },
 ];
 
-type Tab = 'profile' | 'alerts' | 'users';
+type Tab = 'profile' | 'alerts' | 'backup' | 'users';
 
 export function Configuracion() {
     const { user, profile, isAdmin, refreshProfile } = useAuth();
@@ -29,6 +30,14 @@ export function Configuracion() {
         alert_debt_days: profile?.alert_debt_days ?? 7,
         alert_budget_pct: profile?.alert_budget_pct ?? 80,
     });
+    const [backupPassword, setBackupPassword] = useState('');
+    const [backupConfirmPassword, setBackupConfirmPassword] = useState('');
+    const [restorePassword, setRestorePassword] = useState('');
+    const [backupLoading, setBackupLoading] = useState(false);
+    const [restoreLoading, setRestoreLoading] = useState(false);
+    const [backupResult, setBackupResult] = useState<Record<string, number> | null>(null);
+    const [restoreResult, setRestoreResult] = useState<Record<string, number> | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleCurrencyChange = async (newCurrency: string) => {
@@ -61,6 +70,62 @@ export function Configuracion() {
         if (error) setMessage({ type: 'error', text: 'Error al guardar: ' + error.message });
         else { setMessage({ type: 'success', text: 'Configuración de alertas guardada' }); await refreshProfile(); }
         setSavingAlerts(false);
+    };
+
+    const handleBackup = async () => {
+        if (!user) return;
+        if (!backupPassword || backupPassword.length < 6) {
+            setMessage({ type: 'error', text: 'La contraseña debe tener al menos 6 caracteres' });
+            return;
+        }
+        if (backupPassword !== backupConfirmPassword) {
+            setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
+            return;
+        }
+        setBackupLoading(true);
+        setMessage(null);
+        setBackupResult(null);
+        try {
+            const { blob, filename, tables } = await createBackup(user.id, backupPassword);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+            setBackupResult(tables);
+            setMessage({ type: 'success', text: `Backup creado: ${filename}` });
+            setBackupPassword('');
+            setBackupConfirmPassword('');
+        } catch (err) {
+            setMessage({ type: 'error', text: `Error: ${err instanceof Error ? err.message : 'Error desconocido'}` });
+        } finally {
+            setBackupLoading(false);
+        }
+    };
+
+    const handleRestore = async (file: File) => {
+        if (!user) return;
+        if (!restorePassword) {
+            setMessage({ type: 'error', text: 'Ingresa la contraseña del backup' });
+            return;
+        }
+        if (!file.name.endsWith('.mafe')) {
+            setMessage({ type: 'error', text: 'Solo se aceptan archivos .mafe' });
+            return;
+        }
+        setRestoreLoading(true);
+        setMessage(null);
+        setRestoreResult(null);
+        try {
+            const { tables } = await restoreBackup(file, restorePassword, user.id);
+            setRestoreResult(tables);
+            setMessage({ type: 'success', text: 'Restauración completada exitosamente' });
+            setRestorePassword('');
+        } catch (err) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Error al restaurar' });
+        } finally {
+            setRestoreLoading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     const handlePasswordChange = async (e: React.FormEvent) => {
@@ -142,6 +207,13 @@ export function Configuracion() {
                     >
                         <Bell size={20} />
                         <span>Alertas</span>
+                    </button>
+                    <button
+                        className={`config-nav-item ${activeTab === 'backup' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('backup')}
+                    >
+                        <HardDrive size={20} />
+                        <span>Backup</span>
                     </button>
                     {isAdmin && (
                         <button
@@ -362,6 +434,121 @@ export function Configuracion() {
                                     {savingAlerts ? 'Guardando...' : <><Save size={18} /> Guardar Alertas</>}
                                 </button>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'backup' && (
+                        <div className="profile-section">
+                            <h3>Backup y Restauración</h3>
+
+                            {/* Backup */}
+                            <div className="profile-card" style={{ flexDirection: 'column', gap: '1.25rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <Download size={22} color="#10B981" />
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '1rem' }}>Crear Backup</h4>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            Exporta toda tu información en formato .mafe encriptado
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="alerts-grid">
+                                    <div className="form-group">
+                                        <label>Contraseña de cifrado</label>
+                                        <input type="password" className="form-input" value={backupPassword}
+                                            onChange={e => setBackupPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Confirmar contraseña</label>
+                                        <input type="password" className="form-input" value={backupConfirmPassword}
+                                            onChange={e => setBackupConfirmPassword(e.target.value)} placeholder="Repetir contraseña" />
+                                    </div>
+                                </div>
+
+                                <button type="button" className="btn btn-primary" onClick={handleBackup}
+                                    disabled={backupLoading || !backupPassword}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-start' }}>
+                                    {backupLoading ? 'Generando backup...' : <><Download size={18} /> Descargar Backup .mafe</>}
+                                </button>
+
+                                {backupResult && (
+                                    <div style={{ background: '#ECFDF5', padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', color: '#059669', fontWeight: 600 }}>
+                                            <CheckCircle size={16} /> Backup exitoso
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            {Object.entries(backupResult).filter(([, v]) => v > 0).map(([k, v]) => (
+                                                <span key={k} style={{ background: '#D1FAE5', padding: '0.2rem 0.5rem', borderRadius: '0.25rem' }}>
+                                                    {k}: {v}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Restore */}
+                            <div className="profile-card" style={{ flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <Upload size={22} color="#3B82F6" />
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '1rem' }}>Restaurar Backup</h4>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            Importa un archivo .mafe para restaurar tu información
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: '#FEF3C7', padding: '0.75rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8rem', color: '#92400E' }}>
+                                    <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <span>La restauración reemplazará todos los datos actuales. Esta acción no se puede deshacer.</span>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Contraseña del backup</label>
+                                    <input type="password" className="form-input" value={restorePassword}
+                                        onChange={e => setRestorePassword(e.target.value)} placeholder="Contraseña usada al crear el backup" />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Archivo .mafe</label>
+                                    <input type="file" ref={fileInputRef} accept=".mafe"
+                                        className="form-input" style={{ padding: '0.5rem' }}
+                                        onChange={e => { if (e.target.files?.[0]) handleRestore(e.target.files[0]); }} disabled={restoreLoading || !restorePassword} />
+                                </div>
+
+                                {restoreLoading && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3B82F6', fontSize: '0.9rem' }}>
+                                        <div className="loading-spinner" style={{ width: 20, height: 20 }}></div> Restaurando datos...
+                                    </div>
+                                )}
+
+                                {restoreResult && (
+                                    <div style={{ background: '#EFF6FF', padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', color: '#2563EB', fontWeight: 600 }}>
+                                            <CheckCircle size={16} /> Restauración exitosa
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            {Object.entries(restoreResult).filter(([, v]) => v > 0).map(([k, v]) => (
+                                                <span key={k} style={{ background: '#DBEAFE', padding: '0.2rem 0.5rem', borderRadius: '0.25rem' }}>
+                                                    {k}: {v}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {message && activeTab === 'backup' && (
+                                <div className={`message ${message.type}`} style={{
+                                    padding: '0.75rem', borderRadius: 'var(--radius)', marginTop: '1rem',
+                                    backgroundColor: message.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                                    color: message.type === 'error' ? 'var(--expense)' : 'var(--income)', fontSize: '0.9rem'
+                                }}>
+                                    {message.text}
+                                </div>
+                            )}
                         </div>
                     )}
 
