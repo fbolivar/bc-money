@@ -42,13 +42,15 @@ interface DebtFormData {
     name: string; type: Debt['type']; creditor: string; original_amount: string;
     remaining_amount: string; interest_rate: string; currency: string;
     total_installments: string; installment_amount: string; payment_day: string;
+    paid_installments: string;
     start_date: string; end_date: string; color: string; notes: string;
 }
 
 const DEFAULT_FORM: DebtFormData = {
     name: '', type: 'personal_loan', creditor: '', original_amount: '', remaining_amount: '',
     interest_rate: '0', currency: 'COP', total_installments: '', installment_amount: '',
-    payment_day: '', start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '', color: '#EF4444', notes: '',
+    payment_day: '', paid_installments: '',
+    start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '', color: '#EF4444', notes: '',
 };
 
 export function Deudas() {
@@ -119,6 +121,7 @@ export function Deudas() {
                 remaining_amount: remaining, interest_rate: parseFloat(formData.interest_rate) || 0,
                 currency: formData.currency, total_installments: formData.total_installments ? parseInt(formData.total_installments) : null,
                 installment_amount: formData.installment_amount ? parseFloat(formData.installment_amount) : null,
+                paid_installments: formData.paid_installments ? parseInt(formData.paid_installments) : 0,
                 payment_day: formData.payment_day ? parseInt(formData.payment_day) : null,
                 start_date: formData.start_date, end_date: formData.end_date || null,
                 color: formData.color, notes: formData.notes || null,
@@ -190,8 +193,8 @@ export function Deudas() {
             interest_rate: debt.interest_rate.toString(), currency: debt.currency,
             total_installments: debt.total_installments?.toString() || '',
             installment_amount: debt.installment_amount?.toString() || '',
-            payment_day: debt.payment_day?.toString() || '', start_date: debt.start_date,
-            end_date: debt.end_date || '', color: debt.color, notes: debt.notes || '',
+            payment_day: debt.payment_day?.toString() || '', paid_installments: debt.paid_installments?.toString() || '0',
+            start_date: debt.start_date, end_date: debt.end_date || '', color: debt.color, notes: debt.notes || '',
         });
         setIsModalOpen(true);
     }
@@ -412,21 +415,67 @@ export function Deudas() {
                                     <input type="number" className="form-input" value={formData.original_amount} onChange={e => setFormData({ ...formData, original_amount: e.target.value })} required min="0" step="0.01" />
                                 </div>
                                 <div className="form-group">
-                                    <label>Tasa de Interés (%)</label>
-                                    <input type="number" className="form-input" value={formData.interest_rate} onChange={e => setFormData({ ...formData, interest_rate: e.target.value })} min="0" step="0.01" />
+                                    <label>Saldo Actual (lo que debes hoy)</label>
+                                    <input type="number" className="form-input" value={formData.remaining_amount} onChange={e => setFormData({ ...formData, remaining_amount: e.target.value })} min="0" step="0.01" placeholder="Dejar vacío = monto original" />
                                 </div>
                             </div>
 
                             <div className="form-row two-cols">
                                 <div className="form-group">
+                                    <label>Tasa de Interés Anual (%)</label>
+                                    <input type="number" className="form-input" value={formData.interest_rate} onChange={e => setFormData({ ...formData, interest_rate: e.target.value })} min="0" step="0.01" />
+                                </div>
+                                <div className="form-group">
                                     <label>Total de Cuotas</label>
                                     <input type="number" className="form-input" value={formData.total_installments} onChange={e => setFormData({ ...formData, total_installments: e.target.value })} placeholder="Ej: 36" min="1" />
                                 </div>
+                            </div>
+
+                            <div className="form-row two-cols">
                                 <div className="form-group">
                                     <label>Valor de Cuota</label>
-                                    <input type="number" className="form-input" value={formData.installment_amount} onChange={e => setFormData({ ...formData, installment_amount: e.target.value })} min="0" step="0.01" />
+                                    <input type="number" className="form-input" value={formData.installment_amount} onChange={e => setFormData({ ...formData, installment_amount: e.target.value })} min="0" step="0.01" placeholder="Se calcula automáticamente" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Cuotas Pagadas</label>
+                                    <input type="number" className="form-input" value={formData.paid_installments || ''} onChange={e => setFormData({ ...formData, paid_installments: e.target.value })} min="0" placeholder="0" />
                                 </div>
                             </div>
+
+                            {/* Auto-calculation summary */}
+                            {(formData.original_amount || formData.remaining_amount) && (
+                                <div className="debt-calc-summary">
+                                    <h4>Resumen de la Deuda</h4>
+                                    {(() => {
+                                        const principal = parseFloat(formData.remaining_amount) || parseFloat(formData.original_amount) || 0;
+                                        const rate = (parseFloat(formData.interest_rate) || 0) / 100 / 12;
+                                        const totalCuotas = parseInt(formData.total_installments) || 0;
+                                        const paidCuotas = parseInt(formData.paid_installments || '0');
+                                        const remaining = Math.max(totalCuotas - paidCuotas, 0);
+
+                                        // Calculate installment if not provided
+                                        let cuota = parseFloat(formData.installment_amount) || 0;
+                                        if (!cuota && principal > 0 && remaining > 0) {
+                                            cuota = rate > 0
+                                                ? principal * rate / (1 - Math.pow(1 + rate, -remaining))
+                                                : principal / remaining;
+                                        }
+
+                                        const totalPorPagar = cuota * remaining;
+                                        const totalIntereses = totalPorPagar - principal;
+
+                                        return (
+                                            <div className="debt-calc-grid">
+                                                <div className="dc-item"><span className="dc-label">Saldo pendiente</span><span className="dc-value">{fmt(principal, formData.currency || 'COP')}</span></div>
+                                                {cuota > 0 && <div className="dc-item"><span className="dc-label">Cuota mensual</span><span className="dc-value">{fmt(cuota, formData.currency || 'COP')}</span></div>}
+                                                {remaining > 0 && <div className="dc-item"><span className="dc-label">Cuotas restantes</span><span className="dc-value">{remaining} de {totalCuotas || '—'}</span></div>}
+                                                {totalPorPagar > 0 && <div className="dc-item highlight"><span className="dc-label">Total por pagar</span><span className="dc-value">{fmt(totalPorPagar, formData.currency || 'COP')}</span></div>}
+                                                {totalIntereses > 0 && <div className="dc-item interest"><span className="dc-label">Total intereses</span><span className="dc-value">{fmt(totalIntereses, formData.currency || 'COP')}</span></div>}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
 
                             <div className="form-row two-cols">
                                 <div className="form-group">

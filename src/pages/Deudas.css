@@ -142,3 +142,18 @@
 .amort-table td:first-child { text-align: center; font-weight: 600; }
 .amort-table tr.paid { background: #F0FDF4; }
 .amort-table tr.paid td { color: #16A34A; }
+
+/* Debt calculation summary */
+.debt-calc-summary { background: var(--color-surface-hover, #F8FAFC); border-radius: var(--radius-lg, 0.75rem); padding: 1rem; margin-top: 0.25rem; }
+.debt-calc-summary h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-text-primary, #0F172A); }
+.debt-calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.dc-item { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.5rem 0.6rem; border-radius: 0.5rem; background: var(--color-surface, #fff); }
+.dc-item.highlight { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; grid-column: span 2; }
+.dc-item.highlight .dc-label { color: rgba(255,255,255,0.8); }
+.dc-item.highlight .dc-value { font-size: 1.1rem; }
+.dc-item.interest { background: #FEF3C7; }
+.dc-item.interest .dc-label { color: #92400E; }
+.dc-item.interest .dc-value { color: #D97706; }
+.dc-label { font-size: 0.7rem; color: var(--color-text-tertiary, #94A3B8); }
+.dc-value { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary, #0F172A); }
+@media (max-width: 480px) { .debt-calc-grid { grid-template-columns: 1fr; } .dc-item.highlight { grid-column: span 1; } }
