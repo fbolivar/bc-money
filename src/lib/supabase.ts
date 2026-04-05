@@ -296,6 +296,7 @@ export type Family = {
   id: string;
   name: string;
   owner_id: string;
+  shared_modules: string[];
   created_at: string;
 };
 
