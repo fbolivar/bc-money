@@ -132,3 +132,79 @@
         display: none;
     }
 }
+/* Alerts */
+.alerts-wrapper {
+    position: relative;
+}
+.topbar-btn.has-alerts {
+    color: var(--color-danger);
+}
+.alerts-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-height: 400px;
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    border: 1px solid var(--color-border);
+    z-index: 100;
+    overflow: hidden;
+    animation: alertsDrop 0.2s ease-out;
+}
+@keyframes alertsDrop {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.alerts-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+}
+.alerts-close {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+}
+.alerts-close:hover { background: var(--color-surface-hover); }
+.alerts-dropdown-body {
+    overflow-y: auto;
+    max-height: 340px;
+}
+.alerts-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.15s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--color-surface-hover); }
+.alert-item.urgent { background: #FEF2F2; }
+.alert-item-icon { flex-shrink: 0; margin-top: 2px; }
+.alert-item.alert-warranty .alert-item-icon { color: #3B82F6; }
+.alert-item.alert-debt .alert-item-icon { color: #EF4444; }
+.alert-item.alert-budget .alert-item-icon { color: #F59E0B; }
+.alert-item-content { display: flex; flex-direction: column; gap: 0.1rem; }
+.alert-item-title { font-weight: 600; font-size: 0.85rem; color: var(--color-text-primary); }
+.alert-item-msg { font-size: 0.75rem; color: var(--color-text-secondary); }
+
+@media (max-width: 768px) {
+    .alerts-dropdown { width: calc(100vw - 2rem); right: -0.5rem; }
+}

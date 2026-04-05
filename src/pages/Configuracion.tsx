@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
-import { User, Shield, Lock, Save, DollarSign } from 'lucide-react';
+import { User, Shield, Lock, Save, DollarSign, Bell } from 'lucide-react';
 import './Configuracion.css';
 
 const CURRENCIES = [
@@ -12,7 +12,7 @@ const CURRENCIES = [
     { value: 'MXN', label: 'MXN - Peso mexicano' },
 ];
 
-type Tab = 'profile' | 'users';
+type Tab = 'profile' | 'alerts' | 'users';
 
 export function Configuracion() {
     const { user, profile, isAdmin, refreshProfile } = useAuth();
@@ -22,6 +22,13 @@ export function Configuracion() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [updatingPassword, setUpdatingPassword] = useState(false);
     const [savingCurrency, setSavingCurrency] = useState(false);
+    const [savingAlerts, setSavingAlerts] = useState(false);
+    const [alertSettings, setAlertSettings] = useState({
+        alerts_enabled: profile?.alerts_enabled ?? true,
+        alert_warranty_days: profile?.alert_warranty_days ?? 30,
+        alert_debt_days: profile?.alert_debt_days ?? 7,
+        alert_budget_pct: profile?.alert_budget_pct ?? 80,
+    });
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleCurrencyChange = async (newCurrency: string) => {
@@ -39,6 +46,21 @@ export function Configuracion() {
             await refreshProfile();
         }
         setSavingCurrency(false);
+    };
+
+    const handleSaveAlerts = async () => {
+        if (!user) return;
+        setSavingAlerts(true);
+        setMessage(null);
+        const { error } = await supabase.from('profiles').update({
+            alerts_enabled: alertSettings.alerts_enabled,
+            alert_warranty_days: alertSettings.alert_warranty_days,
+            alert_debt_days: alertSettings.alert_debt_days,
+            alert_budget_pct: alertSettings.alert_budget_pct,
+        }).eq('id', user.id);
+        if (error) setMessage({ type: 'error', text: 'Error al guardar: ' + error.message });
+        else { setMessage({ type: 'success', text: 'Configuración de alertas guardada' }); await refreshProfile(); }
+        setSavingAlerts(false);
     };
 
     const handlePasswordChange = async (e: React.FormEvent) => {
@@ -113,6 +135,13 @@ export function Configuracion() {
                     >
                         <User size={20} />
                         <span>Mi Perfil</span>
+                    </button>
+                    <button
+                        className={`config-nav-item ${activeTab === 'alerts' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('alerts')}
+                    >
+                        <Bell size={20} />
+                        <span>Alertas</span>
                     </button>
                     {isAdmin && (
                         <button
@@ -246,6 +275,92 @@ export function Configuracion() {
                                         </div>
                                     </form>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'alerts' && (
+                        <div className="profile-section">
+                            <h3>Configuración de Alertas</h3>
+                            <div className="profile-card" style={{ flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={alertSettings.alerts_enabled}
+                                            onChange={e => setAlertSettings({ ...alertSettings, alerts_enabled: e.target.checked })}
+                                            style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                                        />
+                                        <span style={{ fontWeight: 600, fontSize: '1rem' }}>Activar sistema de alertas</span>
+                                    </label>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                        Recibe notificaciones de garantías, deudas y presupuestos en la campana
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                    <div className="form-group">
+                                        <label>Días aviso garantías</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            value={alertSettings.alert_warranty_days}
+                                            onChange={e => setAlertSettings({ ...alertSettings, alert_warranty_days: parseInt(e.target.value) || 0 })}
+                                            min="1" max="365"
+                                        />
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            Avisar {alertSettings.alert_warranty_days} días antes del vencimiento
+                                        </span>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Días aviso deudas</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            value={alertSettings.alert_debt_days}
+                                            onChange={e => setAlertSettings({ ...alertSettings, alert_debt_days: parseInt(e.target.value) || 0 })}
+                                            min="1" max="30"
+                                        />
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            Avisar {alertSettings.alert_debt_days} días antes de la cuota
+                                        </span>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>% presupuesto para aviso</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            value={alertSettings.alert_budget_pct}
+                                            onChange={e => setAlertSettings({ ...alertSettings, alert_budget_pct: parseInt(e.target.value) || 0 })}
+                                            min="1" max="100"
+                                        />
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            Avisar al superar el {alertSettings.alert_budget_pct}% del presupuesto
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {message && (
+                                    <div className={`message ${message.type}`} style={{
+                                        padding: '0.75rem', borderRadius: 'var(--radius)',
+                                        backgroundColor: message.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                                        color: message.type === 'error' ? 'var(--expense)' : 'var(--income)', fontSize: '0.9rem'
+                                    }}>
+                                        {message.text}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSaveAlerts}
+                                    disabled={savingAlerts}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-start' }}
+                                >
+                                    {savingAlerts ? 'Guardando...' : <><Save size={18} /> Guardar Alertas</>}
+                                </button>
                             </div>
                         </div>
                     )}

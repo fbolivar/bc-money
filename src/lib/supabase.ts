@@ -54,6 +54,10 @@ export type Profile = {
   onboarding_step: number;
   role: 'admin' | 'user';
   status: 'active' | 'inactive' | 'banned';
+  alert_warranty_days: number;
+  alert_debt_days: number;
+  alert_budget_pct: number;
+  alerts_enabled: boolean;
   created_at: string;
   updated_at: string;
 };
