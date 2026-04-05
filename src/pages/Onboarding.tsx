@@ -164,7 +164,7 @@ export function Onboarding() {
             await refreshProfile();
             navigate('/');
         } catch (error) {
-            console.error('Error completing onboarding:', error);
+            // console.error('Error completing onboarding:', error);
         } finally {
             setLoading(false);
         }

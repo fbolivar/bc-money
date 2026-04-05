@@ -68,7 +68,7 @@ export function Categorias() {
             if (error) throw error;
             setCategories(data || []);
         } catch (error) {
-            console.error('Error fetching categories:', error);
+            // console.error('Error fetching categories:', error);
         } finally {
             setLoading(false);
         }
@@ -133,7 +133,7 @@ export function Categorias() {
             resetForm();
             fetchCategories();
         } catch (error) {
-            console.error('Error saving category:', error);
+            // console.error('Error saving category:', error);
             showToast('Error al guardar la categoría', 'error');
         } finally {
             setSaving(false);
@@ -152,7 +152,7 @@ export function Categorias() {
             showToast('Categoría eliminada', 'success');
             fetchCategories();
         } catch (error) {
-            console.error('Error deleting category:', error);
+            // console.error('Error deleting category:', error);
             showToast('Error al eliminar', 'error');
             setDeleteConfirm(null);
         }

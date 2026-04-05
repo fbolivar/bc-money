@@ -218,7 +218,18 @@ export function Presupuestos() {
 
             {/* Actions */}
             <div className="toolbar">
-                <h3>Presupuestos por Categoría</h3>
+                <h3>Presupuestos por Categoría ({budgetData.length})</h3>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-secondary" onClick={async () => {
+                    if (!user || budgets.length > 0) return;
+                    const expCats = categories.filter(c => c.type === 'expense' || c.type === 'both').slice(0, 6);
+                    for (const cat of expCats) {
+                        await supabase.from('budgets').insert({ user_id: user.id, category_id: cat.id, amount: 500000, period: 'monthly' });
+                    }
+                    fetchData();
+                }} disabled={budgets.length > 0} title={budgets.length > 0 ? 'Ya tienes presupuestos' : 'Crear presupuestos para las primeras 6 categorías de gasto'}>
+                    Plantilla Rápida
+                </button>
                 <button className="btn btn-primary" onClick={() => {
                     setEditingBudget(null);
                     setFormData({ category_id: '', amount: '', period: 'monthly' });
@@ -227,6 +238,7 @@ export function Presupuestos() {
                     <Plus size={18} />
                     Nuevo Presupuesto
                 </button>
+                </div>
             </div>
 
             {/* Budget Cards */}

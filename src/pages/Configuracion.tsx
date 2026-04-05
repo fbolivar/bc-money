@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
 import { createBackup, restoreBackup } from '../lib/backup';
-import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle } from 'lucide-react';
+import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle, Moon, Sun } from 'lucide-react';
 import './Configuracion.css';
 
 const CURRENCIES = [
@@ -38,7 +38,15 @@ export function Configuracion() {
     const [backupResult, setBackupResult] = useState<Record<string, number> | null>(null);
     const [restoreResult, setRestoreResult] = useState<Record<string, number> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [darkMode, setDarkMode] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const toggleDarkMode = () => {
+        const next = !darkMode;
+        setDarkMode(next);
+        document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+        localStorage.setItem('bc-money-theme', next ? 'dark' : 'light');
+    };
 
     const handleCurrencyChange = async (newCurrency: string) => {
         if (!user || newCurrency === profile?.currency) return;
@@ -181,7 +189,7 @@ export function Configuracion() {
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
             setMessage({ type: 'error', text: 'Ocurrió un error inesperado: ' + errorMessage });
-            console.error(error);
+            // console.error(error);
         } finally {
             setUpdatingPassword(false);
         }
@@ -357,6 +365,20 @@ export function Configuracion() {
 
                     {activeTab === 'alerts' && (
                         <div className="profile-section">
+                            <h3>Apariencia</h3>
+                            <div className="profile-card" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    {darkMode ? <Moon size={20} /> : <Sun size={20} />}
+                                    <div>
+                                        <span style={{ fontWeight: 600 }}>Modo Oscuro</span>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0 }}>Cambia la apariencia de la aplicación</p>
+                                    </div>
+                                </div>
+                                <button type="button" onClick={toggleDarkMode} className={`theme-toggle ${darkMode ? 'dark' : ''}`} title="Cambiar tema">
+                                    <span className="theme-toggle-knob"></span>
+                                </button>
+                            </div>
+
                             <h3>Configuración de Alertas</h3>
                             <div className="profile-card" style={{ flexDirection: 'column', gap: '1.5rem' }}>
                                 <div className="form-group">

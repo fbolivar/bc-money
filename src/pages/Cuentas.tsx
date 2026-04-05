@@ -88,7 +88,7 @@ export function Cuentas() {
             if (error) throw error;
             setAccounts(data || []);
         } catch (error) {
-            console.error('Error fetching accounts:', error);
+            // console.error('Error fetching accounts:', error);
         } finally {
             setLoading(false);
         }
@@ -133,7 +133,7 @@ export function Cuentas() {
             resetForm();
             fetchAccounts();
         } catch (error) {
-            console.error('Error saving account:', error);
+            // console.error('Error saving account:', error);
             showToast('Error al guardar la cuenta', 'error');
         } finally {
             setSaving(false);
@@ -148,7 +148,7 @@ export function Cuentas() {
             showToast('Cuenta eliminada', 'success');
             fetchAccounts();
         } catch (error) {
-            console.error('Error deleting account:', error);
+            // console.error('Error deleting account:', error);
             showToast('Error al eliminar', 'error');
             setDeleteConfirm(null);
         }

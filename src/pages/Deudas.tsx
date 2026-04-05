@@ -164,6 +164,24 @@ export function Deudas() {
         } catch { showToast('Error al eliminar', 'error'); setDeleteConfirm(null); }
     }
 
+    const [showAmortization, setShowAmortization] = useState<string | null>(null);
+
+    function getAmortization(debt: Debt) {
+        const total = debt.total_installments || 12;
+        const rate = (debt.interest_rate || 0) / 100 / 12;
+        const principal = Number(debt.original_amount);
+        const cuota = debt.installment_amount || (rate > 0 ? principal * rate / (1 - Math.pow(1 + rate, -total)) : principal / total);
+        const rows = [];
+        let balance = principal;
+        for (let i = 1; i <= total; i++) {
+            const interest = balance * rate;
+            const capital = cuota - interest;
+            balance = Math.max(balance - capital, 0);
+            rows.push({ n: i, cuota, interest, capital, balance, paid: i <= debt.paid_installments });
+        }
+        return rows;
+    }
+
     function openEdit(debt: Debt) {
         setEditingDebt(debt);
         setFormData({
@@ -304,9 +322,36 @@ export function Deudas() {
                                     </div>
                                 )}
 
-                                <button type="button" className="pay-btn" onClick={() => { setSelectedDebt(debt); setPayAmount(debt.installment_amount?.toString() || ''); setIsPayModal(true); }}>
-                                    Registrar Pago
-                                </button>
+                                <div className="debt-card-btns">
+                                    <button type="button" className="pay-btn" onClick={() => { setSelectedDebt(debt); setPayAmount(debt.installment_amount?.toString() || ''); setIsPayModal(true); }}>
+                                        Registrar Pago
+                                    </button>
+                                    {debt.total_installments && (
+                                        <button type="button" className="amort-btn" onClick={() => setShowAmortization(showAmortization === debt.id ? null : debt.id)}>
+                                            {showAmortization === debt.id ? 'Ocultar' : 'Amortización'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {showAmortization === debt.id && debt.total_installments && (
+                                    <div className="amort-table-wrap">
+                                        <table className="amort-table">
+                                            <thead><tr><th>#</th><th>Cuota</th><th>Interés</th><th>Capital</th><th>Saldo</th><th></th></tr></thead>
+                                            <tbody>
+                                                {getAmortization(debt).map(r => (
+                                                    <tr key={r.n} className={r.paid ? 'paid' : ''}>
+                                                        <td>{r.n}</td>
+                                                        <td>{fmt(r.cuota, debt.currency)}</td>
+                                                        <td>{fmt(r.interest, debt.currency)}</td>
+                                                        <td>{fmt(r.capital, debt.currency)}</td>
+                                                        <td>{fmt(r.balance, debt.currency)}</td>
+                                                        <td>{r.paid ? <CheckCircle size={12} color="#10B981" /> : ''}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

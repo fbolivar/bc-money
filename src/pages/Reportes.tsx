@@ -8,7 +8,7 @@ import {
     ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Category, Account, Budget, Debt, Warranty } from '../lib/supabase';
+import type { Transaction, Category, Account, Budget, Debt, Warranty, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,6 +25,7 @@ export function Reportes() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [debts, setDebts] = useState<Debt[]>([]);
     const [warranties, setWarranties] = useState<Warranty[]>([]);
+    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [accountFilter, setAccountFilter] = useState<string>('all');
@@ -37,7 +38,7 @@ export function Reportes() {
         const fetchData = async () => {
             const monthStart = startOfMonth(selectedMonth);
             const monthEnd = endOfMonth(selectedMonth);
-            const [txRes, catRes, accRes, budRes, debtRes, warRes] = await Promise.all([
+            const [txRes, catRes, accRes, budRes, debtRes, warRes, subRes] = await Promise.all([
                 supabase.from('transactions').select('*').eq('user_id', user.id)
                     .gte('date', format(monthStart, 'yyyy-MM-dd')).lte('date', format(monthEnd, 'yyyy-MM-dd')),
                 supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
@@ -45,6 +46,7 @@ export function Reportes() {
                 supabase.from('budgets').select('*').eq('user_id', user.id),
                 supabase.from('debts').select('*').eq('user_id', user.id),
                 supabase.from('warranties').select('*').eq('user_id', user.id),
+                supabase.from('subscriptions').select('*').eq('user_id', user.id).eq('status', 'active'),
             ]);
             setTransactions(txRes.data || []);
             setCategories(catRes.data || []);
@@ -52,6 +54,7 @@ export function Reportes() {
             setBudgets(budRes.data || []);
             setDebts(debtRes.data || []);
             setWarranties(warRes.data || []);
+            setSubscriptions(subRes.data || []);
             setLoading(false);
         };
         fetchData();
@@ -420,6 +423,48 @@ export function Reportes() {
                                         </tr>
                                     );
                                 })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Net Worth Summary */}
+            <div className="report-section">
+                <h3>Patrimonio Neto</h3>
+                <div className="transactions-table-container">
+                    <table className="table">
+                        <thead><tr><th>Concepto</th><th className="text-right">Valor</th></tr></thead>
+                        <tbody>
+                            {accounts.map(a => <tr key={a.id}><td>{a.name}</td><td className="text-right positive">{currency} {Number(a.balance).toLocaleString()}</td></tr>)}
+                            <tr className="total-row"><td><strong>Total Activos</strong></td><td className="text-right positive"><strong>{currency} {accounts.reduce((s, a) => s + Math.max(Number(a.balance), 0), 0).toLocaleString()}</strong></td></tr>
+                            {activeDebts.map(d => <tr key={d.id}><td>{d.name}</td><td className="text-right negative">-{currency} {Number(d.remaining_amount).toLocaleString()}</td></tr>)}
+                            <tr className="total-row"><td><strong>Total Pasivos</strong></td><td className="text-right negative"><strong>-{currency} {totalDebtRemaining.toLocaleString()}</strong></td></tr>
+                            <tr className="total-row highlight"><td><strong>Patrimonio Neto</strong></td><td className={`text-right ${accounts.reduce((s, a) => s + Number(a.balance), 0) - totalDebtRemaining >= 0 ? 'positive' : 'negative'}`}><strong>{currency} {(accounts.reduce((s, a) => s + Number(a.balance), 0) - totalDebtRemaining).toLocaleString()}</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Subscriptions Summary */}
+            {subscriptions.length > 0 && (
+                <div className="report-section">
+                    <h3>Suscripciones Activas — Costo mensual: {currency} {subscriptions.reduce((s, sub) => {
+                        const multiplier = sub.billing_cycle === 'yearly' ? 1/12 : sub.billing_cycle === 'quarterly' ? 1/3 : sub.billing_cycle === 'weekly' ? 4.33 : 1;
+                        return s + Number(sub.amount) * multiplier;
+                    }, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+                    <div className="transactions-table-container">
+                        <table className="table">
+                            <thead><tr><th>Nombre</th><th>Ciclo</th><th className="text-right">Monto</th><th>Próximo Cobro</th></tr></thead>
+                            <tbody>
+                                {subscriptions.map(s => (
+                                    <tr key={s.id}>
+                                        <td>{s.name}</td>
+                                        <td>{s.billing_cycle === 'monthly' ? 'Mensual' : s.billing_cycle === 'yearly' ? 'Anual' : s.billing_cycle === 'quarterly' ? 'Trimestral' : 'Semanal'}</td>
+                                        <td className="text-right">{currency} {Number(s.amount).toLocaleString()}</td>
+                                        <td>{format(new Date(s.next_billing_date), 'd MMM yyyy', { locale: es })}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>

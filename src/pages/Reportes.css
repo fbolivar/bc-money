@@ -246,3 +246,8 @@
 @media (max-width: 768px) {
     .export-buttons { flex-wrap: wrap; }
 }
+
+.total-row td { border-top: 2px solid var(--color-border); font-weight: 700; }
+.total-row.highlight td { background: var(--color-primary-light); }
+.positive { color: #10B981; }
+.negative { color: #EF4444; }

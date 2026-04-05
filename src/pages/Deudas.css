@@ -129,3 +129,16 @@
     .form-row.two-cols { grid-template-columns: 1fr; }
     .deu-toast { left: 1rem; right: 1rem; }
 }
+
+/* Amortization */
+.debt-card-btns { display: flex; gap: 0.5rem; margin-top: auto; }
+.amort-btn { flex: 1; padding: 0.5rem; border: 1px solid var(--border-color, #E2E8F0); border-radius: 0.6rem; background: none; color: var(--text-secondary, #64748B); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.amort-btn:hover { background: var(--bg-hover, #F8FAFC); }
+.amort-table-wrap { margin-top: 0.75rem; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color, #E2E8F0); border-radius: 0.5rem; }
+.amort-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+.amort-table th { background: var(--bg-hover, #F8FAFC); padding: 0.4rem 0.5rem; text-align: right; font-weight: 600; color: var(--text-secondary, #64748B); position: sticky; top: 0; }
+.amort-table th:first-child { text-align: center; }
+.amort-table td { padding: 0.35rem 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color, #E2E8F0); }
+.amort-table td:first-child { text-align: center; font-weight: 600; }
+.amort-table tr.paid { background: #F0FDF4; }
+.amort-table tr.paid td { color: #16A34A; }

@@ -93,6 +93,27 @@
   --topbar-height: 68px;
 }
 
+/* ========== Dark Mode ========== */
+[data-theme="dark"] {
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-surface-hover: #334155;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-tertiary: #64748B;
+  --color-primary-light: rgba(79, 70, 229, 0.2);
+  --color-secondary-light: rgba(14, 165, 233, 0.2);
+  --color-danger-light: rgba(239, 68, 68, 0.2);
+  --color-warning-light: rgba(245, 158, 11, 0.2);
+  --color-success-light: rgba(16, 185, 129, 0.2);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 24px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 24px 48px rgb(0 0 0 / 0.5);
+}
+
 /* ========== Global Reset ========== */
 *,
 *::before,
@@ -674,4 +695,39 @@ a:hover {
   to {
     transform: rotate(360deg);
   }
+}
+/* Dark mode overrides for hardcoded backgrounds */
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .modal-header {
+  background-color: var(--color-surface) !important;
+}
+
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select {
+  background-color: var(--color-surface-hover) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .form-group label {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .btn-cancel {
+  background-color: var(--color-surface-hover) !important;
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .delete-modal,
+[data-theme="dark"] .delete-modal h2 {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .delete-modal p {
+  color: var(--color-text-secondary) !important;
 }
