@@ -20,6 +20,9 @@ const PAGE_TITLES: Record<string, string> = {
     '/mascotas': 'Mascotas',
     '/compras': 'Lista de Compras',
     '/hogar': 'Mantenimiento del Hogar',
+    '/suscripciones': 'Suscripciones',
+    '/patrimonio': 'Patrimonio Neto',
+    '/calendario': 'Calendario Financiero',
     '/onboarding': 'Configuración Inicial',
 };
 

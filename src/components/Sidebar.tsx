@@ -16,6 +16,9 @@ import {
     PawPrint,
     ShoppingCart,
     Hammer,
+    Repeat,
+    TrendingUp,
+    CalendarDays,
     X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -30,9 +33,12 @@ const NAV_ITEMS = [
     { path: '/mascotas', icon: PawPrint, label: 'Mascotas' },
     { path: '/compras', icon: ShoppingCart, label: 'Compras' },
     { path: '/hogar', icon: Hammer, label: 'Hogar' },
+    { path: '/suscripciones', icon: Repeat, label: 'Suscripciones' },
     { path: '/categorias', icon: Tags, label: 'Categorías' },
     { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
     { path: '/metas', icon: Target, label: 'Metas' },
+    { path: '/patrimonio', icon: TrendingUp, label: 'Patrimonio' },
+    { path: '/calendario', icon: CalendarDays, label: 'Calendario' },
     { path: '/reportes', icon: FileText, label: 'Reportes' },
 ] as const;
 

@@ -291,6 +291,35 @@ export type HomeMaintenance = {
   created_at: string;
 };
 
+export type NetWorthSnapshot = {
+  id: string;
+  user_id: string;
+  date: string;
+  total_assets: number;
+  total_liabilities: number;
+  net_worth: number;
+  breakdown: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type Subscription = {
+  id: string;
+  user_id: string;
+  name: string;
+  category: 'entertainment' | 'software' | 'music' | 'gaming' | 'fitness' | 'education' | 'news' | 'cloud' | 'insurance' | 'membership' | 'other';
+  amount: number;
+  currency: string;
+  billing_cycle: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  next_billing_date: string;
+  auto_renew: boolean;
+  color: string;
+  provider: string | null;
+  status: 'active' | 'paused' | 'cancelled';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AIConversation = {
   id: string;
   user_id: string;
