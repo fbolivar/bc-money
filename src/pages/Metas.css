@@ -110,9 +110,47 @@
     color: var(--color-text-tertiary);
 }
 
+.goal-footer-info {
+    margin-bottom: 0.75rem;
+}
+
 .goal-date {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.savings-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem;
+    background: var(--color-bg-secondary, #f3f4f6);
+    border-radius: 0.5rem;
+}
+
+.savings-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.2rem;
+}
+
+.savings-amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.savings-label {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+.savings-days {
+    width: 100%;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    margin-top: 0.15rem;
 }
 
 .goal-completed-text {

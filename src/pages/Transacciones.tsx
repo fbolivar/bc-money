@@ -9,7 +9,7 @@ import {
     X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Transaction, Category, Account } from '../lib/supabase';
+import type { Transaction, Category, Account, Goal } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,6 +25,7 @@ export function Transacciones() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [goals, setGoals] = useState<Goal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(isValidInitialType);
     const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -42,6 +43,7 @@ export function Transacciones() {
         amount: '',
         category_id: '',
         account_id: '',
+        goal_id: '',
         description: '',
         date: format(new Date(), 'yyyy-MM-dd'),
         is_essential: false,
@@ -52,12 +54,13 @@ export function Transacciones() {
     const currency = profile?.currency || 'USD';
 
     const getTransactionsData = useCallback(async (userId: string) => {
-        const [txRes, catRes, accRes] = await Promise.all([
+        const [txRes, catRes, accRes, goalRes] = await Promise.all([
             supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(1000),
             supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
             supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
+            supabase.from('goals').select('*').eq('user_id', userId).eq('status', 'active').order('name'),
         ]);
-        return { transactions: txRes.data || [], categories: catRes.data || [], accounts: accRes.data || [] };
+        return { transactions: txRes.data || [], categories: catRes.data || [], accounts: accRes.data || [], goals: goalRes.data || [] };
     }, []);
 
     const refreshData = useCallback(async () => {
@@ -66,6 +69,7 @@ export function Transacciones() {
         setTransactions(data.transactions);
         setCategories(data.categories);
         setAccounts(data.accounts);
+        setGoals(data.goals);
         setLoading(false);
     }, [user, getTransactionsData]);
 
@@ -75,6 +79,7 @@ export function Transacciones() {
             setTransactions(data.transactions);
             setCategories(data.categories);
             setAccounts(data.accounts);
+            setGoals(data.goals);
             setLoading(false);
         });
     }, [user]);
@@ -88,6 +93,7 @@ export function Transacciones() {
             amount: parseFloat(formData.amount),
             category_id: formData.category_id || null,
             account_id: formData.account_id || null,
+            goal_id: formData.goal_id || null,
             description: formData.description || null,
             date: formData.date,
             is_essential: formData.is_essential,
@@ -119,6 +125,7 @@ export function Transacciones() {
             amount: tx.amount.toString(),
             category_id: tx.category_id || '',
             account_id: tx.account_id || '',
+            goal_id: tx.goal_id || '',
             description: tx.description || '',
             date: tx.date,
             is_essential: tx.is_essential,
@@ -144,6 +151,7 @@ export function Transacciones() {
             amount: '',
             category_id: '',
             account_id: '',
+            goal_id: '',
             description: '',
             date: format(new Date(), 'yyyy-MM-dd'),
             is_essential: false,
@@ -439,6 +447,23 @@ export function Transacciones() {
                                     ))}
                                 </select>
                             </div>
+
+                            {formData.type === 'income' && goals.length > 0 && (
+                                <div className="form-group">
+                                    <label className="form-label">Vincular a meta de ahorro</label>
+                                    <select
+                                        className="form-select"
+                                        value={formData.goal_id}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, goal_id: e.target.value }))}
+                                        title="Meta de ahorro"
+                                    >
+                                        <option value="">Sin meta</option>
+                                        {goals.map(g => (
+                                            <option key={g.id} value={g.id}>{g.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label className="form-label">Descripción</label>

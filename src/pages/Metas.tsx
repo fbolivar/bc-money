@@ -266,24 +266,36 @@ export function Metas() {
                                         <span className="percentage">{progress.toFixed(0)}% completado</span>
                                     </div>
 
-                                    {goal.target_date && (
-                                        <div className="goal-footer-info">
-                                            <p className="goal-date">
-                                                Meta: {format(new Date(goal.target_date), 'd MMM yyyy', { locale: es })}
-                                            </p>
-                                            {(() => {
-                                                const plan = calculateSavingsPlan(Number(goal.target_amount), Number(goal.current_amount), goal.target_date);
-                                                if (plan && plan.type === 'plan') {
-                                                    return (
-                                                        <p className="goal-plan text-xs text-primary font-medium">
-                                                            Ahorra {currency} {plan.monthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mes
-                                                        </p>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
-                                        </div>
-                                    )}
+                                    {goal.target_date && (() => {
+                                        const plan = calculateSavingsPlan(Number(goal.target_amount), Number(goal.current_amount), goal.target_date);
+                                        return (
+                                            <div className="goal-footer-info">
+                                                <p className="goal-date">
+                                                    Meta: {format(new Date(goal.target_date), 'd MMM yyyy', { locale: es })}
+                                                </p>
+                                                {plan && plan.type === 'plan' && (
+                                                    <div className="savings-breakdown">
+                                                        <div className="savings-item">
+                                                            <span className="savings-amount">{currency} {(plan.remaining / plan.days).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                            <span className="savings-label">/ día</span>
+                                                        </div>
+                                                        <div className="savings-item">
+                                                            <span className="savings-amount">{currency} {plan.weekly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                            <span className="savings-label">/ semana</span>
+                                                        </div>
+                                                        <div className="savings-item">
+                                                            <span className="savings-amount">{currency} {plan.monthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                            <span className="savings-label">/ mes</span>
+                                                        </div>
+                                                        <p className="savings-days">{plan.days} días restantes</p>
+                                                    </div>
+                                                )}
+                                                {plan && plan.type === 'error' && (
+                                                    <p className="goal-plan text-xs" style={{ color: '#EF4444' }}>{plan.message}</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     <button
                                         className="btn btn-primary w-full"
