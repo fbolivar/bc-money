@@ -3,6 +3,7 @@ import { createContext, useEffect, useState, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { logger } from '../lib/logger';
 import type { Profile } from '../lib/supabase';
 
 interface AuthContextType {
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .single();
 
             if (error) {
-                console.error('Error fetching profile:', error.message);
+                logger.error('Error fetching profile:', error.message);
                 setAuthError('Error al cargar el perfil');
                 return;
             }
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setAuthError(null);
             }
         } catch (err: unknown) {
-            console.error('Exception fetching profile:', err);
+            logger.error('Exception fetching profile:', err);
             setAuthError('Error inesperado al cargar el perfil');
         }
     }, []);
@@ -140,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await supabase.auth.signOut();
         } catch (err) {
-            console.error('Error during signOut:', err);
+            logger.error('Error during signOut:', err);
         } finally {
             setUser(null);
             setSession(null);

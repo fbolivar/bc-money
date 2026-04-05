@@ -30,10 +30,7 @@ export function Login() {
         const { error } = await signIn(email, password);
 
         if (error) {
-            setError(error.message === 'Invalid login credentials'
-                ? 'Credenciales incorrectas. Verifica tu email y contraseña.'
-                : error.message
-            );
+            setError('Credenciales incorrectas. Verifica tu email y contraseña.');
         }
 
         setIsLoading(false);

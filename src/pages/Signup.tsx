@@ -34,8 +34,12 @@ export function Signup() {
             return;
         }
 
-        if (password.length < 6) {
-            setError('La contraseña debe tener al menos 6 caracteres');
+        if (password.length < 8) {
+            setError('La contraseña debe tener al menos 8 caracteres');
+            return;
+        }
+        if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+            setError('La contraseña debe incluir mayúsculas, minúsculas y números');
             return;
         }
 
@@ -44,7 +48,7 @@ export function Signup() {
         const { error } = await signUp(email, password, fullName);
 
         if (error) {
-            setError(error.message);
+            setError('No se pudo crear la cuenta. Verifica los datos e intenta de nuevo.');
         } else {
             navigate('/onboarding');
         }

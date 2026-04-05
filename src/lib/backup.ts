@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from './logger';
 
 // .mafe format: encrypted JSON with AES-GCM using a derived key from user password
 // Structure: [4-byte magic "MAFE"] [12-byte IV] [encrypted payload]
@@ -41,7 +42,7 @@ export async function createBackup(userId: string, password: string): Promise<{ 
                 // These are fetched via parent tables, skip direct fetch
                 continue;
             }
-            console.warn(`Skipping ${table}:`, error.message);
+            logger.warn(`Skipping ${table}:`, error.message);
             continue;
         }
         data[table] = rows || [];
@@ -155,7 +156,7 @@ export async function restoreBackup(file: File, password: string, userId: string
         for (let i = 0; i < mapped.length; i += 100) {
             const batch = mapped.slice(i, i + 100);
             const { error } = await supabase.from(table).upsert(batch, { onConflict: 'id' });
-            if (error) console.warn(`Error restoring ${table}:`, error.message);
+            if (error) logger.warn(`Error restoring ${table}:`, error.message);
         }
         counts[table] = rows.length;
     }
@@ -170,7 +171,7 @@ export async function restoreBackup(file: File, password: string, userId: string
         for (let i = 0; i < mapped.length; i += 100) {
             const batch = mapped.slice(i, i + 100);
             const { error } = await supabase.from(table).upsert(batch, { onConflict: 'id' });
-            if (error) console.warn(`Error restoring ${table}:`, error.message);
+            if (error) logger.warn(`Error restoring ${table}:`, error.message);
         }
         counts[table] = rows.length;
     }

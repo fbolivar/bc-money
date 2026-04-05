@@ -141,8 +141,12 @@ export function Configuracion() {
             setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
             return;
         }
-        if (newPassword.length < 6) {
-            setMessage({ type: 'error', text: 'La contraseña debe tener al menos 6 caracteres' });
+        if (newPassword.length < 8) {
+            setMessage({ type: 'error', text: 'La contraseña debe tener al menos 8 caracteres' });
+            return;
+        }
+        if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+            setMessage({ type: 'error', text: 'Debe incluir mayúsculas, minúsculas y números' });
             return;
         }
 
