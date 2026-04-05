@@ -38,3 +38,5 @@ tr.deselected { opacity: 0.4; }
 .imp-instructions li::before { content: '•'; position: absolute; left: 0; color: var(--color-primary); }
 
 @media (max-width: 768px) { .imp-formats { flex-direction: column; } .imp-summary { flex-direction: column; gap: 0.25rem; } }
+
+.imp-format.highlight { border-left: 4px solid var(--color-primary); background: var(--color-primary-light); }

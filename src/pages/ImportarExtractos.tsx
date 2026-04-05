@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, FileText, CheckCircle, AlertTriangle, X, Download } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertTriangle, X, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 import './ImportarExtractos.css';
 
 interface ParsedTransaction {
@@ -13,53 +14,122 @@ interface ParsedTransaction {
     selected: boolean;
 }
 
-function parseCSV(text: string): ParsedTransaction[] {
-    const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
-    const headers = lines[0].toLowerCase().split(/[,;\t]/).map(h => h.trim().replace(/"/g, ''));
-    const dateIdx = headers.findIndex(h => h.includes('fecha') || h === 'date' || h.includes('f.'));
-    const descIdx = headers.findIndex(h => h.includes('desc') || h.includes('concepto') || h.includes('referencia') || h.includes('detalle'));
-    const amountIdx = headers.findIndex(h => h.includes('monto') || h.includes('valor') || h.includes('amount') || h.includes('importe'));
-    const debitIdx = headers.findIndex(h => h.includes('débito') || h.includes('debito') || h.includes('cargo'));
-    const creditIdx = headers.findIndex(h => h.includes('crédito') || h.includes('credito') || h.includes('abono'));
+// Smart column detection - works with Colombian banks
+function findColumnIndex(headers: string[], keywords: string[]): number {
+    return headers.findIndex(h => keywords.some(k => h.includes(k)));
+}
+
+function parseDate(raw: unknown): string {
+    if (!raw) return format(new Date(), 'yyyy-MM-dd');
+    const s = String(raw).trim();
+
+    // Excel serial date number
+    if (/^\d{5}$/.test(s)) {
+        const d = new Date((parseInt(s) - 25569) * 86400000);
+        return format(d, 'yyyy-MM-dd');
+    }
+
+    // Try common formats: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD/MM/YY
+    const parts = s.split(/[/\-.\s]/);
+    if (parts.length >= 3) {
+        const [a, b, c] = parts;
+        if (a.length === 4) return `${a}-${b.padStart(2, '0')}-${c.padStart(2, '0')}`;
+        if (c.length === 4) return `${c}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
+        if (c.length === 2) return `20${c}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
+    }
+    return format(new Date(), 'yyyy-MM-dd');
+}
+
+function parseAmount(raw: unknown): number {
+    if (!raw) return 0;
+    const s = String(raw).replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    return Math.abs(parseFloat(s) || 0);
+}
+
+function parseRows(headers: string[], rows: unknown[][]): ParsedTransaction[] {
+    const h = headers.map(x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+
+    // Detect columns - support multiple naming conventions from Colombian banks
+    const dateIdx = findColumnIndex(h, ['fecha', 'date', 'f.', 'dia']);
+    const descIdx = findColumnIndex(h, ['desc', 'concepto', 'detalle', 'referencia', 'nombre', 'observ', 'movimiento']);
+    const amountIdx = findColumnIndex(h, ['monto', 'valor', 'amount', 'importe', 'total']);
+    const debitIdx = findColumnIndex(h, ['debito', 'cargo', 'retiro', 'salida', 'egreso']);
+    const creditIdx = findColumnIndex(h, ['credito', 'abono', 'deposito', 'entrada', 'ingreso']);
 
     const results: ParsedTransaction[] = [];
-    const separator = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
 
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(separator).map(c => c.trim().replace(/"/g, ''));
+    for (const row of rows) {
         let amount = 0;
         let type: 'income' | 'expense' = 'expense';
 
         if (debitIdx >= 0 && creditIdx >= 0) {
-            const debit = parseFloat(cols[debitIdx]?.replace(/[^0-9.-]/g, '') || '0');
-            const credit = parseFloat(cols[creditIdx]?.replace(/[^0-9.-]/g, '') || '0');
+            const debit = parseAmount(row[debitIdx]);
+            const credit = parseAmount(row[creditIdx]);
             if (credit > 0) { amount = credit; type = 'income'; }
             else if (debit > 0) { amount = debit; type = 'expense'; }
             else continue;
         } else if (amountIdx >= 0) {
-            const raw = parseFloat(cols[amountIdx]?.replace(/[^0-9.-]/g, '') || '0');
-            if (raw === 0) continue;
-            amount = Math.abs(raw);
-            type = raw > 0 ? 'income' : 'expense';
-        } else continue;
-
-        let date = format(new Date(), 'yyyy-MM-dd');
-        if (dateIdx >= 0 && cols[dateIdx]) {
-            const d = cols[dateIdx];
-            // Try common date formats
-            const parts = d.split(/[/\-.]/);
-            if (parts.length === 3) {
-                if (parts[0].length === 4) date = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                else if (parts[2].length === 4) date = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                else date = `20${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            const rawVal = row[amountIdx];
+            const numVal = parseAmount(rawVal);
+            if (numVal === 0) continue;
+            amount = numVal;
+            // Check if negative in original
+            const rawStr = String(rawVal || '');
+            type = rawStr.startsWith('-') || rawStr.includes('(') ? 'expense' : 'income';
+        } else {
+            // Try to find any numeric column
+            for (let i = 0; i < row.length; i++) {
+                if (i === dateIdx || i === descIdx) continue;
+                const v = parseAmount(row[i]);
+                if (v > 0) { amount = v; type = 'expense'; break; }
             }
+            if (amount === 0) continue;
         }
 
-        const description = descIdx >= 0 ? cols[descIdx] || '' : '';
+        const date = parseDate(dateIdx >= 0 ? row[dateIdx] : null);
+        const description = descIdx >= 0 ? String(row[descIdx] || '').trim() : '';
+
         results.push({ date, description, amount, type, selected: true });
     }
     return results;
+}
+
+function parseCSV(text: string): ParsedTransaction[] {
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+
+    // Detect separator
+    const sep = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
+    const headers = lines[0].split(sep).map(h => h.trim().replace(/"/g, ''));
+    const rows = lines.slice(1).map(l => l.split(sep).map(c => c.trim().replace(/"/g, '')));
+    return parseRows(headers, rows);
+}
+
+function parseXLSX(buffer: ArrayBuffer): ParsedTransaction[] {
+    const workbook = XLSX.read(buffer, { type: 'array' });
+
+    // Try each sheet until we find transactions
+    for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const data: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        if (data.length < 2) continue;
+
+        // Find the header row (first row with multiple text cells)
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(data.length, 15); i++) {
+            const row = data[i] as string[];
+            const textCells = row.filter(c => c && typeof c === 'string' && c.length > 1).length;
+            if (textCells >= 3) { headerRowIdx = i; break; }
+        }
+
+        const headers = (data[headerRowIdx] as string[]).map(c => String(c || ''));
+        const rows = data.slice(headerRowIdx + 1).filter(r => (r as unknown[]).some(c => c !== null && c !== undefined && c !== ''));
+
+        const results = parseRows(headers, rows as unknown[][]);
+        if (results.length > 0) return results;
+    }
+    return [];
 }
 
 function parseOFX(text: string): ParsedTransaction[] {
@@ -92,17 +162,28 @@ export function ImportarExtractos() {
         setError('');
         setResult(null);
         setFileName(file.name);
-        const text = await file.text();
 
         let txs: ParsedTransaction[] = [];
-        if (file.name.endsWith('.ofx') || file.name.endsWith('.qfx')) {
-            txs = parseOFX(text);
-        } else {
-            txs = parseCSV(text);
+        const ext = file.name.toLowerCase().split('.').pop() || '';
+
+        try {
+            if (ext === 'xlsx' || ext === 'xls') {
+                const buffer = await file.arrayBuffer();
+                txs = parseXLSX(buffer);
+            } else if (ext === 'ofx' || ext === 'qfx') {
+                const text = await file.text();
+                txs = parseOFX(text);
+            } else {
+                const text = await file.text();
+                txs = parseCSV(text);
+            }
+        } catch (e) {
+            setError(`Error al leer el archivo: ${e}`);
+            return;
         }
 
         if (txs.length === 0) {
-            setError('No se encontraron transacciones en el archivo. Verifica el formato.');
+            setError('No se encontraron transacciones. Verifica que el archivo tenga columnas como Fecha, Concepto/Descripción, Monto/Valor o Débito/Crédito.');
             return;
         }
         setParsed(txs);
@@ -122,17 +203,14 @@ export function ImportarExtractos() {
         const selected = parsed.filter(t => t.selected);
         if (selected.length === 0) return;
         setImporting(true);
-
         let count = 0;
         for (const tx of selected) {
             const { error } = await supabase.from('transactions').insert({
                 user_id: user.id, type: tx.type, amount: tx.amount,
-                description: tx.description || null, date: tx.date,
-                payment_method: 'other',
+                description: tx.description || null, date: tx.date, payment_method: 'other',
             });
             if (!error) count++;
         }
-
         setResult({ count });
         setImporting(false);
         setParsed([]);
@@ -143,22 +221,23 @@ export function ImportarExtractos() {
     return (
         <div className="importar-page animate-fadeIn">
             <div className="imp-header">
-                <div><h1>Importar Extractos</h1><p>Importa transacciones desde extractos bancarios</p></div>
+                <div><h1>Importar Extractos</h1><p>Importa transacciones desde extractos bancarios colombianos</p></div>
             </div>
 
             {/* Supported Formats */}
             <div className="imp-formats">
+                <div className="imp-format highlight"><FileSpreadsheet size={20} /><div><strong>Excel (XLSX / XLS)</strong><span>Bancolombia, Nequi, Banco de Bogotá, AV Villas, Davivienda, BBVA</span></div></div>
                 <div className="imp-format"><FileText size={20} /><div><strong>CSV</strong><span>Archivos separados por comas, punto y coma o tabulador</span></div></div>
-                <div className="imp-format"><FileText size={20} /><div><strong>OFX / QFX</strong><span>Open Financial Exchange (estándar bancario)</span></div></div>
+                <div className="imp-format"><FileText size={20} /><div><strong>OFX / QFX</strong><span>Open Financial Exchange (estándar internacional)</span></div></div>
             </div>
 
             {/* Upload Area */}
             {parsed.length === 0 && !result && (
                 <div className="imp-upload" onClick={() => fileRef.current?.click()}>
                     <Upload size={48} />
-                    <h3>Arrastra o selecciona un archivo</h3>
-                    <p>Formatos: .csv, .ofx, .qfx</p>
-                    <input ref={fileRef} type="file" accept=".csv,.ofx,.qfx" style={{ display: 'none' }}
+                    <h3>Arrastra o selecciona tu extracto bancario</h3>
+                    <p>Formatos: .xlsx, .xls, .csv, .ofx, .qfx</p>
+                    <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ofx,.qfx" style={{ display: 'none' }}
                         onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
                 </div>
             )}
@@ -171,10 +250,8 @@ export function ImportarExtractos() {
                     <div className="imp-preview-header">
                         <h3>{fileName} — {parsed.length} transacciones encontradas</h3>
                         <div className="imp-preview-actions">
-                            <button type="button" className="btn btn-ghost" onClick={toggleAll}>Seleccionar/Deseleccionar todas</button>
-                            <button type="button" className="btn btn-ghost" onClick={() => { setParsed([]); setFileName(''); }}>
-                                <X size={16} /> Cancelar
-                            </button>
+                            <button type="button" className="btn btn-ghost" onClick={toggleAll}>Seleccionar/Deseleccionar</button>
+                            <button type="button" className="btn btn-ghost" onClick={() => { setParsed([]); setFileName(''); }}><X size={16} /> Cancelar</button>
                         </div>
                     </div>
 
@@ -221,12 +298,21 @@ export function ImportarExtractos() {
 
             {/* Instructions */}
             <div className="imp-instructions">
-                <h3>Instrucciones</h3>
+                <h3>Bancos Compatibles</h3>
                 <ul>
-                    <li><strong>CSV:</strong> El archivo debe tener columnas como Fecha, Descripción/Concepto, Monto/Valor. Detecta automáticamente separadores (coma, punto y coma, tabulador).</li>
-                    <li><strong>OFX/QFX:</strong> Descarga el extracto desde tu banco en formato OFX. Compatible con Bancolombia, Davivienda, BBVA y la mayoría de bancos.</li>
-                    <li><strong>Débito/Crédito:</strong> Si tu CSV tiene columnas separadas de Débito y Crédito, se detectan automáticamente.</li>
-                    <li>Revisa las transacciones antes de importar y deselecciona las que no quieras incluir.</li>
+                    <li><strong>Bancolombia:</strong> Sucursal Virtual → Extractos → Descargar Excel</li>
+                    <li><strong>Nequi:</strong> Historial → Exportar → Excel</li>
+                    <li><strong>Banco de Bogotá:</strong> Consultas → Movimientos → Exportar Excel</li>
+                    <li><strong>AV Villas:</strong> Cuentas → Movimientos → Descargar</li>
+                    <li><strong>Davivienda:</strong> Consultas → Extracto → Descargar XLS</li>
+                    <li><strong>BBVA:</strong> Posición Global → Movimientos → Exportar</li>
+                </ul>
+                <h3 style={{ marginTop: '1rem' }}>Detección Automática</h3>
+                <ul>
+                    <li>Detecta columnas: Fecha, Descripción/Concepto/Detalle, Monto/Valor, Débito/Crédito</li>
+                    <li>Salta filas de encabezado y resumen automáticamente</li>
+                    <li>Soporta formatos de fecha DD/MM/YYYY y YYYY-MM-DD</li>
+                    <li>Soporta montos con puntos de miles y comas decimales (formato colombiano)</li>
                 </ul>
             </div>
         </div>
