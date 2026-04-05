@@ -68,6 +68,7 @@ export default defineConfig({
           'vendor-charts': ['recharts'],
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-utils': ['date-fns', 'lucide-react'],
+          'vendor-export': ['xlsx', 'jspdf', 'jspdf-autotable'],
         },
       },
     },

@@ -207,3 +207,42 @@
     outline: none;
     border-color: var(--color-primary);
 }
+
+/* Export buttons */
+.export-buttons {
+    display: flex;
+    gap: 0.4rem;
+}
+.btn.btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn.btn-export.csv { background: #10B981; color: white; }
+.btn.btn-export.csv:hover { background: #059669; }
+.btn.btn-export.xls { background: #217346; color: white; }
+.btn.btn-export.xls:hover { background: #1a5c38; }
+.btn.btn-export.pdf { background: #DC2626; color: white; }
+.btn.btn-export.pdf:hover { background: #B91C1C; }
+
+/* Report sections */
+.report-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+.report-section h3 {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 768px) {
+    .export-buttons { flex-wrap: wrap; }
+}
