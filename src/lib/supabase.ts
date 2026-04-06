@@ -169,6 +169,8 @@ export type Debt = {
   start_date: string;
   end_date: string | null;
   status: 'active' | 'paid_off' | 'defaulted';
+  is_current: boolean;
+  months_behind: number;
   color: string;
   notes: string | null;
   created_at: string;

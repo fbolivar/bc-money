@@ -157,3 +157,23 @@
 .dc-label { font-size: 0.7rem; color: var(--color-text-tertiary, #94A3B8); }
 .dc-value { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary, #0F172A); }
 @media (max-width: 480px) { .debt-calc-grid { grid-template-columns: 1fr; } .dc-item.highlight { grid-column: span 1; } }
+
+/* Current/Mora toggle */
+.debt-current-toggle { background: var(--color-surface-hover, #F8FAFC); border-radius: var(--radius-lg, 0.75rem); padding: 1rem; }
+.debt-toggle-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+.debt-toggle-label input[type="checkbox"] { display: none; }
+.debt-toggle-indicator { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.debt-toggle-indicator.on { background: #ECFDF5; color: #10B981; }
+.debt-toggle-indicator.off { background: #FEF2F2; color: #EF4444; }
+.debt-toggle-label strong { display: block; font-size: 0.9rem; color: var(--color-text-primary, #0F172A); }
+.debt-toggle-label span { display: block; font-size: 0.75rem; color: var(--color-text-tertiary, #94A3B8); }
+
+.debt-behind-field { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--color-border, #E2E8F0); }
+.debt-behind-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary, #64748B); margin-bottom: 0.3rem; }
+.debt-behind-total { display: block; margin-top: 0.4rem; font-size: 0.85rem; font-weight: 700; color: #EF4444; }
+
+.dc-item.mora { background: #FEE2E2; }
+.dc-item.mora .dc-label { color: #991B1B; }
+.dc-item.mora .dc-value { color: #DC2626; }
+
+.debt-mora-badge { display: inline-block; font-size: 0.6rem; font-weight: 700; background: #EF4444; color: white; padding: 0.1rem 0.4rem; border-radius: 0.25rem; margin-left: 0.5rem; vertical-align: middle; text-transform: uppercase; }

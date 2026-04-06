@@ -43,13 +43,14 @@ interface DebtFormData {
     remaining_amount: string; interest_rate: string; currency: string;
     total_installments: string; installment_amount: string; payment_day: string;
     paid_installments: string;
+    is_current: boolean; months_behind: string;
     start_date: string; end_date: string; color: string; notes: string;
 }
 
 const DEFAULT_FORM: DebtFormData = {
     name: '', type: 'personal_loan', creditor: '', original_amount: '', remaining_amount: '',
     interest_rate: '0', currency: 'COP', total_installments: '', installment_amount: '',
-    payment_day: '', paid_installments: '',
+    payment_day: '', paid_installments: '', is_current: true, months_behind: '0',
     start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '', color: '#EF4444', notes: '',
 };
 
@@ -122,6 +123,8 @@ export function Deudas() {
                 currency: formData.currency, total_installments: formData.total_installments ? parseInt(formData.total_installments) : null,
                 installment_amount: formData.installment_amount ? parseFloat(formData.installment_amount) : null,
                 paid_installments: formData.paid_installments ? parseInt(formData.paid_installments) : 0,
+                is_current: formData.is_current,
+                months_behind: formData.is_current ? 0 : (parseInt(formData.months_behind) || 0),
                 payment_day: formData.payment_day ? parseInt(formData.payment_day) : null,
                 start_date: formData.start_date, end_date: formData.end_date || null,
                 color: formData.color, notes: formData.notes || null,
@@ -194,6 +197,7 @@ export function Deudas() {
             total_installments: debt.total_installments?.toString() || '',
             installment_amount: debt.installment_amount?.toString() || '',
             payment_day: debt.payment_day?.toString() || '', paid_installments: debt.paid_installments?.toString() || '0',
+            is_current: debt.is_current ?? true, months_behind: (debt.months_behind || 0).toString(),
             start_date: debt.start_date, end_date: debt.end_date || '', color: debt.color, notes: debt.notes || '',
         });
         setIsModalOpen(true);
@@ -286,7 +290,10 @@ export function Deudas() {
                                     </div>
                                 </div>
 
-                                <h3 className="debt-name">{debt.name}</h3>
+                                <h3 className="debt-name">
+                                    {debt.name}
+                                    {!debt.is_current && <span className="debt-mora-badge">En mora</span>}
+                                </h3>
                                 <span className="debt-type">{TYPE_LABELS[debt.type]}</span>
                                 {debt.creditor && <span className="debt-creditor">{debt.creditor}</span>}
 
@@ -442,6 +449,35 @@ export function Deudas() {
                                 </div>
                             </div>
 
+                            {/* Current status */}
+                            <div className="debt-current-toggle">
+                                <label className="debt-toggle-label">
+                                    <input type="checkbox" checked={formData.is_current}
+                                        onChange={e => setFormData({ ...formData, is_current: e.target.checked, months_behind: e.target.checked ? '0' : formData.months_behind })} />
+                                    <span className={`debt-toggle-indicator ${formData.is_current ? 'on' : 'off'}`}>
+                                        {formData.is_current ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                                    </span>
+                                    <div>
+                                        <strong>{formData.is_current ? 'Al día' : 'En mora'}</strong>
+                                        <span>{formData.is_current ? 'Los pagos están al corriente' : 'Tiene cuotas atrasadas'}</span>
+                                    </div>
+                                </label>
+
+                                {!formData.is_current && (
+                                    <div className="debt-behind-field">
+                                        <label>Meses en mora</label>
+                                        <input type="number" className="form-input" value={formData.months_behind}
+                                            onChange={e => setFormData({ ...formData, months_behind: e.target.value })}
+                                            min="1" max="120" placeholder="1" />
+                                        {parseInt(formData.months_behind) > 0 && formData.installment_amount && (
+                                            <span className="debt-behind-total">
+                                                Deuda atrasada: {fmt(parseInt(formData.months_behind) * parseFloat(formData.installment_amount), formData.currency || 'COP')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Auto-calculation summary */}
                             {(formData.original_amount || formData.remaining_amount) && (
                                 <div className="debt-calc-summary">
@@ -461,16 +497,20 @@ export function Deudas() {
                                                 : principal / remaining;
                                         }
 
-                                        const totalPorPagar = cuota * remaining;
-                                        const totalIntereses = totalPorPagar - principal;
+                                        const moraMonths = !formData.is_current ? (parseInt(formData.months_behind) || 0) : 0;
+                                        const moraAmount = moraMonths * cuota;
+                                        const totalPorPagar = (cuota * remaining) + moraAmount;
+                                        const totalIntereses = Math.max(totalPorPagar - principal - moraAmount, 0);
 
+                                        const cur = formData.currency || 'COP';
                                         return (
                                             <div className="debt-calc-grid">
-                                                <div className="dc-item"><span className="dc-label">Saldo pendiente</span><span className="dc-value">{fmt(principal, formData.currency || 'COP')}</span></div>
-                                                {cuota > 0 && <div className="dc-item"><span className="dc-label">Cuota mensual</span><span className="dc-value">{fmt(cuota, formData.currency || 'COP')}</span></div>}
+                                                <div className="dc-item"><span className="dc-label">Saldo pendiente</span><span className="dc-value">{fmt(principal, cur)}</span></div>
+                                                {cuota > 0 && <div className="dc-item"><span className="dc-label">Cuota mensual</span><span className="dc-value">{fmt(cuota, cur)}</span></div>}
                                                 {remaining > 0 && <div className="dc-item"><span className="dc-label">Cuotas restantes</span><span className="dc-value">{remaining} de {totalCuotas || '—'}</span></div>}
-                                                {totalPorPagar > 0 && <div className="dc-item highlight"><span className="dc-label">Total por pagar</span><span className="dc-value">{fmt(totalPorPagar, formData.currency || 'COP')}</span></div>}
-                                                {totalIntereses > 0 && <div className="dc-item interest"><span className="dc-label">Total intereses</span><span className="dc-value">{fmt(totalIntereses, formData.currency || 'COP')}</span></div>}
+                                                {moraAmount > 0 && <div className="dc-item mora"><span className="dc-label">Cuotas en mora ({moraMonths})</span><span className="dc-value">{fmt(moraAmount, cur)}</span></div>}
+                                                {totalPorPagar > 0 && <div className="dc-item highlight"><span className="dc-label">Total por pagar</span><span className="dc-value">{fmt(totalPorPagar, cur)}</span></div>}
+                                                {totalIntereses > 0 && <div className="dc-item interest"><span className="dc-label">Total intereses</span><span className="dc-value">{fmt(totalIntereses, cur)}</span></div>}
                                             </div>
                                         );
                                     })()}
