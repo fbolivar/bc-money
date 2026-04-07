@@ -48,17 +48,16 @@ const POPULAR_TICKERS: Record<string, { symbol: string; name: string }[]> = {
     ],
 };
 
-// Logo URLs for stocks and crypto
+// Logo URLs - tested and working free APIs
 function getLogoUrl(symbol: string | null, type: string): string | null {
     if (!symbol) return null;
     const s = symbol.toUpperCase();
+    const sl = symbol.toLowerCase();
     if (type === 'crypto') {
-        return `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+        return `https://assets.coincap.io/assets/icons/${sl}@2x.png`;
     }
-    if (type === 'stock' || type === 'fund' || type === 'bond') {
-        return `https://img.logo.dev/ticker/${s}?token=pk_anonymous&size=100&format=png`;
-    }
-    return null;
+    // Stocks, ETFs, Funds, Bonds - FMP provides free logos
+    return `https://financialmodelingprep.com/image-stock/${s}.png`;
 }
 
 // Ticker icon with real logo and text fallback
