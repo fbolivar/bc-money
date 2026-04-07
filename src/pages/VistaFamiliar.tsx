@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Users, ArrowLeftRight, Landmark, Wallet, Target, CircleDollarSign, Repeat,
-    BarChart3, TrendingUp, TrendingDown, Lock,
+    BarChart3, TrendingUp, TrendingDown, Lock, ShieldCheck, PawPrint, ShoppingCart, Hammer,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Family, Transaction, Account, Budget, Goal, Debt, Subscription, Investment, Category } from '../lib/supabase';
+import type { Family, Transaction, Account, Budget, Goal, Debt, Subscription, Investment, Category, Warranty, Pet, ShoppingList, HomeItem } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { parseLocalDate } from '../lib/dates';
 import { format } from 'date-fns';
@@ -27,6 +27,10 @@ export function VistaFamiliar() {
     const [debts, setDebts] = useState<Debt[]>([]);
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [investments, setInvestments] = useState<Investment[]>([]);
+    const [warranties, setWarranties] = useState<Warranty[]>([]);
+    const [pets, setPets] = useState<Pet[]>([]);
+    const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
+    const [homeItems, setHomeItems] = useState<HomeItem[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
 
     const currency = profile?.currency || 'COP';
@@ -74,6 +78,18 @@ export function VistaFamiliar() {
         }
         if (shared.includes('investments')) {
             promises.push(supabase.from('investments').select('*').eq('user_id', ownerId).then(r => { setInvestments(r.data || []); }));
+        }
+        if (shared.includes('warranties')) {
+            promises.push(supabase.from('warranties').select('*').eq('user_id', ownerId).then(r => { setWarranties(r.data || []); }));
+        }
+        if (shared.includes('pets')) {
+            promises.push(supabase.from('pets').select('*').eq('user_id', ownerId).then(r => { setPets(r.data || []); }));
+        }
+        if (shared.includes('shopping')) {
+            promises.push(supabase.from('shopping_lists').select('*').eq('user_id', ownerId).eq('status', 'active').then(r => { setShoppingLists(r.data || []); }));
+        }
+        if (shared.includes('home')) {
+            promises.push(supabase.from('home_items').select('*').eq('user_id', ownerId).then(r => { setHomeItems(r.data || []); }));
         }
 
         await Promise.all(promises);
@@ -240,6 +256,72 @@ export function VistaFamiliar() {
                                 </div>
                             );
                         })}
+                    </div>
+                </div>
+            )}
+
+            {/* Warranties */}
+            {shared.includes('warranties') && warranties.length > 0 && (
+                <div className="vf-section">
+                    <div className="vf-section-header"><ShieldCheck size={18} /><h3>Garantías</h3><span className="vf-badge">{warranties.length}</span></div>
+                    <div className="vf-cards">
+                        {warranties.map(w => {
+                            const days = Math.ceil((new Date(w.warranty_end_date).getTime() - Date.now()) / 86400000);
+                            return (
+                                <div key={w.id} className="vf-card">
+                                    <span className="vf-card-name">{w.product_name}</span>
+                                    <span className="vf-card-sub">{w.brand || ''}{w.store ? ` · ${w.store}` : ''}</span>
+                                    <span className={`vf-card-sub ${days < 0 ? 'negative' : days <= 30 ? 'warning' : 'positive'}`}>
+                                        {days < 0 ? 'Vencida' : `${days} días restantes`}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Pets */}
+            {shared.includes('pets') && pets.length > 0 && (
+                <div className="vf-section">
+                    <div className="vf-section-header"><PawPrint size={18} /><h3>Mascotas</h3><span className="vf-badge">{pets.length}</span></div>
+                    <div className="vf-cards">
+                        {pets.map(p => (
+                            <div key={p.id} className="vf-card">
+                                <span className="vf-card-name">{p.name}</span>
+                                <span className="vf-card-sub">{p.species}{p.breed ? ` · ${p.breed}` : ''}{p.weight ? ` · ${p.weight}kg` : ''}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Shopping Lists */}
+            {shared.includes('shopping') && shoppingLists.length > 0 && (
+                <div className="vf-section">
+                    <div className="vf-section-header"><ShoppingCart size={18} /><h3>Listas de Compras</h3><span className="vf-badge">{shoppingLists.length} activas</span></div>
+                    <div className="vf-list">
+                        {shoppingLists.map(l => (
+                            <div key={l.id} className="vf-list-item">
+                                <span className="vf-li-desc">{l.name}</span>
+                                {l.budget_limit && <span className="vf-li-amount expense">Límite: {fmt(l.budget_limit, currency)}</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Home Items */}
+            {shared.includes('home') && homeItems.length > 0 && (
+                <div className="vf-section">
+                    <div className="vf-section-header"><Hammer size={18} /><h3>Hogar</h3><span className="vf-badge">{homeItems.length} elementos</span></div>
+                    <div className="vf-cards">
+                        {homeItems.map(h => (
+                            <div key={h.id} className="vf-card">
+                                <span className="vf-card-name">{h.name}</span>
+                                <span className="vf-card-sub">{h.area}{h.brand ? ` · ${h.brand}` : ''}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
