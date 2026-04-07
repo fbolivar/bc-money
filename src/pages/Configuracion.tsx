@@ -279,11 +279,12 @@ export function Configuracion() {
                                             type="number"
                                             className="form-input"
                                             style={{ maxWidth: '200px' }}
-                                            value={profile?.birth_year || ''}
-                                            onChange={async (e) => {
+                                            defaultValue={profile?.birth_year || ''}
+                                            onBlur={async (e) => {
                                                 const val = parseInt(e.target.value);
-                                                if (val && val > 1920 && val <= new Date().getFullYear()) {
+                                                if (val && val >= 1920 && val <= new Date().getFullYear()) {
                                                     await supabase.from('profiles').update({ birth_year: val }).eq('id', user!.id);
+                                                    setMessage({ type: 'success', text: 'Año de nacimiento guardado' });
                                                     refreshProfile();
                                                 }
                                             }}
