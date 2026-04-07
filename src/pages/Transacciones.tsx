@@ -115,11 +115,13 @@ export function Transacciones() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Ensure date is exactly the string from the input, no timezone conversion
+        const dateStr = String(formData.date).slice(0, 10); // Force YYYY-MM-DD only
         const txData = {
             user_id: user!.id, type: formData.type, amount: parseFloat(formData.amount),
             category_id: formData.category_id || null, account_id: formData.account_id || null,
             goal_id: formData.goal_id || null, description: formData.description || null,
-            date: formData.date, is_essential: formData.is_essential, is_recurring: formData.is_recurring,
+            date: dateStr, is_essential: formData.is_essential, is_recurring: formData.is_recurring,
             payment_method: formData.payment_method,
         };
         if (editingTx) await supabase.from('transactions').update(txData).eq('id', editingTx.id);
