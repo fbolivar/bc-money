@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import type { Pet, PetEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, differenceInDays, differenceInYears, differenceInMonths } from 'date-fns';
+import { parseLocalDate } from '../lib/dates';
 import { es } from 'date-fns/locale';
 import './Mascotas.css';
 
@@ -262,8 +263,8 @@ export function Mascotas() {
                                                     <EvIcon size={16} className="ev-icon" />
                                                     <div className="ev-info">
                                                         <span className="ev-name">{ev.name}</span>
-                                                        <span className="ev-meta">{EVT_LABELS[ev.type]} · {format(new Date(ev.date), 'd MMM yyyy', { locale: es })}{ev.veterinary ? ` · ${ev.veterinary}` : ''}</span>
-                                                        {ev.next_date && <span className="ev-next">Próximo: {format(new Date(ev.next_date), 'd MMM yyyy', { locale: es })}</span>}
+                                                        <span className="ev-meta">{EVT_LABELS[ev.type]} · {format(parseLocalDate(ev.date), 'd MMM yyyy', { locale: es })}{ev.veterinary ? ` · ${ev.veterinary}` : ''}</span>
+                                                        {ev.next_date && <span className="ev-next">Próximo: {format(parseLocalDate(ev.next_date), 'd MMM yyyy', { locale: es })}</span>}
                                                     </div>
                                                     {ev.cost && <span className="ev-cost">{fmt(ev.cost, ev.currency)}</span>}
                                                     <div className="ev-actions">

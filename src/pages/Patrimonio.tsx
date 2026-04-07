@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import type { Account, Debt, NetWorthSnapshot } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
+import { parseLocalDate } from '../lib/dates';
 import { es } from 'date-fns/locale';
 import './Patrimonio.css';
 
@@ -43,7 +44,7 @@ export function Patrimonio() {
 
     const chartData = useMemo(() => {
         const data = snapshots.map(s => ({
-            date: format(new Date(s.date), 'd MMM', { locale: es }),
+            date: format(parseLocalDate(s.date), 'd MMM', { locale: es }),
             patrimonio: Number(s.net_worth),
             activos: Number(s.total_assets),
             pasivos: Number(s.total_liabilities),
@@ -159,7 +160,7 @@ export function Patrimonio() {
                     <div className="pat-history-list">
                         {[...snapshots].reverse().slice(0, 10).map(s => (
                             <div key={s.id} className="pat-history-row">
-                                <span className="ph-date">{format(new Date(s.date), 'd MMM yyyy', { locale: es })}</span>
+                                <span className="ph-date">{format(parseLocalDate(s.date), 'd MMM yyyy', { locale: es })}</span>
                                 <span className={`ph-nw ${Number(s.net_worth) >= 0 ? 'positive' : 'negative'}`}>{fmt(Number(s.net_worth), currency)}</span>
                                 <span className="ph-assets">{fmt(Number(s.total_assets), currency)}</span>
                                 <span className="ph-liabilities">{fmt(Number(s.total_liabilities), currency)}</span>

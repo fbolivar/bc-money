@@ -5,6 +5,7 @@ import type { Debt, Warranty, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth, addMonths, subMonths, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseLocalDate } from '../lib/dates';
 import './Calendario.css';
 
 interface CalendarEvent {
@@ -57,23 +58,23 @@ export function Calendario() {
 
         // Warranties expiring
         for (const w of (warRes.data || [])) {
-            evts.push({ id: `w-${w.id}`, date: new Date(w.warranty_end_date), title: w.product_name, type: 'warranty' });
+            evts.push({ id: `w-${w.id}`, date: parseLocalDate(w.warranty_end_date), title: w.product_name, type: 'warranty' });
         }
 
         // Subscriptions
         for (const s of (subRes.data || [])) {
-            evts.push({ id: `s-${s.id}`, date: new Date(s.next_billing_date), title: s.name, type: 'subscription', amount: s.amount, currency: s.currency });
+            evts.push({ id: `s-${s.id}`, date: parseLocalDate(s.next_billing_date), title: s.name, type: 'subscription', amount: s.amount, currency: s.currency });
         }
 
         // Maintenance
         for (const mt of (maintRes.data || [])) {
             if (!mt.next_date) continue;
-            evts.push({ id: `m-${mt.id}`, date: new Date(mt.next_date), title: mt.name, type: 'maintenance', amount: mt.cost, currency: mt.currency });
+            evts.push({ id: `m-${mt.id}`, date: parseLocalDate(mt.next_date), title: mt.name, type: 'maintenance', amount: mt.cost, currency: mt.currency });
         }
 
         // Custom events
         for (const ce of (customRes.data || [])) {
-            evts.push({ id: `c-${ce.id}`, date: new Date(ce.date), title: ce.title, type: 'custom', amount: ce.amount, currency: ce.currency });
+            evts.push({ id: `c-${ce.id}`, date: parseLocalDate(ce.date), title: ce.title, type: 'custom', amount: ce.amount, currency: ce.currency });
         }
 
         setEvents(evts);

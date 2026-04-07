@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import type { HomeItem, HomeMaintenance } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, differenceInDays } from 'date-fns';
+import { parseLocalDate } from '../lib/dates';
 import { es } from 'date-fns/locale';
 import './Hogar.css';
 
@@ -89,7 +90,7 @@ export function Hogar() {
 
     const alerts = useMemo(() => tasks.filter(t => {
         if (!t.next_date || t.status === 'cancelled') return false;
-        const days = differenceInDays(new Date(t.next_date), new Date());
+        const days = differenceInDays(parseLocalDate(t.next_date), new Date());
         return days >= 0 && days <= 14;
     }), [tasks]);
 
@@ -201,8 +202,8 @@ export function Hogar() {
                                                     <TIcon size={15} className="task-icon" />
                                                     <div className="task-info">
                                                         <span className="task-name">{t.name}</span>
-                                                        <span className="task-meta">{MT_LABELS[t.type]} · {format(new Date(t.date), 'd MMM yyyy', { locale: es })}{t.provider ? ` · ${t.provider}` : ''}</span>
-                                                        {t.next_date && <span className="task-next">Próximo: {format(new Date(t.next_date), 'd MMM yyyy', { locale: es })}</span>}
+                                                        <span className="task-meta">{MT_LABELS[t.type]} · {format(parseLocalDate(t.date), 'd MMM yyyy', { locale: es })}{t.provider ? ` · ${t.provider}` : ''}</span>
+                                                        {t.next_date && <span className="task-next">Próximo: {format(parseLocalDate(t.next_date), 'd MMM yyyy', { locale: es })}</span>}
                                                     </div>
                                                     <span className={`task-status-badge ${t.status}`}>{t.status === 'completed' ? <CheckCircle size={12} /> : <Clock size={12} />}{t.status === 'completed' ? 'Hecho' : t.status === 'scheduled' ? 'Pendiente' : 'Cancelado'}</span>
                                                     {t.cost && <span className="task-cost">{fmt(t.cost, t.currency)}</span>}

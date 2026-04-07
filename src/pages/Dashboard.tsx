@@ -14,6 +14,7 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { SkeletonDashboard } from '../components/Skeleton';
+import { parseLocalDate } from '../lib/dates';
 import './Dashboard.css';
 
 async function getDashboardData(userId: string) {
@@ -79,7 +80,7 @@ export function Dashboard() {
     const monthlyData = useMemo(() => Array.from({ length: 6 }, (_, i) => {
         const month = subMonths(new Date(), 5 - i);
         const mStart = startOfMonth(month); const mEnd = endOfMonth(month);
-        const monthTx = filteredTx.filter(t => { const d = new Date(t.date); return d >= mStart && d <= mEnd; });
+        const monthTx = filteredTx.filter(t => { const d = parseLocalDate(t.date); return d >= mStart && d <= mEnd; });
         return {
             name: format(month, 'MMM', { locale: es }),
             ingresos: monthTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
@@ -90,7 +91,7 @@ export function Dashboard() {
     // Current month stats
     const currentMonthTx = useMemo(() => {
         const start = startOfMonth(new Date()); const end = endOfMonth(new Date());
-        return filteredTx.filter(t => { const d = new Date(t.date); return d >= start && d <= end; });
+        return filteredTx.filter(t => { const d = parseLocalDate(t.date); return d >= start && d <= end; });
     }, [filteredTx]);
     const monthIncome = currentMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
     const monthExpenses = currentMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
@@ -185,7 +186,7 @@ export function Dashboard() {
                                         </div>
                                         <div className="dash-tx-right">
                                             <span className={`dash-tx-amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmtMoney(Number(tx.amount), currency)}</span>
-                                            <span className="dash-tx-date">{format(new Date(tx.date + 'T12:00:00'), 'd MMM', { locale: es })}</span>
+                                            <span className="dash-tx-date">{format(parseLocalDate(tx.date), 'd MMM', { locale: es })}</span>
                                         </div>
                                     </div>
                                 );

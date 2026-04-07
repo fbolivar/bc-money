@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 import type { Transaction, Category, Account, Budget, Debt, Warranty, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, differenceInDays } from 'date-fns';
+import { parseLocalDate } from '../lib/dates';
 import { es } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -482,7 +483,7 @@ export function Reportes() {
                                 const cat = categories.find(c => c.id === tx.category_id);
                                 return (
                                     <tr key={tx.id}>
-                                        <td>{format(new Date(tx.date + 'T12:00:00'), 'd MMM', { locale: es })}</td>
+                                        <td>{format(parseLocalDate(tx.date), 'd MMM', { locale: es })}</td>
                                         <td>{tx.description || '-'}</td>
                                         <td><span className="category-tag" style={{ backgroundColor: cat?.color || '#6B7280' }}>{cat?.name || 'Sin categoría'}</span></td>
                                         <td><span className={`type-badge ${tx.type}`}>{tx.type === 'income' ? 'Ingreso' : 'Gasto'}</span></td>
