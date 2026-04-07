@@ -132,14 +132,14 @@ export function Familia() {
     }
 
     async function removeMember(memberId: string, userId: string) {
-        if (!confirm('¿Eliminar este miembro?')) return;
+        // Confirmation handled by caller
         await supabase.from('family_members').delete().eq('id', memberId);
         await supabase.from('profiles').update({ family_id: null }).eq('id', userId);
         showToast('Miembro eliminado', 'success'); fetchData();
     }
 
     async function leaveFamily() {
-        if (!user || !family || !confirm('¿Salir de esta familia?')) return;
+        if (!user || !family) return;
         await supabase.from('family_members').delete().eq('family_id', family.id).eq('user_id', user.id);
         await supabase.from('profiles').update({ family_id: null }).eq('id', user.id);
         showToast('Has salido de la familia', 'success');

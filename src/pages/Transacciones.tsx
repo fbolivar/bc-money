@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-    Plus, Search, Edit2, Trash2, ArrowUpRight, ArrowDownRight, X,
+    Plus, Search, Edit2, Trash2, ArrowUpRight, ArrowDownRight, X, AlertTriangle,
     Upload, Copy, ChevronLeft, ChevronRight, CheckSquare, Square, BarChart3,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -31,6 +31,7 @@ export function Transacciones() {
     const [showModal, setShowModal] = useState(isValidInitialType);
     const [showImport, setShowImport] = useState(false);
     const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [page, setPage] = useState(0);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -152,17 +153,22 @@ export function Transacciones() {
         showToast('Transacción duplicada', 'success'); refreshData();
     };
 
-    const handleDelete = async (id: string) => {
-        await supabase.from('transactions').delete().eq('id', id);
-        showToast('Transacción eliminada', 'success'); refreshData();
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        if (deleteId === 'bulk') {
+            for (const id of selectedIds) await supabase.from('transactions').delete().eq('id', id);
+            showToast(`${selectedIds.size} transacciones eliminadas`, 'success');
+            setSelectedIds(new Set());
+        } else {
+            await supabase.from('transactions').delete().eq('id', deleteId);
+            showToast('Transacción eliminada', 'success');
+        }
+        setDeleteId(null); refreshData();
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = () => {
         if (selectedIds.size === 0) return;
-        if (!confirm(`¿Eliminar ${selectedIds.size} transacciones?`)) return;
-        for (const id of selectedIds) await supabase.from('transactions').delete().eq('id', id);
-        setSelectedIds(new Set());
-        showToast(`${selectedIds.size} transacciones eliminadas`, 'success'); refreshData();
+        setDeleteId('bulk');
     };
 
     const toggleSelect = (id: string) => {
@@ -335,7 +341,7 @@ export function Transacciones() {
                                         <div className="actions">
                                             <button className="btn btn-icon btn-ghost" title="Duplicar" onClick={() => handleDuplicate(tx)}><Copy size={14} /></button>
                                             <button className="btn btn-icon btn-ghost" title="Editar" onClick={() => handleEdit(tx)}><Edit2 size={14} /></button>
-                                            <button className="btn btn-icon btn-ghost" title="Eliminar" onClick={() => handleDelete(tx.id)}><Trash2 size={14} /></button>
+                                            <button className="btn btn-icon btn-ghost" title="Eliminar" onClick={() => setDeleteId(tx.id)}><Trash2 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -414,6 +420,23 @@ export function Transacciones() {
                             </p>
                             <input ref={fileRef} type="file" accept=".csv" className="form-input" style={{ padding: '0.5rem' }}
                                 onChange={e => { if (e.target.files?.[0]) handleImportCSV(e.target.files[0]); }} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteId && (
+                <div className="modal-overlay" onClick={() => setDeleteId(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, textAlign: 'center', padding: '2rem' }}>
+                        <AlertTriangle size={40} color="#F59E0B" />
+                        <h2 style={{ margin: '1rem 0 0.5rem', fontSize: '1.1rem' }}>
+                            {deleteId === 'bulk' ? `¿Eliminar ${selectedIds.size} transacciones?` : '¿Eliminar esta transacción?'}
+                        </h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Esta acción no se puede deshacer.</p>
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setDeleteId(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Eliminar</button>
                         </div>
                     </div>
                 </div>

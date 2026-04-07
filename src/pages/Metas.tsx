@@ -169,11 +169,13 @@ export function Metas() {
         refreshGoals();
     };
 
-    const handleDelete = async (id: string) => {
-        if (confirm('¿Eliminar esta meta?')) {
-            await supabase.from('goals').delete().eq('id', id);
-            refreshGoals();
-        }
+    const [deleteGoalId, setDeleteGoalId] = useState<string | null>(null);
+
+    const confirmDeleteGoal = async () => {
+        if (!deleteGoalId) return;
+        await supabase.from('goals').delete().eq('id', deleteGoalId);
+        setDeleteGoalId(null);
+        refreshGoals();
     };
 
     const closeModal = () => {
@@ -246,7 +248,7 @@ export function Metas() {
                                             <button className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button className="btn btn-icon btn-ghost" onClick={() => handleDelete(goal.id)}>
+                                            <button className="btn btn-icon btn-ghost" onClick={() => setDeleteGoalId(goal.id)}>
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
@@ -329,7 +331,7 @@ export function Metas() {
                                         <button className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
                                             <Edit2 size={14} />
                                         </button>
-                                        <button className="btn btn-icon btn-ghost" onClick={() => handleDelete(goal.id)}>
+                                        <button className="btn btn-icon btn-ghost" onClick={() => setDeleteGoalId(goal.id)}>
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -560,6 +562,21 @@ export function Metas() {
                                 <button type="submit" className="btn btn-primary">Aportar</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation */}
+            {deleteGoalId && (
+                <div className="modal-overlay" onClick={() => setDeleteGoalId(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 380, textAlign: 'center', padding: '2rem' }}>
+                        <AlertTriangle size={40} color="#F59E0B" />
+                        <h2 style={{ margin: '1rem 0 0.5rem', fontSize: '1.1rem' }}>¿Eliminar esta meta?</h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Esta acción no se puede deshacer.</p>
+                        <div className="modal-actions" style={{ marginTop: '1rem' }}>
+                            <button type="button" className="btn btn-secondary" onClick={() => setDeleteGoalId(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-danger" onClick={confirmDeleteGoal}>Eliminar</button>
+                        </div>
                     </div>
                 </div>
             )}
