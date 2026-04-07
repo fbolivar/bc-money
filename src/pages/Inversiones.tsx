@@ -48,8 +48,35 @@ const POPULAR_TICKERS: Record<string, { symbol: string; name: string }[]> = {
     ],
 };
 
-// Ticker icon component - shows symbol as styled text or fallback icon
+// Logo URLs for stocks and crypto
+function getLogoUrl(symbol: string | null, type: string): string | null {
+    if (!symbol) return null;
+    const s = symbol.toUpperCase();
+    if (type === 'crypto') {
+        return `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+    }
+    if (type === 'stock' || type === 'fund' || type === 'bond') {
+        return `https://img.logo.dev/ticker/${s}?token=pk_anonymous&size=100&format=png`;
+    }
+    return null;
+}
+
+// Ticker icon with real logo and text fallback
 function TickerIcon({ symbol, type, color, size = 40 }: { symbol?: string | null; type: string; color: string; size?: number }) {
+    const [imgError, setImgError] = useState(false);
+    const logoUrl = getLogoUrl(symbol || null, type);
+
+    // Show real logo if available
+    if (logoUrl && symbol && !imgError) {
+        return (
+            <div className="ticker-icon logo" style={{ width: size, height: size, backgroundColor: '#fff', borderColor: `${color}30` }}>
+                <img src={logoUrl} alt={symbol} width={size * 0.65} height={size * 0.65}
+                    onError={() => setImgError(true)} style={{ borderRadius: size * 0.12, objectFit: 'contain' }} />
+            </div>
+        );
+    }
+
+    // Fallback: ticker text
     if (symbol && symbol.length <= 5) {
         return (
             <div className="ticker-icon" style={{ width: size, height: size, backgroundColor: `${color}15`, color, borderColor: `${color}30` }}>
@@ -57,6 +84,8 @@ function TickerIcon({ symbol, type, color, size = 40 }: { symbol?: string | null
             </div>
         );
     }
+
+    // Fallback: type icon
     const Icon = TYPE_ICONS[type] || Package;
     return (
         <div className="inv-card-icon" style={{ width: size, height: size, backgroundColor: `${color}20`, color }}>
