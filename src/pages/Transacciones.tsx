@@ -322,7 +322,7 @@ export function Transacciones() {
                             return (
                                 <tr key={tx.id} className={selectedIds.has(tx.id) ? 'selected' : ''}>
                                     <td><button type="button" className="check-btn" onClick={() => toggleSelect(tx.id)} title="Seleccionar">{selectedIds.has(tx.id) ? <CheckSquare size={16} /> : <Square size={16} />}</button></td>
-                                    <td>{format(new Date(tx.date), 'd MMM yyyy', { locale: es })}</td>
+                                    <td>{format(new Date(tx.date + 'T12:00:00'), 'd MMM yyyy', { locale: es })}</td>
                                     <td><div className="tx-desc">{tx.description || 'Sin descripción'}{tx.is_recurring && <span className="badge badge-info">Recurrente</span>}</div></td>
                                     <td><span className="category-tag" style={{ backgroundColor: category?.color || '#6B7280' }}>{category?.name || 'Sin categoría'}</span></td>
                                     <td>{account?.name || '—'}</td>

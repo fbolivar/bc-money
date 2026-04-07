@@ -482,7 +482,7 @@ export function Reportes() {
                                 const cat = categories.find(c => c.id === tx.category_id);
                                 return (
                                     <tr key={tx.id}>
-                                        <td>{format(new Date(tx.date), 'd MMM', { locale: es })}</td>
+                                        <td>{format(new Date(tx.date + 'T12:00:00'), 'd MMM', { locale: es })}</td>
                                         <td>{tx.description || '-'}</td>
                                         <td><span className="category-tag" style={{ backgroundColor: cat?.color || '#6B7280' }}>{cat?.name || 'Sin categoría'}</span></td>
                                         <td><span className={`type-badge ${tx.type}`}>{tx.type === 'income' ? 'Ingreso' : 'Gasto'}</span></td>

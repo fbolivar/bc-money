@@ -185,7 +185,7 @@ export function Dashboard() {
                                         </div>
                                         <div className="dash-tx-right">
                                             <span className={`dash-tx-amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmtMoney(Number(tx.amount), currency)}</span>
-                                            <span className="dash-tx-date">{format(new Date(tx.date), 'd MMM', { locale: es })}</span>
+                                            <span className="dash-tx-date">{format(new Date(tx.date + 'T12:00:00'), 'd MMM', { locale: es })}</span>
                                         </div>
                                     </div>
                                 );
