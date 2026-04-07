@@ -12,18 +12,58 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Inversiones.css';
 
-const TYPES: { value: Investment['type']; label: string; icon: LucideIcon }[] = [
-    { value: 'stock', label: 'Acción', icon: BarChart3 },
-    { value: 'crypto', label: 'Cripto', icon: Bitcoin },
-    { value: 'bond', label: 'Bono', icon: Landmark },
-    { value: 'fund', label: 'Fondo', icon: Building },
-    { value: 'real_estate', label: 'Inmueble', icon: Building },
-    { value: 'commodity', label: 'Commodity', icon: Gem },
-    { value: 'other', label: 'Otro', icon: Package },
+const TYPES: { value: Investment['type']; label: string; icon: LucideIcon; color: string }[] = [
+    { value: 'stock', label: 'Acción', icon: BarChart3, color: '#3B82F6' },
+    { value: 'crypto', label: 'Cripto', icon: Bitcoin, color: '#F59E0B' },
+    { value: 'bond', label: 'Bono', icon: Landmark, color: '#10B981' },
+    { value: 'fund', label: 'Fondo', icon: Building, color: '#8B5CF6' },
+    { value: 'real_estate', label: 'Inmueble', icon: Building, color: '#06B6D4' },
+    { value: 'commodity', label: 'Commodity', icon: Gem, color: '#EC4899' },
+    { value: 'other', label: 'Otro', icon: Package, color: '#64748B' },
 ];
 const TYPE_LABELS = Object.fromEntries(TYPES.map(t => [t.value, t.label]));
 const TYPE_ICONS: Record<string, LucideIcon> = Object.fromEntries(TYPES.map(t => [t.value, t.icon]));
-const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
+const TYPE_COLORS_MAP: Record<string, string> = Object.fromEntries(TYPES.map(t => [t.value, t.color]));
+const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B', '#0F172A', '#14B8A6'];
+
+// Popular tickers by type for quick selection
+const POPULAR_TICKERS: Record<string, { symbol: string; name: string }[]> = {
+    stock: [
+        { symbol: 'AAPL', name: 'Apple' }, { symbol: 'MSFT', name: 'Microsoft' }, { symbol: 'GOOGL', name: 'Google' },
+        { symbol: 'AMZN', name: 'Amazon' }, { symbol: 'META', name: 'Meta' }, { symbol: 'TSLA', name: 'Tesla' },
+        { symbol: 'NVDA', name: 'Nvidia' }, { symbol: 'SPY', name: 'S&P 500 ETF' }, { symbol: 'QQQ', name: 'Nasdaq ETF' },
+        { symbol: 'BAC', name: 'Bank of America' }, { symbol: 'JPM', name: 'JPMorgan' }, { symbol: 'V', name: 'Visa' },
+    ],
+    crypto: [
+        { symbol: 'BTC', name: 'Bitcoin' }, { symbol: 'ETH', name: 'Ethereum' }, { symbol: 'BNB', name: 'Binance' },
+        { symbol: 'SOL', name: 'Solana' }, { symbol: 'XRP', name: 'Ripple' }, { symbol: 'ADA', name: 'Cardano' },
+        { symbol: 'DOGE', name: 'Dogecoin' }, { symbol: 'DOT', name: 'Polkadot' }, { symbol: 'AVAX', name: 'Avalanche' },
+    ],
+    fund: [
+        { symbol: 'VTI', name: 'Vanguard Total' }, { symbol: 'VOO', name: 'Vanguard S&P' }, { symbol: 'VWO', name: 'Vanguard EM' },
+        { symbol: 'IVV', name: 'iShares S&P' }, { symbol: 'VEA', name: 'Vanguard FTSE' },
+    ],
+    bond: [
+        { symbol: 'TLT', name: 'Treasury 20y+' }, { symbol: 'BND', name: 'Vanguard Bond' }, { symbol: 'AGG', name: 'iShares Bond' },
+    ],
+};
+
+// Ticker icon component - shows symbol as styled text or fallback icon
+function TickerIcon({ symbol, type, color, size = 40 }: { symbol?: string | null; type: string; color: string; size?: number }) {
+    if (symbol && symbol.length <= 5) {
+        return (
+            <div className="ticker-icon" style={{ width: size, height: size, backgroundColor: `${color}15`, color, borderColor: `${color}30` }}>
+                <span className="ticker-text" style={{ fontSize: symbol.length > 3 ? size * 0.25 : size * 0.32 }}>{symbol}</span>
+            </div>
+        );
+    }
+    const Icon = TYPE_ICONS[type] || Package;
+    return (
+        <div className="inv-card-icon" style={{ width: size, height: size, backgroundColor: `${color}20`, color }}>
+            <Icon size={size * 0.5} />
+        </div>
+    );
+}
 
 function fmt(n: number, c: string) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n); }
 
@@ -97,7 +137,7 @@ export function Inversiones() {
         setIsModal(true);
     }
 
-    function resetForm() { setForm({ name: '', type: 'stock', symbol: '', quantity: '', purchase_price: '', current_price: '', currency: 'USD', purchase_date: format(new Date(), 'yyyy-MM-dd'), color: '#8B5CF6', notes: '' }); }
+    function resetForm() { setForm({ name: '', type: 'stock', symbol: '', quantity: '', purchase_price: '', current_price: '', currency: 'USD', purchase_date: format(new Date(), 'yyyy-MM-dd'), color: '#3B82F6', notes: '' }); }
 
     if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
 
@@ -149,7 +189,7 @@ export function Inversiones() {
                         return (
                             <div key={inv.id} className="inv-card-item" style={{ borderLeftColor: inv.color }}>
                                 <div className="inv-card-header">
-                                    <div className="inv-card-icon" style={{ backgroundColor: `${inv.color}20`, color: inv.color }}><Icon size={20} /></div>
+                                    <TickerIcon symbol={inv.symbol} type={inv.type} color={inv.color} size={44} />
                                     <div className="inv-card-actions">
                                         <button type="button" title="Editar" className="inv-btn" onClick={() => openEdit(inv)}><Edit2 size={14} /></button>
                                         <button type="button" title="Eliminar" className="inv-btn del" onClick={() => setDeleteConfirm(inv)}><Trash2 size={14} /></button>
@@ -187,9 +227,34 @@ export function Inversiones() {
                         <form onSubmit={handleSubmit} className="inv-modal-form">
                             <div className="form-group"><label>Nombre</label><input type="text" className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Ej: Apple Inc" /></div>
                             <div className="form-row two-cols">
-                                <div className="form-group"><label>Tipo</label><select className="form-select" title="Tipo" value={form.type} onChange={e => setForm({ ...form, type: e.target.value as Investment['type'] })}>{TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-                                <div className="form-group"><label>Símbolo</label><input type="text" className="form-input" value={form.symbol} onChange={e => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder="Ej: AAPL" /></div>
+                                <div className="form-group"><label>Tipo</label><select className="form-select" title="Tipo" value={form.type} onChange={e => { const t = e.target.value as Investment['type']; setForm({ ...form, type: t, color: TYPE_COLORS_MAP[t] || form.color }); }}>{TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+                                <div className="form-group"><label>Símbolo / Ticker</label><input type="text" className="form-input" value={form.symbol} onChange={e => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder="Ej: AAPL, BTC, SPY" /></div>
                             </div>
+
+                            {/* Quick ticker suggestions */}
+                            {POPULAR_TICKERS[form.type] && (
+                                <div className="form-group">
+                                    <label>Selección rápida</label>
+                                    <div className="inv-ticker-grid">
+                                        {POPULAR_TICKERS[form.type].map(t => (
+                                            <button key={t.symbol} type="button"
+                                                className={`inv-ticker-btn ${form.symbol === t.symbol ? 'active' : ''}`}
+                                                onClick={() => setForm({ ...form, symbol: t.symbol, name: form.name || t.name })}>
+                                                <span className="inv-ticker-sym">{t.symbol}</span>
+                                                <span className="inv-ticker-name">{t.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Preview */}
+                            {form.symbol && (
+                                <div className="inv-preview">
+                                    <TickerIcon symbol={form.symbol} type={form.type} color={form.color} size={48} />
+                                    <div><strong>{form.name || form.symbol}</strong><span>{TYPE_LABELS[form.type]} · {form.symbol}</span></div>
+                                </div>
+                            )}
                             <div className="form-row two-cols">
                                 <div className="form-group"><label>Cantidad</label><input type="number" className="form-input" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required min="0" step="0.000001" /></div>
                                 <div className="form-group"><label>Precio Compra</label><input type="number" className="form-input" value={form.purchase_price} onChange={e => setForm({ ...form, purchase_price: e.target.value })} required min="0" step="0.01" /></div>
