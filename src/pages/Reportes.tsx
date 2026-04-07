@@ -37,11 +37,15 @@ export function Reportes() {
     useEffect(() => {
         if (!user) return;
         const fetchData = async () => {
-            const monthStart = startOfMonth(selectedMonth);
-            const monthEnd = endOfMonth(selectedMonth);
+            // Build date range manually to avoid timezone issues
+            const y = selectedMonth.getFullYear();
+            const m = selectedMonth.getMonth();
+            const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+            const lastDayNum = new Date(y, m + 1, 0).getDate();
+            const lastDay = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
             const [txRes, catRes, accRes, budRes, debtRes, warRes, subRes] = await Promise.all([
                 supabase.from('transactions').select('*').eq('user_id', user.id)
-                    .gte('date', format(monthStart, 'yyyy-MM-dd')).lte('date', format(monthEnd, 'yyyy-MM-dd')),
+                    .gte('date', firstDay).lte('date', lastDay),
                 supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
                 supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
                 supabase.from('budgets').select('*').eq('user_id', user.id),
