@@ -1,0 +1,56 @@
+.vf-page { display: flex; flex-direction: column; gap: 1.5rem; }
+.vf-header h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 0.25rem; }
+.vf-header p { color: var(--color-text-secondary); font-size: 0.9rem; }
+.vf-header strong { color: var(--color-primary); }
+
+.vf-empty { text-align: center; padding: 4rem 2rem; color: var(--color-text-secondary); }
+.vf-empty h3 { margin: 1rem 0 0.5rem; color: var(--color-text-primary); }
+
+/* Section */
+.vf-section { background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-md); }
+.vf-section-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+.vf-section-header svg { color: var(--color-primary); }
+.vf-section-header h3 { font-size: 1rem; font-weight: 700; flex: 1; }
+.vf-badge { font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary); }
+.vf-badge.danger { background: rgba(239,68,68,0.1); color: #EF4444; }
+
+/* Metrics row */
+.vf-metrics { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.vf-metric { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border-radius: var(--radius-lg); flex: 1; }
+.vf-metric.green { background: linear-gradient(135deg, #10B981, #34D399); color: white; }
+.vf-metric.red { background: linear-gradient(135deg, #EF4444, #F87171); color: white; }
+.vf-m-value { display: block; font-size: 1.1rem; font-weight: 800; }
+.vf-m-label { display: block; font-size: 0.7rem; opacity: 0.85; }
+
+/* Cards grid */
+.vf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.6rem; }
+.vf-card { padding: 0.75rem; background: var(--color-surface-hover); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 0.2rem; }
+.vf-card-name { font-weight: 600; font-size: 0.85rem; color: var(--color-text-primary); display: flex; align-items: center; gap: 0.4rem; }
+.vf-card-value { font-weight: 800; font-size: 1.05rem; color: var(--color-text-primary); }
+.vf-card-value.negative { color: #EF4444; }
+.vf-card-sub { font-size: 0.75rem; color: var(--color-text-tertiary); }
+.vf-card-sub.positive { color: #10B981; }
+.vf-card-sub.negative { color: #EF4444; }
+.vf-mora { font-size: 0.55rem; font-weight: 700; background: #EF4444; color: white; padding: 0.05rem 0.3rem; border-radius: 0.2rem; }
+
+/* Progress */
+.vf-progress { height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden; margin-top: 0.25rem; }
+.vf-progress-bar { height: 100%; border-radius: 3px; }
+.vf-progress-bar.ok { background: #10B981; }
+.vf-progress-bar.warning { background: #F59E0B; }
+.vf-progress-bar.danger { background: #EF4444; }
+
+/* List */
+.vf-list { display: flex; flex-direction: column; }
+.vf-list-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-light); font-size: 0.85rem; }
+.vf-list-item:last-child { border-bottom: none; }
+.vf-li-date { color: var(--color-text-tertiary); font-size: 0.75rem; min-width: 50px; }
+.vf-li-desc { flex: 1; color: var(--color-text-primary); font-weight: 500; }
+.vf-li-amount { font-weight: 700; }
+.vf-li-amount.income { color: #10B981; }
+.vf-li-amount.expense { color: #EF4444; }
+
+@media (max-width: 768px) {
+    .vf-metrics { flex-direction: column; }
+    .vf-cards { grid-template-columns: 1fr; }
+}

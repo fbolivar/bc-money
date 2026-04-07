@@ -28,6 +28,7 @@ const Notas = lazy(() => import('./pages/Notas').then(module => ({ default: modu
 const ImportarExtractos = lazy(() => import('./pages/ImportarExtractos').then(module => ({ default: module.ImportarExtractos })));
 const Inversiones = lazy(() => import('./pages/Inversiones').then(module => ({ default: module.Inversiones })));
 const Familia = lazy(() => import('./pages/Familia').then(module => ({ default: module.Familia })));
+const VistaFamiliar = lazy(() => import('./pages/VistaFamiliar').then(module => ({ default: module.VistaFamiliar })));
 const ApiDocs = lazy(() => import('./pages/ApiDocs').then(module => ({ default: module.ApiDocs })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
 
@@ -71,6 +72,7 @@ function App() {
               <Route path="/importar" element={<ImportarExtractos />} />
               <Route path="/inversiones" element={<Inversiones />} />
               <Route path="/familia" element={<Familia />} />
+              <Route path="/vista-familiar" element={<VistaFamiliar />} />
               <Route path="/api" element={<ApiDocs />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />

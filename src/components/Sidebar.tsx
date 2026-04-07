@@ -4,7 +4,7 @@ import {
     LayoutDashboard, ArrowLeftRight, Wallet, Target, FileText, Settings, LogOut,
     DollarSign, Tags, Landmark, CircleDollarSign, ShieldCheck, PawPrint,
     ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
-    StickyNote, Upload, BarChart3, Users, Code, X,
+    StickyNote, Upload, BarChart3, Users, Code, Eye, X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import './Sidebar.css';
@@ -48,6 +48,7 @@ const NAV_SECTIONS = [
             { path: '/notas', icon: StickyNote, label: 'Notas' },
             { path: '/importar', icon: Upload, label: 'Importar' },
             { path: '/familia', icon: Users, label: 'Familia' },
+            { path: '/vista-familiar', icon: Eye, label: 'Vista Familiar' },
             { path: '/api', icon: Code, label: 'API' },
         ],
     },
