@@ -274,6 +274,25 @@ export function Configuracion() {
                                         </div>
                                     </div>
                                     <div className="form-group">
+                                        <label>Año de Nacimiento</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            style={{ maxWidth: '200px' }}
+                                            value={profile?.birth_year || ''}
+                                            onChange={async (e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (val && val > 1920 && val <= new Date().getFullYear()) {
+                                                    await supabase.from('profiles').update({ birth_year: val }).eq('id', user!.id);
+                                                    refreshProfile();
+                                                }
+                                            }}
+                                            placeholder="Ej: 1990"
+                                            min="1920"
+                                            max={new Date().getFullYear()}
+                                        />
+                                    </div>
+                                    <div className="form-group">
                                         <label>Rol</label>
                                         <div className="value-display cap">
                                             {profile?.role === 'admin' ? (

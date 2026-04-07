@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     TrendingUp, TrendingDown, Wallet, Target, AlertCircle,
-    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign,
+    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign, Palmtree,
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -115,6 +115,39 @@ export function Dashboard() {
 
     // Total accounts balance
     const totalAccountBalance = accounts.reduce((s, a) => s + Number(a.balance), 0);
+
+    // Retirement calculation
+    const retirementData = useMemo(() => {
+        const birthYear = profile?.birth_year;
+        if (!birthYear) return null;
+
+        const currentAge = new Date().getFullYear() - birthYear;
+        const monthlySavings = Math.max(income - expenses, 0) / Math.max(filteredTx.length / 30, 1) * 30; // Avg monthly savings
+        const avgMonthlySavings = income > 0 ? (income - expenses) / Math.max(1, new Set(filteredTx.map(t => t.date.slice(0, 7))).size) : 0;
+        const totalDebt = debts.reduce((s, d) => s + Number(d.remaining_amount), 0);
+        const currentNetWorth = totalAccountBalance - totalDebt;
+
+        // Target: 25x annual expenses (4% rule)
+        const monthlyExpenses = expenses > 0 ? expenses / Math.max(1, new Set(filteredTx.filter(t => t.type === 'expense').map(t => t.date.slice(0, 7))).size) : 0;
+        const annualExpenses = monthlyExpenses * 12;
+        const retirementTarget = annualExpenses * 25; // 4% withdrawal rule
+
+        if (retirementTarget <= 0 || avgMonthlySavings <= 0) return { currentAge, retirementAge: null, yearsLeft: null, target: 0, current: currentNetWorth, monthlyNeeded: 0 };
+
+        // Estimate years to reach target with 6% annual return
+        const monthlyReturn = 0.06 / 12;
+        let projected = Math.max(currentNetWorth, 0);
+        let months = 0;
+        while (projected < retirementTarget && months < 600) { // Max 50 years
+            projected = projected * (1 + monthlyReturn) + avgMonthlySavings;
+            months++;
+        }
+
+        const yearsLeft = Math.ceil(months / 12);
+        const retirementAge = currentAge + yearsLeft;
+
+        return { currentAge, retirementAge, yearsLeft, target: retirementTarget, current: currentNetWorth, monthlyNeeded: avgMonthlySavings };
+    }, [profile, income, expenses, filteredTx, totalAccountBalance, debts]);
 
     if (loading) {
         return <div className="page-content"><SkeletonDashboard /></div>;
@@ -290,6 +323,59 @@ export function Dashboard() {
                                 <span className="dui-date">{format(new Date(s.next_billing_date), 'd MMM', { locale: es })}</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Retirement Widget */}
+            {retirementData && (
+                <div className="dash-retirement">
+                    <div className="ret-header">
+                        <Palmtree size={22} />
+                        <h3>Proyección de Jubilación</h3>
+                    </div>
+                    <div className="ret-content">
+                        <div className="ret-age-display">
+                            <span className="ret-current-age">{retirementData.currentAge} años</span>
+                            <span className="ret-arrow">→</span>
+                            <span className="ret-retire-age">
+                                {retirementData.retirementAge
+                                    ? `${retirementData.retirementAge} años`
+                                    : 'Sin datos suficientes'}
+                            </span>
+                        </div>
+                        {retirementData.retirementAge && (
+                            <div className="ret-details">
+                                <div className="ret-detail">
+                                    <span className="ret-detail-label">Años restantes</span>
+                                    <span className="ret-detail-value">{retirementData.yearsLeft}</span>
+                                </div>
+                                <div className="ret-detail">
+                                    <span className="ret-detail-label">Meta (regla 4%)</span>
+                                    <span className="ret-detail-value">{fmtMoney(retirementData.target, currency)}</span>
+                                </div>
+                                <div className="ret-detail">
+                                    <span className="ret-detail-label">Patrimonio actual</span>
+                                    <span className="ret-detail-value">{fmtMoney(retirementData.current, currency)}</span>
+                                </div>
+                                <div className="ret-detail">
+                                    <span className="ret-detail-label">Ahorro mensual promedio</span>
+                                    <span className="ret-detail-value">{fmtMoney(retirementData.monthlyNeeded, currency)}</span>
+                                </div>
+                            </div>
+                        )}
+                        {retirementData.retirementAge && retirementData.retirementAge <= 65 && (
+                            <div className="ret-badge good">Podrías jubilarte antes de los 65</div>
+                        )}
+                        {retirementData.retirementAge && retirementData.retirementAge > 65 && retirementData.retirementAge <= 75 && (
+                            <div className="ret-badge moderate">Jubilación estimada entre 65 y 75 años</div>
+                        )}
+                        {retirementData.retirementAge && retirementData.retirementAge > 75 && (
+                            <div className="ret-badge warning">Incrementa tu ahorro mensual para mejorar tu proyección</div>
+                        )}
+                        {!retirementData.retirementAge && (
+                            <div className="ret-badge warning">Registra ingresos y gastos para calcular tu proyección</div>
+                        )}
                     </div>
                 </div>
             )}
