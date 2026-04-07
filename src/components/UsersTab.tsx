@@ -38,7 +38,7 @@ export function UsersTab() {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching profiles:', error);
+            // console.error('Error fetching profiles:', error);
             alert('Error al cargar la lista de usuarios. Asegúrate de tener permisos de administrador.');
         } else {
             setProfiles(data as Profile[]);
@@ -71,9 +71,12 @@ export function UsersTab() {
         setShowModal(true);
     };
 
-    const handleDeleteUser = async (userId: string) => {
-        if (userId === currentProfile?.id) return;
-        if (!confirm('¿Estás seguro de eliminar este usuario permanentemente? Esta acción no se puede deshacer.')) return;
+    const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+
+    const confirmDeleteUser = async () => {
+        const userId = deleteUserId;
+        if (!userId) return;
+        setDeleteUserId(null);
 
         try {
             const { error: fnError } = await supabase.functions.invoke('admin-users', {
@@ -86,7 +89,7 @@ export function UsersTab() {
             setProfiles(prev => prev.filter(p => p.id !== userId));
             alert('Usuario eliminado correctamente.');
         } catch (error) {
-            console.error('Delete error:', error);
+            // console.error('Delete error:', error);
             const message = error instanceof Error ? error.message : 'Error desconocido';
             alert('Error al eliminar usuario: ' + message);
         }
@@ -163,7 +166,7 @@ export function UsersTab() {
                 }
             }
         } catch (error) {
-            console.error('Submit error:', error);
+            // console.error('Submit error:', error);
             const message = error instanceof Error ? error.message : 'Intente nuevamente.';
             alert('Error al guardar usuario: ' + message);
         } finally {
@@ -277,7 +280,7 @@ export function UsersTab() {
 
                                                 <button
                                                     className="action-btn text-danger"
-                                                    onClick={() => handleDeleteUser(p.id)}
+                                                    onClick={() => { if (p.id !== currentProfile?.id) setDeleteUserId(p.id); }}
                                                     title="Eliminar permanentemente"
                                                 >
                                                     <Trash2 size={16} />
@@ -384,6 +387,19 @@ export function UsersTab() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {deleteUserId && (
+                <div className="modal-overlay" onClick={() => setDeleteUserId(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, textAlign: 'center', padding: '2rem' }}>
+                        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>¿Eliminar este usuario?</h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Esta acción es permanente y no se puede deshacer.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setDeleteUserId(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-danger" style={{ flex: 1 }} onClick={confirmDeleteUser}>Eliminar</button>
+                        </div>
                     </div>
                 </div>
             )}
