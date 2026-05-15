@@ -186,6 +186,46 @@ export function Dashboard() {
         return { currentAge, retirementAge, yearsLeft, target: retirementTarget, current: currentNetWorth, monthlyNeeded: avgMonthlySavings };
     }, [profile, income, expenses, filteredTx, totalAccountBalance, debts]);
 
+    // Spending anomalies: categories >30% over 3-month average
+    const spendingAnomalies = useMemo(() => {
+        const now = new Date();
+        const curStart = startOfMonth(now);
+        const curEnd = endOfMonth(now);
+
+        const curBycat: Record<string, number> = {};
+        for (const t of filteredTx) {
+            if (t.type !== 'expense') continue;
+            const d = parseLocalDate(t.date);
+            if (d < curStart || d > curEnd) continue;
+            const k = t.category_id || '__none__';
+            curBycat[k] = (curBycat[k] || 0) + Number(t.amount);
+        }
+
+        const sumBycat: Record<string, number> = {};
+        for (let i = 1; i <= 3; i++) {
+            const m = subMonths(now, i);
+            const mStart = startOfMonth(m); const mEnd = endOfMonth(m);
+            for (const t of filteredTx) {
+                if (t.type !== 'expense') continue;
+                const d = parseLocalDate(t.date);
+                if (d < mStart || d > mEnd) continue;
+                const k = t.category_id || '__none__';
+                sumBycat[k] = (sumBycat[k] || 0) + Number(t.amount);
+            }
+        }
+
+        const result: { name: string; current: number; avg: number; pct: number }[] = [];
+        for (const [k, current] of Object.entries(curBycat)) {
+            const avg = (sumBycat[k] || 0) / 3;
+            if (avg < 10000) continue;
+            const pct = ((current - avg) / avg) * 100;
+            if (pct < 30) continue;
+            const cat = categories.find(c => c.id === k);
+            result.push({ name: cat?.name || 'Sin categoría', current, avg, pct });
+        }
+        return result.sort((a, b) => b.pct - a.pct).slice(0, 4);
+    }, [filteredTx, categories]);
+
     if (loading) {
         return <div className="page-content"><SkeletonDashboard /></div>;
     }
@@ -458,6 +498,28 @@ export function Dashboard() {
                             <div className="ret-badge warning">Registra ingresos y gastos para calcular tu proyección</div>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* Spending anomalies */}
+            {spendingAnomalies.length > 0 && (
+                <div className="dash-anomalies">
+                    <div className="dash-anomalies-header">
+                        <TrendingUp size={16} />
+                        <h3>Gastos Inusuales Este Mes</h3>
+                    </div>
+                    <div className="dash-anomalies-list">
+                        {spendingAnomalies.map(a => (
+                            <div key={a.name} className="da-item">
+                                <span className="da-name">{a.name}</span>
+                                <div className="da-right">
+                                    <span className="da-pct">+{a.pct.toFixed(0)}% vs promedio</span>
+                                    <span className="da-amt">{fmtMoney(a.current, currency)}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="da-hint">Comparado con tu promedio de los últimos 3 meses</p>
                 </div>
             )}
 

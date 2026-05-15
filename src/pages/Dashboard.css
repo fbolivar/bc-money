@@ -404,3 +404,45 @@
     accent-color: var(--primary, #6366f1);
     cursor: pointer;
 }
+
+/* Spending Anomalies Widget */
+.dash-anomalies {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-left: 4px solid #f59e0b;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+}
+
+.dash-anomalies-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #d97706;
+}
+
+.dash-anomalies-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.dash-anomalies-list { display: flex; flex-direction: column; gap: 0; }
+
+.da-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-color, #f3f4f6);
+  font-size: 0.875rem;
+}
+
+.da-item:last-child { border-bottom: none; }
+.da-name { font-weight: 600; color: var(--text-primary, #111827); }
+.da-right { display: flex; align-items: center; gap: 0.75rem; }
+.da-pct { font-size: 0.75rem; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 0.15rem 0.45rem; border-radius: 6px; }
+.da-amt { font-weight: 600; color: var(--text-primary, #111827); font-size: 0.875rem; }
+.da-hint { margin: 0.6rem 0 0; font-size: 0.72rem; color: var(--text-secondary, #6b7280); }

@@ -1,0 +1,156 @@
+.qam-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  animation: qam-fade-in 0.18s ease;
+}
+
+@keyframes qam-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.qam-panel {
+  background: var(--card-bg, #fff);
+  width: 100%;
+  max-width: 520px;
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem 1.5rem 2rem;
+  animation: qam-slide-up 0.22s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes qam-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+@media (min-width: 600px) {
+  .qam-overlay { align-items: center; padding: 1rem; }
+  .qam-panel { border-radius: 16px; max-height: 85vh; }
+}
+
+.qam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.qam-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+
+.qam-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #6b7280);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.qam-close:hover { background: var(--hover-bg, #f3f4f6); }
+
+/* Type toggle */
+.qam-type-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.qam-type-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  transition: all 0.15s;
+}
+
+.qam-type-btn.active.expense { border-color: #ef4444; color: #ef4444; background: #fee2e2; }
+.qam-type-btn.active.income  { border-color: #10b981; color: #10b981; background: #d1fae5; }
+
+/* Form */
+.qam-form { display: flex; flex-direction: column; gap: 0.85rem; }
+
+.qam-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.qam-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.qam-field label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary, #6b7280); }
+
+.qam-input, .qam-select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-primary, #111827);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.qam-input:focus, .qam-select:focus { border-color: var(--primary, #6366f1); }
+
+.qam-amount { font-size: 1.4rem; font-weight: 700; text-align: center; height: 3rem; }
+
+.qam-error { color: #ef4444; font-size: 0.82rem; margin: 0; }
+
+.qam-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  transition: opacity 0.15s;
+}
+
+.qam-submit.expense { background: #ef4444; color: #fff; }
+.qam-submit.income  { background: #10b981; color: #fff; }
+.qam-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Floating Action Button */
+.fab-quick-add {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary, #6366f1);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+  z-index: 100;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.fab-quick-add:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.55);
+}
+
+.fab-quick-add:active { transform: scale(0.95); }
+
+@media (max-width: 768px) {
+  .fab-quick-add { bottom: 1.25rem; right: 1.25rem; }
+}

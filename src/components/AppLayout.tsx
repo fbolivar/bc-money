@@ -1,12 +1,13 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { checkAndNotify, canNotify } from '../lib/notifications';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { QuickAddModal } from './QuickAddModal';
 
 export function AppLayout() {
     const { user, loading, profile } = useAuth();
@@ -23,7 +24,9 @@ export function AppLayout() {
             alert_budget_pct: profile.alert_budget_pct ?? 80,
         });
     }, [user, profile]);
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showQuickAdd, setShowQuickAdd] = useState(false);
 
     const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
     const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
@@ -63,6 +66,23 @@ export function AppLayout() {
                     </footer>
                 </div>
             </main>
+
+            {/* Floating quick-add button */}
+            <button
+                type="button"
+                className="fab-quick-add"
+                title="Agregar transacción rápida"
+                onClick={() => setShowQuickAdd(true)}
+            >
+                <Plus size={26} />
+            </button>
+
+            {showQuickAdd && (
+                <QuickAddModal
+                    onClose={() => setShowQuickAdd(false)}
+                    onSaved={() => setShowQuickAdd(false)}
+                />
+            )}
         </div>
     );
 }
