@@ -1,10 +1,11 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
-import { WifiOff, Plus } from 'lucide-react';
+import { WifiOff, Plus, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { checkAndNotify, canNotify } from '../lib/notifications';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { useRecurringTransactions } from '../hooks/useRecurringTransactions';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { QuickAddModal } from './QuickAddModal';
@@ -31,6 +32,9 @@ export function AppLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [showMonthlySummary, setShowMonthlySummary] = useState(false);
+    const [recurringDismissed, setRecurringDismissed] = useState(false);
+
+    const { createdCount } = useRecurringTransactions(user?.id);
 
     // Show monthly summary once per month after the month changes
     useEffect(() => {
@@ -76,6 +80,13 @@ export function AppLayout() {
                     <div className="offline-banner">
                         <WifiOff size={16} />
                         <span>Sin conexión — mostrando datos guardados localmente</span>
+                    </div>
+                )}
+                {createdCount > 0 && !recurringDismissed && (
+                    <div className="recurring-banner">
+                        <RefreshCw size={15} />
+                        <span>{createdCount} transacción{createdCount > 1 ? 'es recurrentes creadas' : ' recurrente creada'} automáticamente para este mes</span>
+                        <button type="button" title="Cerrar" onClick={() => setRecurringDismissed(true)}><X size={14} /></button>
                     </div>
                 )}
                 <div className="page-content">

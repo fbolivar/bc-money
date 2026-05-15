@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     TrendingUp, TrendingDown, Wallet, Target, AlertCircle,
-    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign, Palmtree, Settings2, X,
+    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign, Palmtree, Settings2, X, FileDown,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell,
@@ -226,6 +228,82 @@ export function Dashboard() {
         return result.sort((a, b) => b.pct - a.pct).slice(0, 4);
     }, [filteredTx, categories]);
 
+    function exportDashboardPDF() {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const monthLabel = format(new Date(), 'MMMM yyyy', { locale: es });
+        const fmt = (n: number) => `${currency} ${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+        // Header
+        doc.setFillColor(99, 102, 241);
+        doc.rect(0, 0, 210, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+        doc.text('BC Money — Dashboard', 14, 10);
+        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+        doc.text(monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1), 14, 17);
+
+        // Summary cards
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Resumen del mes', 14, 32);
+
+        autoTable(doc, {
+            startY: 36,
+            head: [['Ingresos', 'Gastos', 'Balance', 'Tasa de ahorro']],
+            body: [[fmt(monthIncome), fmt(monthExpenses), fmt(monthIncome - monthExpenses), `${savingsRate.toFixed(1)}%`]],
+            styles: { fontSize: 10, halign: 'center' },
+            headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: 'bold' },
+            columnStyles: { 0: { textColor: [16, 185, 129] }, 1: { textColor: [239, 68, 68] }, 2: { textColor: [59, 130, 246] } },
+            margin: { left: 14, right: 14 },
+        });
+
+        const afterSummary = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+
+        // Category breakdown
+        if (pieData.length > 0) {
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+            doc.text('Gastos por categoría', 14, afterSummary);
+            autoTable(doc, {
+                startY: afterSummary + 4,
+                head: [['Categoría', 'Monto', '% del total']],
+                body: pieData.map(c => [c.name, fmt(c.value), `${expenses > 0 ? ((c.value / expenses) * 100).toFixed(1) : 0}%`]),
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [55, 65, 81], textColor: 255 },
+                margin: { left: 14, right: 14 },
+            });
+        }
+
+        const afterCats = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+
+        // Budgets
+        if (budgetUsage.length > 0) {
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+            doc.text('Presupuestos del mes', 14, afterCats);
+            autoTable(doc, {
+                startY: afterCats + 4,
+                head: [['Categoría', 'Presupuesto', 'Gastado', 'Estado']],
+                body: budgetUsage.map(b => [b.category, fmt(b.budget), fmt(b.spent), b.status === 'success' ? '✓ OK' : b.status === 'warning' ? '⚠ Cerca' : '✗ Excedido']),
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [55, 65, 81], textColor: 255 },
+                bodyStyles: {},
+                didParseCell: (data) => {
+                    if (data.column.index === 3 && data.section === 'body') {
+                        const v = data.cell.raw as string;
+                        data.cell.styles.textColor = v.includes('✓') ? [16, 185, 129] : v.includes('✗') ? [239, 68, 68] : [245, 158, 11];
+                    }
+                },
+                margin: { left: 14, right: 14 },
+            });
+        }
+
+        // Footer
+        const pageH = doc.internal.pageSize.height;
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(150);
+        doc.text(`Generado el ${format(new Date(), "d 'de' MMMM yyyy", { locale: es })} · BC FactoryIA SAS`, 14, pageH - 8);
+
+        doc.save(`bc-money-dashboard-${format(new Date(), 'yyyy-MM')}.pdf`);
+    }
+
     if (loading) {
         return <div className="page-content"><SkeletonDashboard /></div>;
     }
@@ -240,6 +318,9 @@ export function Dashboard() {
                         {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                 )}
+                <button type="button" className="dash-widget-settings-btn" title="Exportar PDF del mes" onClick={exportDashboardPDF}>
+                    <FileDown size={16} />
+                </button>
                 <button type="button" className="dash-widget-settings-btn" title="Personalizar dashboard" onClick={() => setShowWidgetSettings(true)}>
                     <Settings2 size={16} />
                 </button>

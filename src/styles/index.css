@@ -474,6 +474,29 @@ a:hover {
   border-bottom: 1px solid #FDE68A;
 }
 
+.recurring-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: #d1fae5;
+  color: #065f46;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: 0.5rem var(--spacing-xl);
+  border-bottom: 1px solid #a7f3d0;
+}
+.recurring-banner button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+}
+.recurring-banner button:hover { opacity: 1; }
+
 .page-content {
   padding: var(--spacing-xl);
   max-width: 1400px;
