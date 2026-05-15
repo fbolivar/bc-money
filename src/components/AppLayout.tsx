@@ -8,6 +8,9 @@ import { useOfflineStatus } from '../hooks/useOfflineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { QuickAddModal } from './QuickAddModal';
+import { MonthlySummary } from './MonthlySummary';
+import { format } from 'date-fns';
+import { subMonths } from 'date-fns';
 
 export function AppLayout() {
     const { user, loading, profile } = useAuth();
@@ -27,6 +30,22 @@ export function AppLayout() {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showQuickAdd, setShowQuickAdd] = useState(false);
+    const [showMonthlySummary, setShowMonthlySummary] = useState(false);
+
+    // Show monthly summary once per month after the month changes
+    useEffect(() => {
+        if (!user) return;
+        const prevMonth = format(subMonths(new Date(), 1), 'yyyy-MM');
+        const key = `summary_seen_${user.id}_${prevMonth}`;
+        if (!localStorage.getItem(key)) {
+            const now = new Date();
+            // Only show in the first 5 days of a new month
+            if (now.getDate() <= 5) {
+                localStorage.setItem(key, '1');
+                setShowMonthlySummary(true);
+            }
+        }
+    }, [user]);
 
     const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
     const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
@@ -82,6 +101,10 @@ export function AppLayout() {
                     onClose={() => setShowQuickAdd(false)}
                     onSaved={() => setShowQuickAdd(false)}
                 />
+            )}
+
+            {showMonthlySummary && (
+                <MonthlySummary onClose={() => setShowMonthlySummary(false)} />
             )}
         </div>
     );

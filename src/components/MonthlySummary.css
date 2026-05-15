@@ -1,0 +1,115 @@
+.ms-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: ms-fade-in 0.2s ease;
+}
+@keyframes ms-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.ms-panel {
+  background: var(--card-bg, #fff);
+  width: 100%;
+  max-width: 440px;
+  border-radius: 20px;
+  padding: 1.75rem 1.5rem 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: ms-scale-in 0.22s ease;
+}
+@keyframes ms-scale-in { from { transform: scale(0.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.ms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+.ms-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin: 0 0 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.ms-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-text-primary, #111827);
+}
+.ms-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary, #6b7280);
+  padding: 4px;
+  border-radius: 50%;
+}
+.ms-close:hover { background: var(--color-surface-hover, #f3f4f6); }
+
+.ms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.ms-card {
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ms-card.income { background: #d1fae5; color: #065f46; }
+.ms-card.expense { background: #fee2e2; color: #991b1b; }
+.ms-card.savings.good { background: #dbeafe; color: #1e40af; grid-column: 1 / -1; }
+.ms-card.savings.warn { background: #fef3c7; color: #92400e; grid-column: 1 / -1; }
+.ms-card-label { font-size: 0.75rem; font-weight: 600; opacity: 0.75; }
+.ms-card-val { font-size: 1.1rem; font-weight: 800; }
+.ms-card-sub { font-size: 0.75rem; opacity: 0.8; }
+
+.ms-stats {
+  background: var(--color-surface-hover, #f9fafb);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.ms-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.ms-stat-label { color: var(--color-text-secondary, #6b7280); flex: 1; }
+.ms-stat-val { font-weight: 700; color: var(--color-text-primary, #111827); }
+.ms-stat-val em { font-style: normal; color: var(--color-text-secondary, #6b7280); font-size: 0.78rem; }
+.icon-good { color: #10b981; }
+.icon-warn { color: #f59e0b; }
+
+.ms-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--primary, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ms-btn:hover { opacity: 0.9; }
+
+@media (max-width: 480px) {
+  .ms-panel { padding: 1.25rem 1rem 1.25rem; }
+  .ms-grid { grid-template-columns: 1fr; }
+  .ms-card.savings.good, .ms-card.savings.warn { grid-column: auto; }
+}
