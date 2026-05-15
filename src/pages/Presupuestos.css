@@ -93,6 +93,10 @@
 .toolbar h3 {
     font-size: var(--font-size-lg);
 }
+.toolbar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
 
 /* Grid */
 .budgets-grid {
@@ -134,6 +138,7 @@
     width: 12px;
     height: 12px;
     border-radius: var(--radius-full);
+    background-color: var(--dot-color, #6B7280);
 }
 .period-badge {
     font-size: 0.7rem;
@@ -169,6 +174,7 @@
 .time-marker {
     position: absolute;
     top: -3px;
+    left: var(--marker-left, 0%);
     width: 2px;
     height: 14px;
     background: var(--color-text-secondary);
@@ -262,9 +268,107 @@
     color: var(--color-text-secondary);
     font-size: 0.9rem;
 }
+.delete-icon-warning {
+    color: #F59E0B;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+    animation: alertPulse 0.3s ease-out;
+}
+.toast-success {
+    background: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+}
+.toast-error {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+}
+
+/* Month navigator */
+.month-navigator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.month-label {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    min-width: 180px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.month-current { color: var(--color-text-primary); }
+.month-future { color: var(--color-primary); }
+.month-past { color: var(--color-text-secondary); }
+
+.month-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    background: var(--color-primary);
+    color: white;
+    opacity: 0.85;
+}
+.month-tag-past {
+    background: var(--color-text-secondary);
+}
+
+.btn-sm {
+    font-size: var(--font-size-sm);
+    padding: 0.25rem 0.6rem;
+}
+
+/* Planned / future month styles */
+.overview-planned {
+    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+}
+.overview-mode-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.25);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.25rem;
+    display: inline-block;
+    margin-bottom: 0.75rem;
+}
+.budget-card.status-planned {
+    border-left: 4px solid #6366F1;
+    background: color-mix(in srgb, var(--color-surface) 97%, #6366F1 3%);
+}
+.planned-amount {
+    color: #6366F1;
+}
+.planned-label {
+    color: var(--color-text-secondary);
+    font-style: italic;
+    font-size: var(--font-size-sm);
+}
 
 /* Responsive */
 @media (max-width: 768px) {
     .budgets-grid { grid-template-columns: 1fr; }
     .budget-card-actions { opacity: 1; }
+    .toolbar { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .month-label { min-width: 150px; }
 }

@@ -4,9 +4,13 @@ import {
     LayoutDashboard, ArrowLeftRight, Wallet, Target, FileText, Settings, LogOut,
     DollarSign, Tags, Landmark, CircleDollarSign, ShieldCheck, PawPrint,
     ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
-    StickyNote, Upload, BarChart3, Users, Code, Eye, X,
+    StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
+    Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
+    MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import './Sidebar.css';
 
 const NAV_SECTIONS = [
@@ -24,10 +28,20 @@ const NAV_SECTIONS = [
         items: [
             { path: '/presupuestos', icon: Wallet, label: 'Presupuestos' },
             { path: '/metas', icon: Target, label: 'Metas' },
+            { path: '/fondo-emergencia', icon: ShieldCheck, label: 'Fondo Emergencia' },
             { path: '/deudas', icon: CircleDollarSign, label: 'Deudas' },
             { path: '/suscripciones', icon: Repeat, label: 'Suscripciones' },
             { path: '/plan-deudas', icon: Calculator, label: 'Plan Deudas' },
             { path: '/inversiones', icon: BarChart3, label: 'Inversiones' },
+            { path: '/proyeccion', icon: Activity, label: 'Proyección Flujo' },
+            { path: '/prestamos', icon: Users, label: 'Préstamos' },
+            { path: '/division', icon: Split, label: 'División Gastos' },
+            { path: '/simulador-credito', icon: PiggyBank, label: 'Simulador Crédito' },
+            { path: '/recordatorios', icon: AlarmClock, label: 'Recordatorios' },
+            { path: '/modo-viaje', icon: Plane, label: 'Modo Viaje' },
+            { path: '/transferencias', icon: ArrowLeftRight, label: 'Transferencias' },
+            { path: '/retos', icon: Trophy, label: 'Retos Financieros' },
+            { path: '/alcancia', icon: Coins, label: 'Alcancía Digital' },
         ],
     },
     {
@@ -37,6 +51,7 @@ const NAV_SECTIONS = [
             { path: '/mascotas', icon: PawPrint, label: 'Mascotas' },
             { path: '/compras', icon: ShoppingCart, label: 'Compras' },
             { path: '/hogar', icon: Hammer, label: 'Hogar' },
+            { path: '/eventos', icon: MapPin, label: 'Viajes & Eventos' },
         ],
     },
     {
@@ -44,15 +59,20 @@ const NAV_SECTIONS = [
         items: [
             { path: '/patrimonio', icon: TrendingUp, label: 'Patrimonio' },
             { path: '/calendario', icon: CalendarDays, label: 'Calendario' },
+            { path: '/vencimientos', icon: CalendarClock, label: 'Vencimientos' },
             { path: '/reportes', icon: FileText, label: 'Reportes' },
             { path: '/notas', icon: StickyNote, label: 'Notas' },
             { path: '/importar', icon: Upload, label: 'Importar' },
+            { path: '/benchmarks', icon: Globe2, label: 'Benchmarks' },
             { path: '/familia', icon: Users, label: 'Familia' },
             { path: '/vista-familiar', icon: Eye, label: 'Vista Familiar' },
-            { path: '/api', icon: Code, label: 'API' },
+            { path: '/declaracion', icon: ClipboardList, label: 'Declaración Renta' },
+            { path: '/calculadora', icon: Calculator, label: 'Calc. Freelancer' },
+            { path: '/asistente-ia', icon: Bot, label: 'BC Asesor IA' },
+            { path: '/reglas-categorias', icon: Wand2, label: 'Reglas Auto-Cat.' },
         ],
     },
-] as const;
+];
 
 interface SidebarProps {
     isOpen: boolean;
@@ -62,7 +82,10 @@ interface SidebarProps {
 const isMobile = () => window.innerWidth <= 768;
 
 export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) {
-    const { signOut, profile } = useAuth();
+    const { signOut, profile, isAdmin } = useAuth();
+    const { theme, toggleTheme } = useTheme();
+    const { status: pushStatus, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
+    const showBilling = !!profile?.billing_enabled;
 
     const handleNavClick = useCallback(() => {
         if (isMobile()) onClose();
@@ -108,6 +131,35 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
                             ))}
                         </div>
                     ))}
+                    {showBilling && (
+                        <div className="nav-section">
+                            <span className="nav-section-title">NEGOCIOS</span>
+                            <NavLink
+                                to="/facturacion"
+                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
+                                onClick={handleNavClick}
+                            >
+                                <Receipt size={18} />
+                                <span>Facturación</span>
+                            </NavLink>
+                            <NavLink
+                                to="/documentos"
+                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
+                                onClick={handleNavClick}
+                            >
+                                <Briefcase size={18} />
+                                <span>Documentos</span>
+                            </NavLink>
+                            <NavLink
+                                to="/nomina"
+                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
+                                onClick={handleNavClick}
+                            >
+                                <Users size={18} />
+                                <span>Nómina</span>
+                            </NavLink>
+                        </div>
+                    )}
                 </nav>
 
                 <div className="sidebar-footer">
@@ -123,11 +175,27 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
                         </NavLink>
                     </div>
                     <div className="sidebar-actions">
+                        <button type="button" className="nav-link theme-toggle-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}>
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
+                        </button>
+                        {pushStatus !== 'unsupported' && pushStatus !== 'denied' && (
+                            <button
+                                type="button"
+                                className="nav-link theme-toggle-btn"
+                                onClick={pushStatus === 'subscribed' ? pushUnsubscribe : pushSubscribe}
+                                disabled={pushStatus === 'loading'}
+                                title={pushStatus === 'subscribed' ? 'Desactivar notificaciones' : 'Activar notificaciones'}
+                            >
+                                {pushStatus === 'subscribed' ? <BellOff size={18} /> : <Bell size={18} />}
+                                <span>{pushStatus === 'subscribed' ? 'Notificaciones on' : 'Activar alertas'}</span>
+                            </button>
+                        )}
                         <NavLink to="/configuracion" className="nav-link" onClick={handleNavClick}>
                             <Settings size={18} />
                             <span>Configuración</span>
                         </NavLink>
-                        <button onClick={signOut} className="nav-link logout-btn">
+                        <button type="button" onClick={signOut} className="nav-link logout-btn">
                             <LogOut size={18} />
                             <span>Cerrar Sesión</span>
                         </button>

@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Inicializacion unica con getSession (refresca tokens expirados)
     useEffect(() => {
         const fallbackTimer = setTimeout(() => setLoading(false), 5000);
+        let profileChannel: ReturnType<typeof supabase.channel> | null = null;
 
         // getSession() refresca el JWT si esta expirado, LUEGO cargamos perfil
         supabase.auth.getSession().then(async ({ data: { session: s } }) => {
@@ -73,6 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setSession(s);
                 setUser(s.user);
                 await fetchProfile(s.user.id);
+
+                // Suscripcion realtime al perfil propio: detecta cambios externos
+                // (ej: otro usuario asigna family_id al invitar a esta cuenta)
+                profileChannel = supabase
+                    .channel(`profile-${s.user.id}`)
+                    .on('postgres_changes', {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'profiles',
+                        filter: `id=eq.${s.user.id}`,
+                    }, () => fetchProfile(s.user.id))
+                    .subscribe();
             }
             clearTimeout(fallbackTimer);
             setLoading(false);
@@ -106,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => {
             clearTimeout(fallbackTimer);
             subscription.unsubscribe();
+            profileChannel?.unsubscribe();
         };
     }, [fetchProfile]);
 

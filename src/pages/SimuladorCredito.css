@@ -1,0 +1,308 @@
+.sim-page {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.sim-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sim-header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.sim-header p {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.sim-header svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+/* Layout */
+.sim-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .sim-layout { grid-template-columns: 1fr; }
+}
+
+/* Panel izquierdo */
+.sim-panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.sim-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.sim-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.sim-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.sim-optional {
+    font-weight: 400;
+    text-transform: none;
+    font-size: 0.78rem;
+}
+
+.sim-input {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    width: 100%;
+    transition: border-color 0.15s;
+}
+
+.sim-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.sim-input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.sim-hint {
+    font-size: 0.77rem;
+    color: var(--color-text-secondary);
+}
+
+/* Presets */
+.sim-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.sim-preset-btn {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    background: var(--color-background);
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.sim-preset-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.sim-preset-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sim-preset-desc {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin: 0;
+}
+
+/* Panel derecho */
+.sim-results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.sim-empty {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* KPIs */
+.sim-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.sim-kpi {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sim-kpi svg {
+    color: var(--color-text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.sim-kpi--primary {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.sim-kpi--primary svg { color: var(--color-primary); }
+
+.sim-kpi--ok { border-color: #10B981; }
+.sim-kpi--ok svg { color: #10B981; }
+
+.sim-kpi--warn { border-color: #F59E0B; }
+.sim-kpi--warn svg { color: #F59E0B; }
+
+.sim-kpi--danger { border-color: #EF4444; }
+.sim-kpi--danger svg { color: #EF4444; }
+
+.sim-kpi-label {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.sim-kpi-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+}
+
+.sim-kpi-sub {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+/* Chart */
+.sim-chart-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.sim-chart-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 1rem;
+}
+
+/* Tabla */
+.sim-tabla-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.sim-tabla-toggle {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    text-align: center;
+}
+
+.sim-tabla-toggle:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.sim-tabla-wrap {
+    margin-top: 1rem;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.sim-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.sim-tabla th {
+    background: var(--color-bg-secondary);
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.sim-tabla th:first-child { text-align: center; }
+
+.sim-tabla td {
+    padding: 0.45rem 0.75rem;
+    text-align: right;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.sim-tabla td:first-child { text-align: center; color: var(--color-text-secondary); }
+.sim-tabla td.capital { color: #3B82F6; font-weight: 500; }
+.sim-tabla td.interes { color: #EF4444; }
+
+.sim-tabla tr:last-child td { border-bottom: none; }
+.sim-tabla tr:hover td { background: var(--color-bg-secondary); }

@@ -1,37 +1,45 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     TrendingUp, TrendingDown, Wallet, Target, AlertCircle,
-    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign, Palmtree,
+    ArrowUpRight, ArrowDownRight, Plus, CreditCard, Activity, ReceiptText, CircleDollarSign, Palmtree, Settings2, X,
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
+import { fetchTransactions, fetchAccounts, fetchCategories, fetchBudgets } from '../lib/cachedSupabase';
 import type { Transaction, Goal, Budget, Category, Account, Debt, Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { SkeletonDashboard } from '../components/Skeleton';
+import { AIInsights } from '../components/AIInsights';
+import { OnboardingChecklist } from '../components/OnboardingChecklist';
+import { TRMWidget } from '../components/TRMWidget';
+import { HealthScore } from '../components/HealthScore';
+import { WeeklySummary } from '../components/WeeklySummary';
+import { useExchangeRates } from '../hooks/useExchangeRates';
+import { useRealtimeSync } from '../hooks/useRealtimeSync';
 import { parseLocalDate } from '../lib/dates';
 import './Dashboard.css';
 
 async function getDashboardData(userId: string) {
-    const [txRes, goalsRes, catRes, budgRes, accRes, debtRes, subRes] = await Promise.all([
-        supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(500),
-        supabase.from('goals').select('*').eq('user_id', userId).order('priority', { ascending: true }),
-        supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
-        supabase.from('budgets').select('*').eq('user_id', userId),
-        supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
-        supabase.from('debts').select('*').eq('user_id', userId).eq('status', 'active'),
-        supabase.from('subscriptions').select('*').eq('user_id', userId).eq('status', 'active'),
+    const [transactions, goals, categories, budgets, accounts, debts, subs] = await Promise.all([
+        fetchTransactions(userId).catch(() => [] as Transaction[]),
+        supabase.from('goals').select('*').eq('user_id', userId).order('priority', { ascending: true }).then(r => r.data || []),
+        fetchCategories(userId).catch(() => [] as Category[]),
+        fetchBudgets(userId).catch(() => [] as Budget[]),
+        fetchAccounts(userId).catch(() => [] as Account[]),
+        supabase.from('debts').select('*').eq('user_id', userId).eq('status', 'active').then(r => r.data || []),
+        supabase.from('subscriptions').select('*').eq('user_id', userId).eq('status', 'active').then(r => r.data || []),
     ]);
     return {
-        transactions: txRes.data || [], goals: goalsRes.data || [],
-        categories: catRes.data || [], budgets: budgRes.data || [],
-        accounts: accRes.data || [], debts: debtRes.data || [],
-        subscriptions: subRes.data || [],
+        transactions, goals,
+        categories, budgets,
+        accounts, debts,
+        subscriptions: subs,
     };
 }
 
@@ -50,18 +58,42 @@ export function Dashboard() {
     const [debts, setDebts] = useState<Debt[]>([]);
     const [subs, setSubs] = useState<Subscription[]>([]);
     const [accountFilter, setAccountFilter] = useState<string>('all');
+    const [showWidgetSettings, setShowWidgetSettings] = useState(false);
 
-    const currency = profile?.currency || 'USD';
+    const WIDGET_DEFAULTS = { weeklySummary: true, aiInsights: true, trm: true, healthScore: true, upcomingPayments: true, retirement: true, activity: true };
+    type WidgetKey = keyof typeof WIDGET_DEFAULTS;
+    const [widgets, setWidgets] = useState<Record<WidgetKey, boolean>>(() => {
+        try {
+            const saved = localStorage.getItem('dash_widgets');
+            return saved ? { ...WIDGET_DEFAULTS, ...JSON.parse(saved) } : WIDGET_DEFAULTS;
+        } catch { return WIDGET_DEFAULTS; }
+    });
+
+    const toggleWidget = (key: WidgetKey) => {
+        setWidgets(prev => {
+            const next = { ...prev, [key]: !prev[key] };
+            localStorage.setItem('dash_widgets', JSON.stringify(next));
+            return next;
+        });
+    };
+
+    const currency = profile?.currency || 'COP';
+    const { convert: convertFx, loading: fxLoading } = useExchangeRates(currency);
+
+    const fetchData = useCallback(async () => {
+        if (!user) return;
+        const data = await getDashboardData(user.id);
+        setTransactions(data.transactions); setGoals(data.goals);
+        setCategories(data.categories); setBudgets(data.budgets);
+        setAccounts(data.accounts); setDebts(data.debts);
+        setSubs(data.subscriptions); setLoading(false);
+    }, [user]);
 
     useEffect(() => {
-        if (!user) return;
-        getDashboardData(user.id).then(data => {
-            setTransactions(data.transactions); setGoals(data.goals);
-            setCategories(data.categories); setBudgets(data.budgets);
-            setAccounts(data.accounts); setDebts(data.debts);
-            setSubs(data.subscriptions); setLoading(false);
-        });
-    }, [user]);
+        fetchData();
+    }, [fetchData]);
+
+    useRealtimeSync(user?.id, fetchData);
 
     const filteredTx = useMemo(() =>
         accountFilter === 'all' ? transactions : transactions.filter(t => t.account_id === accountFilter),
@@ -113,8 +145,13 @@ export function Dashboard() {
         return { category: cat?.name || 'General', budget: Number(b.amount), spent, pct, status: pct <= 80 ? 'success' : pct <= 100 ? 'warning' : 'danger' };
     }), [budgets, filteredTx, categories]);
 
-    // Total accounts balance
-    const totalAccountBalance = accounts.reduce((s, a) => s + Number(a.balance), 0);
+    // Total accounts balance — convert each account to user's base currency
+    const hasMultiCurrency = accounts.some(a => a.currency && a.currency !== currency);
+    const totalAccountBalance = accounts.reduce((s, a) => {
+        const bal = Number(a.balance);
+        const acctCurrency = a.currency || currency;
+        return s + convertFx(bal, acctCurrency);
+    }, 0);
 
     // Retirement calculation
     const retirementData = useMemo(() => {
@@ -155,13 +192,43 @@ export function Dashboard() {
 
     return (
         <div className="dashboard animate-fadeIn">
-            {/* Account Filter */}
-            {accounts.length > 0 && (
-                <div className="dash-filter-row">
+            {/* Account Filter + Widget Settings */}
+            <div className="dash-filter-row">
+                {accounts.length > 0 && (
                     <select className="dash-filter-select" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} title="Filtrar por cuenta">
                         <option value="all">Todas las cuentas</option>
                         {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
+                )}
+                <button type="button" className="dash-widget-settings-btn" title="Personalizar dashboard" onClick={() => setShowWidgetSettings(true)}>
+                    <Settings2 size={16} />
+                </button>
+            </div>
+
+            {showWidgetSettings && (
+                <div className="modal-overlay" onClick={() => setShowWidgetSettings(false)}>
+                    <div className="dash-widget-panel" onClick={e => e.stopPropagation()}>
+                        <div className="dwp-header">
+                            <h3>Personalizar dashboard</h3>
+                            <button type="button" title="Cerrar" onClick={() => setShowWidgetSettings(false)}><X size={18} /></button>
+                        </div>
+                        <div className="dwp-list">
+                            {([
+                                ['weeklySummary', 'Resumen semanal'],
+                                ['aiInsights', 'Insights IA'],
+                                ['trm', 'Widget TRM'],
+                                ['healthScore', 'Salud financiera'],
+                                ['upcomingPayments', 'Próximos pagos'],
+                                ['retirement', 'Proyección jubilación'],
+                                ['activity', 'Gráfico de actividad'],
+                            ] as [WidgetKey, string][]).map(([key, label]) => (
+                                <label key={key} className="dwp-item">
+                                    <span>{label}</span>
+                                    <input type="checkbox" checked={widgets[key]} onChange={() => toggleWidget(key)} />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -196,6 +263,14 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Onboarding Checklist — visible solo para usuarios nuevos */}
+            <OnboardingChecklist />
+
+            {widgets.weeklySummary && <WeeklySummary />}
+            {widgets.aiInsights && <AIInsights />}
+            {widgets.trm && <TRMWidget />}
+            {widgets.healthScore && <HealthScore />}
 
             {/* Middle Row: Latest Transactions + Statistics */}
             <div className="dash-middle">
@@ -269,7 +344,11 @@ export function Dashboard() {
                 <div className="dash-card dash-balance-details">
                     <h3>Detalle del Balance</h3>
                     <span className="dbd-total">{fmtMoney(totalAccountBalance || balance, currency)}</span>
-                    <span className="dbd-subtitle">Balance Total</span>
+                    <span className="dbd-subtitle">
+                        {hasMultiCurrency
+                            ? fxLoading ? 'Convirtiendo divisas…' : `Total convertido a ${currency} · tasas live`
+                            : 'Balance Total'}
+                    </span>
                     <div className="dbd-grid">
                         <div className="dbd-item blue">
                             <span className="dbd-item-label">Este Mes</span>
@@ -283,27 +362,29 @@ export function Dashboard() {
                 </div>
 
                 {/* Activity Chart */}
-                <div className="dash-card dash-activity">
-                    <div className="dash-card-header">
-                        <h3>Actividad</h3>
-                        <Activity size={18} className="dash-activity-icon" />
+                {widgets.activity && (
+                    <div className="dash-card dash-activity">
+                        <div className="dash-card-header">
+                            <h3>Actividad</h3>
+                            <Activity size={18} className="dash-activity-icon" />
+                        </div>
+                        <ResponsiveContainer width="100%" height={160}>
+                            <BarChart data={monthlyData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                                <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                <Bar dataKey="ingresos" fill="#10B981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="gastos" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
-                    <ResponsiveContainer width="100%" height={160}>
-                        <BarChart data={monthlyData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                            <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                            <Bar dataKey="ingresos" fill="#10B981" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="gastos" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+                )}
             </div>
 
             {/* Quick Actions */}
             {/* Upcoming Payments */}
-            {(debts.length > 0 || subs.length > 0) && (
+            {widgets.upcomingPayments && (debts.length > 0 || subs.length > 0) && (
                 <div className="dash-upcoming">
                     <h3>Próximos Pagos</h3>
                     <div className="dash-upcoming-list">
@@ -328,7 +409,7 @@ export function Dashboard() {
             )}
 
             {/* Retirement Widget */}
-            {retirementData && (
+            {widgets.retirement && retirementData && (
                 <div className="dash-retirement">
                     <div className="ret-header">
                         <Palmtree size={22} />

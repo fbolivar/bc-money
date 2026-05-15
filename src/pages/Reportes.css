@@ -231,6 +231,9 @@
 .btn.btn-export.xls:hover { background: #1a5c38; }
 .btn.btn-export.pdf { background: #DC2626; color: white; }
 .btn.btn-export.pdf:hover { background: #B91C1C; }
+.btn.btn-export.informe-pdf { background: #1a365d; color: white; }
+.btn.btn-export.informe-pdf:hover:not(:disabled) { background: #2a4a7f; }
+.btn.btn-export.informe-pdf:disabled { opacity: 0.65; cursor: not-allowed; }
 
 /* Report sections */
 .report-section {
@@ -251,3 +254,447 @@
 .total-row.highlight td { background: var(--color-primary-light); }
 .positive { color: #10B981; }
 .negative { color: #EF4444; }
+
+/* ── TREEMAP ── */
+.treemap-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+}
+
+.treemap-section h3 {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+.treemap-section-period {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-tertiary);
+    text-transform: capitalize;
+}
+
+.treemap-tooltip {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.85rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+}
+
+.treemap-tooltip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+
+.treemap-tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.treemap-tooltip-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+}
+
+.treemap-tooltip-amount {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.treemap-tooltip-pct {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* ── COMPARAR PERÍODOS ── */
+.cmp-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+}
+
+.cmp-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+/* Selectors row */
+.cmp-selectors {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.cmp-period-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 200px;
+}
+
+.cmp-period-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cmp-period-a .cmp-period-label { color: #3B82F6; }
+.cmp-period-b .cmp-period-label { color: #10B981; }
+
+.cmp-select-row {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.cmp-select {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-border);
+    background: var(--color-background);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.cmp-period-a .cmp-select:focus { outline: none; border-color: #3B82F6; }
+.cmp-period-b .cmp-select:focus { outline: none; border-color: #10B981; }
+
+.cmp-vs {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-tertiary);
+    padding: 0 var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+/* Metrics grid */
+.cmp-metrics-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1.4fr auto 1.4fr;
+    gap: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.cmp-metric-header,
+.cmp-metric-name,
+.cmp-metric-val,
+.cmp-change {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+}
+
+.cmp-metric-header:last-child,
+.cmp-metric-name:last-child,
+.cmp-metric-val:last-child,
+.cmp-change:last-child {
+    border-bottom: none;
+}
+
+/* Remove bottom border from the last grid row (last 4 cells) */
+.cmp-metrics-grid > *:nth-last-child(-n+4) {
+    border-bottom: none;
+}
+
+.cmp-metric-header {
+    background-color: var(--color-background);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+}
+
+.cmp-header-a { color: #3B82F6; }
+.cmp-header-b { color: #10B981; }
+.cmp-change-col { justify-content: center; }
+
+.cmp-metric-name {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    background-color: var(--color-background);
+}
+
+.cmp-metric-val {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+}
+
+.cmp-val-a { border-left: 3px solid #3B82F620; }
+.cmp-val-b { border-left: 3px solid #10B98120; }
+
+.cmp-change {
+    gap: 3px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    justify-content: center;
+    white-space: nowrap;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+}
+
+.cmp-positive { color: #10B981; }
+.cmp-negative { color: #EF4444; }
+.cmp-neutral  { color: var(--color-text-tertiary); }
+
+/* Chart card */
+.cmp-chart-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    background-color: var(--color-background);
+}
+
+.cmp-chart-card h3 {
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.cmp-chart-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.cmp-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.cmp-dot-a { background-color: #3B82F6; }
+.cmp-dot-b { background-color: #10B981; }
+
+/* Top 5 categories side-by-side */
+.cmp-top-cats {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--spacing-lg);
+    align-items: start;
+}
+
+.cmp-top-cat-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.cmp-top-cat-col h4 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+.cmp-col-title-a { color: #3B82F6; }
+.cmp-col-title-b { color: #10B981; }
+
+.cmp-top-cat-divider {
+    width: 1px;
+    background-color: var(--color-border);
+    align-self: stretch;
+}
+
+.cmp-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.cmp-cat-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-background);
+    font-size: var(--font-size-sm);
+}
+
+.cmp-cat-rank {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+
+.cmp-cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    background-color: var(--dot-color, #6B7280);
+}
+
+.cmp-cat-name {
+    flex: 1;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cmp-cat-amount {
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cmp-selectors { flex-direction: column; align-items: stretch; }
+    .cmp-vs { text-align: center; }
+    .cmp-metrics-grid { grid-template-columns: 1.4fr 1.2fr auto 1.2fr; }
+    .cmp-top-cats { grid-template-columns: 1fr; }
+    .cmp-top-cat-divider { width: 100%; height: 1px; }
+}
+
+@media (max-width: 480px) {
+    .cmp-metrics-grid { grid-template-columns: 1fr 1fr; }
+    .cmp-metrics-grid .cmp-metric-header:nth-child(3),
+    .cmp-metrics-grid .cmp-metric-header:nth-child(4),
+    .cmp-metrics-grid .cmp-change,
+    .cmp-metrics-grid .cmp-val-b { display: none; }
+}
+
+/* ── Mapa de calor de gastos diarios ── */
+.heatmap-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.heatmap-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--color-text-primary);
+}
+
+.heatmap-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.heatmap-wd {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: var(--color-bg-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: transform 0.1s;
+    overflow: hidden;
+    padding: 2px;
+}
+
+.heatmap-cell--empty {
+    background: transparent;
+}
+
+.heatmap-cell--active:hover {
+    transform: scale(1.08);
+    z-index: 1;
+}
+
+.heatmap-day {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.heatmap-amount {
+    font-size: 0.6rem;
+    color: var(--color-text-primary);
+    opacity: 0.9;
+    line-height: 1;
+    margin-top: 1px;
+}
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.heatmap-legend-bar {
+    display: flex;
+    height: 10px;
+    flex: 1;
+    max-width: 120px;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+@media (max-width: 480px) {
+    .heatmap-day { font-size: 0.65rem; }
+    .heatmap-amount { display: none; }
+}

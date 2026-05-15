@@ -40,3 +40,110 @@ tr.deselected { opacity: 0.4; }
 @media (max-width: 768px) { .imp-formats { flex-direction: column; } .imp-summary { flex-direction: column; gap: 0.25rem; } }
 
 .imp-format.highlight { border-left: 4px solid var(--color-primary); background: var(--color-primary-light); }
+
+/* ── Hidden file input (replaces inline style) ── */
+.imp-file-input { display: none; }
+
+/* ── Checkbox column width (replaces inline style) ── */
+.imp-th-check { width: 40px; }
+
+/* ── Instructions second heading margin (replaces inline style) ── */
+.imp-instructions-h3-mt { margin-top: 1rem; }
+
+/* ── Bank Selector Section ── */
+.imp-bank-section { background: var(--color-surface); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.75rem; }
+.imp-bank-title { font-size: 1rem; font-weight: 700; margin: 0; }
+.imp-bank-subtitle { font-size: 0.85rem; color: var(--color-text-secondary); margin: 0; }
+
+.imp-bank-grid { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.imp-bank-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.75rem 1rem; min-width: 100px; background: var(--color-background); border: 2px solid var(--color-border); border-radius: var(--radius-lg); cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; font-family: inherit; }
+.imp-bank-btn:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+.imp-bank-btn.active { border-color: var(--color-primary); background: var(--color-primary-light); box-shadow: 0 0 0 3px var(--color-primary-light, #e0e7ff); }
+.imp-bank-logo { font-size: 1.5rem; line-height: 1; }
+.imp-bank-name { font-size: 0.75rem; font-weight: 600; color: var(--color-text-primary); text-align: center; }
+.imp-bank-check { position: absolute; top: 4px; right: 6px; font-size: 0.7rem; color: var(--color-primary); font-weight: 700; }
+
+/* ── Preset Hint Bar ── */
+.imp-preset-hint { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.imp-preset-hint .imp-preset-logo { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+.imp-preset-hint > div { display: flex; flex-direction: column; gap: 0.2rem; }
+.imp-preset-hint strong { font-size: 0.875rem; }
+.imp-preset-hint span { font-size: 0.8rem; color: var(--color-text-secondary); }
+.imp-preset-meta { font-size: 0.75rem !important; color: var(--color-text-tertiary) !important; }
+.imp-preset-meta code { background: var(--color-border); border-radius: 3px; padding: 0 4px; font-size: 0.72rem; }
+
+/* ── Preview title + found badge ── */
+.imp-preview-title { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.imp-preview-title h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+.imp-found-badge { padding: 0.2rem 0.65rem; background: var(--color-primary-light, #e0e7ff); color: var(--color-primary); border-radius: 999px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.imp-autocat-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.65rem; background: rgba(99, 102, 241, 0.12); color: #6366f1; border-radius: 999px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; border: 1px solid rgba(99, 102, 241, 0.25); }
+
+/* ── Summary Cards ── */
+.imp-summary-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.imp-summary-card { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 140px; padding: 0.75rem 1rem; border-radius: var(--radius-lg); background: var(--color-background); border: 1px solid var(--color-border); }
+.imp-summary-card.income { border-color: #D1FAE5; background: #ECFDF5; }
+.imp-summary-card.expense { border-color: #FEE2E2; background: #FFF5F5; }
+.imp-summary-card.selected { border-color: var(--color-primary-light, #e0e7ff); background: var(--color-primary-light); }
+.imp-summary-card svg { flex-shrink: 0; color: var(--color-text-tertiary); }
+.imp-summary-card.income svg { color: #10B981; }
+.imp-summary-card.expense svg { color: #EF4444; }
+.imp-sc-label { font-size: 0.75rem; color: var(--color-text-secondary); flex: 1; }
+.imp-sc-value { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary); }
+.imp-sc-value.income { color: #10B981; }
+.imp-sc-value.expense { color: #EF4444; }
+
+/* ── Row color-coding ── */
+tr.row-income td { background: rgba(16, 185, 129, 0.04); }
+tr.row-expense td { background: rgba(239, 68, 68, 0.03); }
+tr.deselected td { background: transparent !important; }
+tr.row-duplicate td { background: rgba(245, 158, 11, 0.08) !important; }
+
+/* ── Duplicate badge ── */
+.dup-badge {
+    display: inline-flex; align-items: center; margin-left: 0.4rem;
+    padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-size: 0.68rem;
+    font-weight: 700; background: #fef3c7; color: #92400e;
+    border: 1px solid #fcd34d; vertical-align: middle;
+}
+
+/* ── Duplicate summary card ── */
+.imp-summary-card.duplicate { border-color: #fcd34d; background: #fef3c7; }
+.imp-summary-card.duplicate svg { color: #d97706; }
+.imp-sc-value.duplicate { color: #92400e; }
+
+/* ── Amount column colors ── */
+.amount-income { color: #10B981; font-weight: 600; }
+.amount-expense { color: #EF4444; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .imp-bank-grid { gap: 0.4rem; }
+  .imp-bank-btn { min-width: 80px; padding: 0.6rem 0.75rem; }
+  .imp-summary-cards { flex-direction: column; }
+  .imp-preview-title { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+}
+
+/* ── Pending File Panel ── */
+.imp-pending-file { background: var(--color-surface); border: 2px solid var(--color-border); border-radius: var(--radius-xl); padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+.imp-pending-info { display: flex; align-items: center; gap: 0.6rem; }
+.imp-pending-info svg { color: var(--color-primary); flex-shrink: 0; }
+.imp-pending-name { font-size: 0.9rem; font-weight: 600; color: var(--color-text-primary); flex: 1; word-break: break-all; }
+.imp-pending-clear { padding: 0.25rem; border-radius: var(--radius-md); color: var(--color-text-tertiary); line-height: 1; }
+.imp-pending-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ── AI Button ── */
+.btn-ai { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 1.1rem; border-radius: var(--radius-lg); border: none; font-family: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.35); transition: opacity 0.15s, box-shadow 0.15s; }
+.btn-ai:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 4px 14px rgba(99,102,241,0.45); }
+.btn-ai:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── AI Spinner ── */
+.imp-ai-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: imp-spin 0.75s linear infinite; flex-shrink: 0; }
+@keyframes imp-spin { to { transform: rotate(360deg); } }
+
+/* ── AI Detected Banner ── */
+.imp-ai-detected { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(99,102,241,0.3); border-radius: var(--radius-lg); font-size: 0.82rem; color: #6366f1; font-weight: 500; align-self: flex-start; }
+.imp-ai-detected svg { flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .imp-pending-actions { flex-direction: column; }
+  .imp-pending-actions .btn-ai, .imp-pending-actions .btn-primary { width: 100%; justify-content: center; }
+}

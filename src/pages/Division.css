@@ -1,0 +1,347 @@
+.division-page {
+    padding: var(--spacing-lg);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.division-loading {
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: var(--spacing-2xl);
+}
+
+.division-toast {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+}
+
+.division-toast.success {
+    background: var(--color-success);
+    color: #fff;
+}
+
+.division-toast.error {
+    background: var(--color-danger);
+    color: #fff;
+}
+
+.division-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.division-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.division-title-row h1 {
+    font-size: var(--font-size-2xl);
+    color: var(--color-text-primary);
+}
+
+.division-title-icon {
+    color: var(--color-primary);
+}
+
+.division-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.division-summary-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.division-summary-card.pending svg {
+    color: var(--color-warning);
+}
+
+.division-summary-card.settled svg {
+    color: var(--color-success);
+}
+
+.division-summary-card > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.division-summary-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.division-summary-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+.division-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.division-empty-icon {
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+}
+
+.division-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.division-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-normal);
+}
+
+.division-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.division-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.division-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.division-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.division-card-date {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.division-card-total {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.division-card-amount {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
+
+.division-card-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.division-participants-group {
+    margin-top: var(--spacing-sm);
+}
+
+.division-group-label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-warning);
+    margin-bottom: 0.4rem;
+}
+
+.division-group-label.settled-label {
+    color: var(--color-success);
+}
+
+.division-participant {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.25rem;
+    font-size: var(--font-size-sm);
+}
+
+.division-participant.pending {
+    background: var(--color-warning-light);
+}
+
+.division-participant.settled {
+    background: var(--color-success-light);
+    opacity: 0.75;
+}
+
+.participant-name {
+    flex: 1;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.participant-amount {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    min-width: 6rem;
+    text-align: right;
+}
+
+.mark-paid-btn {
+    color: var(--color-success) !important;
+}
+
+.icon-settled {
+    color: var(--color-success);
+}
+
+.icon-pending {
+    color: var(--color-text-tertiary);
+}
+
+.division-modal {
+    max-width: 600px;
+    width: 100%;
+}
+
+.division-participants-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.division-participants-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-sm {
+    padding: 0.3rem 0.75rem;
+    font-size: var(--font-size-xs);
+}
+
+.division-participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.division-participant-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.participant-name-input {
+    flex: 2;
+}
+
+.participant-amount-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.participant-paid-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+}
+
+.participant-paid-label input[type='checkbox'] {
+    display: none;
+}
+
+.division-total-check {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface-hover);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.total-ok {
+    color: var(--color-success);
+    font-weight: var(--font-weight-semibold);
+}
+
+.total-warn {
+    color: var(--color-warning);
+    font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 600px) {
+    .division-page {
+        padding: var(--spacing-md);
+    }
+
+    .division-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .division-card-header {
+        flex-direction: column;
+    }
+
+    .division-participant-row {
+        flex-wrap: wrap;
+    }
+
+    .participant-name-input,
+    .participant-amount-input {
+        flex: 1 1 45%;
+    }
+}

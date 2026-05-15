@@ -1,11 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, TrendingUp, Coins } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Edit2, Trash2, X, Target, Shield, GraduationCap, ShoppingBag, TrendingUp, Coins, Percent, AlertTriangle, Trophy, Star, Zap, Award } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Goal } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format, differenceInDays, differenceInMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Metas.css';
+
+interface SavingsRule {
+    id: string;
+    goal_id: string;
+    percentage: number;
+    active: boolean;
+    created_at: string;
+}
 
 const GOAL_TYPES = [
     { value: 'emergency_fund', label: 'Fondo de Emergencia', icon: Shield, color: '#10B981' },
@@ -170,12 +178,45 @@ export function Metas() {
     };
 
     const [deleteGoalId, setDeleteGoalId] = useState<string | null>(null);
+    const [rulesGoal, setRulesGoal] = useState<Goal | null>(null);
+    const [goalRules, setGoalRules] = useState<SavingsRule[]>([]);
+    const [rulePercentage, setRulePercentage] = useState('');
+    const [ruleDeleteId, setRuleDeleteId] = useState<string | null>(null);
 
     const confirmDeleteGoal = async () => {
         if (!deleteGoalId) return;
         await supabase.from('goals').delete().eq('id', deleteGoalId);
         setDeleteGoalId(null);
         refreshGoals();
+    };
+
+    const openRulesModal = async (goal: Goal) => {
+        setRulesGoal(goal);
+        setRulePercentage('');
+        const { data } = await supabase.from('savings_rules').select('*').eq('goal_id', goal.id).order('created_at');
+        setGoalRules((data as SavingsRule[]) || []);
+    };
+
+    const handleAddRule = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!rulesGoal || !user) return;
+        const pct = parseFloat(rulePercentage);
+        if (isNaN(pct) || pct <= 0 || pct > 100) return;
+        await supabase.from('savings_rules').insert({ user_id: user.id, goal_id: rulesGoal.id, percentage: pct });
+        setRulePercentage('');
+        const { data } = await supabase.from('savings_rules').select('*').eq('goal_id', rulesGoal.id).order('created_at');
+        setGoalRules((data as SavingsRule[]) || []);
+    };
+
+    const handleDeleteRule = async (id: string) => {
+        await supabase.from('savings_rules').delete().eq('id', id);
+        setGoalRules(prev => prev.filter(r => r.id !== id));
+        setRuleDeleteId(null);
+    };
+
+    const handleToggleRule = async (rule: SavingsRule) => {
+        await supabase.from('savings_rules').update({ active: !rule.active }).eq('id', rule.id);
+        setGoalRules(prev => prev.map(r => r.id === rule.id ? { ...r, active: !r.active } : r));
     };
 
     const closeModal = () => {
@@ -212,6 +253,18 @@ export function Metas() {
     const activeGoals = goals.filter(g => g.status === 'active');
     const completedGoals = goals.filter(g => g.status === 'completed');
 
+    const badges = useMemo(() => {
+        const earned: { icon: typeof Trophy; label: string; colorKey: string }[] = [];
+        if (completedGoals.length >= 1) earned.push({ icon: Trophy, label: 'Primera meta', colorKey: 'amber' });
+        if (completedGoals.length >= 5) earned.push({ icon: Star, label: '5 metas logradas', colorKey: 'indigo' });
+        if (completedGoals.length >= 10) earned.push({ icon: Award, label: '10 metas élite', colorKey: 'pink' });
+        if (completedGoals.some(g => Number(g.target_amount) >= 1_000_000)) earned.push({ icon: Coins, label: 'Millonario', colorKey: 'emerald' });
+        if (completedGoals.some(g => Number(g.target_amount) >= 10_000_000)) earned.push({ icon: Zap, label: 'Super ahorro 10M', colorKey: 'red' });
+        const types = new Set(completedGoals.map(g => g.goal_type));
+        if (types.size >= 3) earned.push({ icon: Target, label: 'Diversificado', colorKey: 'blue' });
+        return earned;
+    }, [completedGoals]);
+
     if (loading) {
         return <div className="loading-container"><div className="loading-spinner"></div></div>;
     }
@@ -245,6 +298,9 @@ export function Metas() {
                                             <GoalIcon size={24} color="white" />
                                         </div>
                                         <div className="goal-actions">
+                                            <button className="btn btn-icon btn-ghost" title="Reglas de ahorro" onClick={() => openRulesModal(goal)}>
+                                                <Percent size={14} />
+                                            </button>
                                             <button className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
                                                 <Edit2 size={14} />
                                             </button>
@@ -316,32 +372,58 @@ export function Metas() {
                 </div>
             </section>
 
+            {/* Badges */}
+            {badges.length > 0 && (
+                <section className="goals-section">
+                    <h3>Logros desbloqueados</h3>
+                    <div className="badges-grid">
+                        {badges.map((b) => {
+                            const BadgeIcon = b.icon;
+                            return (
+                                <div key={b.label} className={`badge-card badge-${b.colorKey}`}>
+                                    <BadgeIcon size={28} />
+                                    <span>{b.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
             {/* Completed Goals */}
             {completedGoals.length > 0 && (
                 <section className="goals-section">
                     <h3>Metas Completadas ({completedGoals.length}) 🎉</h3>
                     <div className="goals-grid">
-                        {completedGoals.map((goal) => (
-                            <div key={goal.id} className="goal-card completed">
-                                <div className="goal-header">
-                                    <div className="goal-icon" style={{ backgroundColor: goal.color }}>
-                                        <Target size={24} color="white" />
+                        {completedGoals.map((goal) => {
+                            const GoalIcon = GOAL_TYPES.find(t => t.value === goal.goal_type)?.icon || Target;
+                            return (
+                                <div key={goal.id} className="goal-card completed">
+                                    <div className="goal-header">
+                                        <div className="goal-icon" data-color={goal.color} style={{ backgroundColor: goal.color }}>
+                                            <GoalIcon size={24} color="white" />
+                                        </div>
+                                        <div className="goal-actions">
+                                            <button type="button" title="Editar meta" className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button type="button" title="Eliminar meta" className="btn btn-icon btn-ghost" onClick={() => setDeleteGoalId(goal.id)}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="goal-actions">
-                                        <button className="btn btn-icon btn-ghost" onClick={() => openEdit(goal)}>
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button className="btn btn-icon btn-ghost" onClick={() => setDeleteGoalId(goal.id)}>
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                    <h4 className="goal-name">{goal.name}</h4>
+                                    <p className="goal-completed-text">
+                                        ¡Meta alcanzada! {currency} {Number(goal.target_amount).toLocaleString()}
+                                    </p>
+                                    {goal.completed_at && (
+                                        <p className="goal-completed-date">
+                                            {format(new Date(goal.completed_at), 'd MMM yyyy', { locale: es })}
+                                        </p>
+                                    )}
                                 </div>
-                                <h4 className="goal-name">{goal.name}</h4>
-                                <p className="goal-completed-text">
-                                    ¡Meta alcanzada! {currency} {Number(goal.target_amount).toLocaleString()}
-                                </p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             )}
@@ -562,6 +644,63 @@ export function Metas() {
                                 <button type="submit" className="btn btn-primary">Aportar</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Savings Rules Modal */}
+            {rulesGoal && (
+                <div className="modal-overlay" onClick={() => setRulesGoal(null)}>
+                    <div className="modal modal-rules" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Reglas de ahorro — {rulesGoal.name}</h2>
+                            <button className="btn btn-icon btn-ghost" title="Cerrar" onClick={() => setRulesGoal(null)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="rules-modal-hint">Al registrar un ingreso, las reglas activas asignan automáticamente un porcentaje a esta meta.</p>
+                            <div className="rules-list">
+                                {goalRules.length === 0 && <p className="rules-empty">Sin reglas configuradas.</p>}
+                                {goalRules.map(rule => (
+                                    <div key={rule.id} className="rule-row">
+                                        <Percent size={14} />
+                                        <span className="rule-pct">{rule.percentage}%</span>
+                                        <button
+                                            type="button"
+                                            className={`btn btn-sm ${rule.active ? 'btn-success-ghost' : 'btn-ghost'} rule-toggle`}
+                                            onClick={() => handleToggleRule(rule)}
+                                            title={rule.active ? 'Desactivar' : 'Activar'}
+                                        >
+                                            {rule.active ? 'Activa' : 'Inactiva'}
+                                        </button>
+                                        {ruleDeleteId === rule.id ? (
+                                            <div className="rule-delete-confirm">
+                                                <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteRule(rule.id)}>Eliminar</button>
+                                                <button type="button" className="btn btn-sm btn-secondary" onClick={() => setRuleDeleteId(null)}>Cancelar</button>
+                                            </div>
+                                        ) : (
+                                            <button type="button" className="btn btn-icon btn-ghost" onClick={() => setRuleDeleteId(rule.id)} title="Eliminar regla"><Trash2 size={13} /></button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <form onSubmit={handleAddRule} className="rule-add-form">
+                                <label className="form-label">Añadir nueva regla (%)</label>
+                                <div className="rule-add-row">
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={rulePercentage}
+                                        onChange={e => setRulePercentage(e.target.value)}
+                                        placeholder="Ej: 10"
+                                        min="1"
+                                        max="100"
+                                        step="0.01"
+                                        required
+                                    />
+                                    <button type="submit" className="btn btn-primary"><Plus size={16} /> Añadir</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}

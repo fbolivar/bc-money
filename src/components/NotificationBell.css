@@ -1,0 +1,216 @@
+.nb-wrapper {
+  position: relative;
+}
+
+.nb-btn {
+  position: relative;
+}
+
+.nb-btn--active {
+  color: var(--color-primary);
+}
+
+.nb-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+  background-color: var(--color-danger);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.nb-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: nb-drop 0.18s ease-out;
+}
+
+@keyframes nb-drop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nb-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.nb-panel-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.nb-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nb-markall-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.nb-markall-btn:hover {
+  background: #DDD6FE;
+}
+
+.nb-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nb-close-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.nb-panel-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.nb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.nb-empty-icon {
+  opacity: 0.35;
+}
+
+.nb-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background 0.12s;
+  position: relative;
+}
+
+.nb-item:last-child {
+  border-bottom: none;
+}
+
+.nb-item--clickable {
+  cursor: pointer;
+}
+
+.nb-item--clickable:hover {
+  background: var(--color-surface-hover);
+}
+
+.nb-item--unread {
+  background: #F5F3FF;
+}
+
+.nb-item--unread:hover {
+  background: #EDE9FE;
+}
+
+.nb-item-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.nb-item--info    .nb-item-icon { color: var(--color-secondary); }
+.nb-item--warning .nb-item-icon { color: var(--color-warning); }
+.nb-item--danger  .nb-item-icon { color: var(--color-danger); }
+.nb-item--success .nb-item-icon { color: var(--color-success); }
+
+.nb-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.nb-item-title {
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nb-item-body {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.nb-item-time {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0.1rem;
+}
+
+.nb-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .nb-panel {
+    width: calc(100vw - 1.5rem);
+    right: -0.5rem;
+  }
+}

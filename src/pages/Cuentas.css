@@ -220,6 +220,9 @@
     margin-top: auto;
     padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .account-balance {
     font-size: 1.25rem;
@@ -227,6 +230,13 @@
     color: var(--text-primary);
 }
 .account-balance.negative { color: #EF4444; }
+.min-balance-badge {
+    display: inline-flex;
+    align-items: center;
+    color: #F97316;
+    cursor: default;
+    flex-shrink: 0;
+}
 
 /* FAB */
 .cuentas-container .fab-add {
@@ -433,4 +443,32 @@
     .cuentas-grid { grid-template-columns: 1fr; }
     .form-row.two-cols { grid-template-columns: 1fr; }
     .cta-toast { left: 1rem; right: 1rem; }
+}
+
+
+/* Balance history chart */
+.cuentas-history {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    padding: 1.25rem 1.25rem 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Burn rate prediction badge */
+.account-burn-rate {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.35rem;
+    letter-spacing: 0.01em;
+}
+.account-burn-rate.burn-ok    { color: #10b981; }
+.account-burn-rate.burn-warn  { color: #f59e0b; }
+.account-burn-rate.burn-critical { color: #ef4444; }
+
+.cuentas-history h3 {
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
 }

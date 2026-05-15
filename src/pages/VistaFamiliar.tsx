@@ -137,192 +137,216 @@ export function VistaFamiliar() {
             )}
 
             {/* Accounts */}
-            {shared.includes('accounts') && accounts.length > 0 && (
+            {shared.includes('accounts') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><Landmark size={18} /><h3>Cuentas</h3><span className="vf-badge">{fmt(totalBalance, currency)}</span></div>
-                    <div className="vf-cards">
-                        {accounts.map(a => (
-                            <div key={a.id} className="vf-card"><span className="vf-card-name">{a.name}</span><span className="vf-card-value">{fmt(Number(a.balance), a.currency)}</span></div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><Landmark size={18} /><h3>Cuentas</h3>{accounts.length > 0 && <span className="vf-badge">{fmt(totalBalance, currency)}</span>}</div>
+                    {accounts.length > 0 ? (
+                        <div className="vf-cards">
+                            {accounts.map(a => (
+                                <div key={a.id} className="vf-card"><span className="vf-card-name">{a.name}</span><span className="vf-card-value">{fmt(Number(a.balance), a.currency)}</span></div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin cuentas registradas aún</p>}
                 </div>
             )}
 
             {/* Transactions summary */}
-            {shared.includes('transactions') && transactions.length > 0 && (
+            {shared.includes('transactions') && (
                 <div className="vf-section">
                     <div className="vf-section-header"><ArrowLeftRight size={18} /><h3>Transacciones Recientes</h3></div>
-                    <div className="vf-metrics">
-                        <div className="vf-metric green"><TrendingUp size={16} /><div><span className="vf-m-value">{fmt(income, currency)}</span><span className="vf-m-label">Ingresos</span></div></div>
-                        <div className="vf-metric red"><TrendingDown size={16} /><div><span className="vf-m-value">{fmt(expenses, currency)}</span><span className="vf-m-label">Gastos</span></div></div>
-                    </div>
-                    <div className="vf-list">
-                        {transactions.slice(0, 10).map(tx => (
-                            <div key={tx.id} className="vf-list-item">
-                                <span className="vf-li-date">{format(parseLocalDate(tx.date), 'd MMM', { locale: es })}</span>
-                                <span className="vf-li-desc">{tx.description || 'Transacción'}</span>
-                                <span className={`vf-li-amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmt(Number(tx.amount), currency)}</span>
+                    {transactions.length > 0 ? (
+                        <>
+                            <div className="vf-metrics">
+                                <div className="vf-metric green"><TrendingUp size={16} /><div><span className="vf-m-value">{fmt(income, currency)}</span><span className="vf-m-label">Ingresos</span></div></div>
+                                <div className="vf-metric red"><TrendingDown size={16} /><div><span className="vf-m-value">{fmt(expenses, currency)}</span><span className="vf-m-label">Gastos</span></div></div>
                             </div>
-                        ))}
-                    </div>
+                            <div className="vf-list">
+                                {transactions.slice(0, 10).map(tx => (
+                                    <div key={tx.id} className="vf-list-item">
+                                        <span className="vf-li-date">{format(parseLocalDate(tx.date), 'd MMM', { locale: es })}</span>
+                                        <span className="vf-li-desc">{tx.description || 'Transacción'}</span>
+                                        <span className={`vf-li-amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmt(Number(tx.amount), currency)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    ) : <p className="vf-empty-section">Sin transacciones registradas aún</p>}
                 </div>
             )}
 
             {/* Budgets */}
-            {shared.includes('budgets') && budgets.length > 0 && (
+            {shared.includes('budgets') && (
                 <div className="vf-section">
                     <div className="vf-section-header"><Wallet size={18} /><h3>Presupuestos</h3></div>
-                    <div className="vf-cards">
-                        {budgets.map(b => {
-                            const cat = categories.find(c => c.id === b.category_id);
-                            const spent = transactions.filter(t => t.type === 'expense' && t.category_id === b.category_id).reduce((s, t) => s + Number(t.amount), 0);
-                            const pct = Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0;
-                            return (
-                                <div key={b.id} className="vf-card">
-                                    <span className="vf-card-name">{cat?.name || 'General'}</span>
-                                    <span className="vf-card-sub">{fmt(spent, currency)} / {fmt(Number(b.amount), currency)}</span>
-                                    <div className="vf-progress"><div className={`vf-progress-bar ${pct > 100 ? 'danger' : pct > 80 ? 'warning' : 'ok'}`} style={{ width: `${Math.min(pct, 100)}%` }}></div></div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {budgets.length > 0 ? (
+                        <div className="vf-cards">
+                            {budgets.map(b => {
+                                const cat = categories.find(c => c.id === b.category_id);
+                                const spent = transactions.filter(t => t.type === 'expense' && t.category_id === b.category_id).reduce((s, t) => s + Number(t.amount), 0);
+                                const pct = Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0;
+                                return (
+                                    <div key={b.id} className="vf-card">
+                                        <span className="vf-card-name">{cat?.name || 'General'}</span>
+                                        <span className="vf-card-sub">{fmt(spent, currency)} / {fmt(Number(b.amount), currency)}</span>
+                                        <div className="vf-progress"><div className={`vf-progress-bar ${pct > 100 ? 'danger' : pct > 80 ? 'warning' : 'ok'}`} style={{ width: `${Math.min(pct, 100)}%` }}></div></div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin presupuestos configurados aún</p>}
                 </div>
             )}
 
             {/* Goals */}
-            {shared.includes('goals') && goals.length > 0 && (
+            {shared.includes('goals') && (
                 <div className="vf-section">
                     <div className="vf-section-header"><Target size={18} /><h3>Metas de Ahorro</h3></div>
-                    <div className="vf-cards">
-                        {goals.map(g => {
-                            const pct = Number(g.target_amount) > 0 ? (Number(g.current_amount) / Number(g.target_amount)) * 100 : 0;
-                            return (
-                                <div key={g.id} className="vf-card">
-                                    <span className="vf-card-name">{g.name}</span>
-                                    <span className="vf-card-sub">{fmt(Number(g.current_amount), currency)} / {fmt(Number(g.target_amount), currency)}</span>
-                                    <div className="vf-progress"><div className="vf-progress-bar ok" style={{ width: `${Math.min(pct, 100)}%` }}></div></div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {goals.length > 0 ? (
+                        <div className="vf-cards">
+                            {goals.map(g => {
+                                const pct = Number(g.target_amount) > 0 ? (Number(g.current_amount) / Number(g.target_amount)) * 100 : 0;
+                                return (
+                                    <div key={g.id} className="vf-card">
+                                        <span className="vf-card-name">{g.name}</span>
+                                        <span className="vf-card-sub">{fmt(Number(g.current_amount), currency)} / {fmt(Number(g.target_amount), currency)}</span>
+                                        <div className="vf-progress"><div className="vf-progress-bar ok" style={{ width: `${Math.min(pct, 100)}%` }}></div></div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin metas activas aún</p>}
                 </div>
             )}
 
             {/* Debts */}
-            {shared.includes('debts') && debts.length > 0 && (
+            {shared.includes('debts') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><CircleDollarSign size={18} /><h3>Deudas</h3><span className="vf-badge danger">{fmt(totalDebt, currency)}</span></div>
-                    <div className="vf-cards">
-                        {debts.map(d => (
-                            <div key={d.id} className="vf-card">
-                                <span className="vf-card-name">{d.name}{!d.is_current && <span className="vf-mora">EN MORA</span>}</span>
-                                <span className="vf-card-value negative">{fmt(Number(d.remaining_amount), d.currency)}</span>
-                                {d.total_installments && <span className="vf-card-sub">Cuota {d.paid_installments}/{d.total_installments}</span>}
-                            </div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><CircleDollarSign size={18} /><h3>Deudas</h3>{debts.length > 0 && <span className="vf-badge danger">{fmt(totalDebt, currency)}</span>}</div>
+                    {debts.length > 0 ? (
+                        <div className="vf-cards">
+                            {debts.map(d => (
+                                <div key={d.id} className="vf-card">
+                                    <span className="vf-card-name">{d.name}{!d.is_current && <span className="vf-mora">EN MORA</span>}</span>
+                                    <span className="vf-card-value negative">{fmt(Number(d.remaining_amount), d.currency)}</span>
+                                    {d.total_installments && <span className="vf-card-sub">Cuota {d.paid_installments}/{d.total_installments}</span>}
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin deudas activas</p>}
                 </div>
             )}
 
             {/* Subscriptions */}
-            {shared.includes('subscriptions') && subscriptions.length > 0 && (
+            {shared.includes('subscriptions') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><Repeat size={18} /><h3>Suscripciones</h3><span className="vf-badge">{fmt(monthlySubs, currency)}/mes</span></div>
-                    <div className="vf-list">
-                        {subscriptions.map(s => (
-                            <div key={s.id} className="vf-list-item">
-                                <span className="vf-li-desc">{s.name}</span>
-                                <span className="vf-li-amount expense">{fmt(Number(s.amount), s.currency)}/{s.billing_cycle === 'monthly' ? 'mes' : s.billing_cycle === 'yearly' ? 'año' : s.billing_cycle}</span>
-                            </div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><Repeat size={18} /><h3>Suscripciones</h3>{subscriptions.length > 0 && <span className="vf-badge">{fmt(monthlySubs, currency)}/mes</span>}</div>
+                    {subscriptions.length > 0 ? (
+                        <div className="vf-list">
+                            {subscriptions.map(s => (
+                                <div key={s.id} className="vf-list-item">
+                                    <span className="vf-li-desc">{s.name}</span>
+                                    <span className="vf-li-amount expense">{fmt(Number(s.amount), s.currency)}/{s.billing_cycle === 'monthly' ? 'mes' : s.billing_cycle === 'yearly' ? 'año' : s.billing_cycle}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin suscripciones activas</p>}
                 </div>
             )}
 
             {/* Investments */}
-            {shared.includes('investments') && investments.length > 0 && (
+            {shared.includes('investments') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><BarChart3 size={18} /><h3>Inversiones</h3><span className="vf-badge">{fmt(investmentValue, currency)}</span></div>
-                    <div className="vf-cards">
-                        {investments.map(i => {
-                            const val = i.quantity * (i.current_price || i.purchase_price);
-                            const cost = i.quantity * i.purchase_price;
-                            const gain = val - cost;
-                            return (
-                                <div key={i.id} className="vf-card">
-                                    <span className="vf-card-name">{i.symbol || i.name}</span>
-                                    <span className="vf-card-value">{fmt(val, i.currency)}</span>
-                                    <span className={`vf-card-sub ${gain >= 0 ? 'positive' : 'negative'}`}>{gain >= 0 ? '+' : ''}{fmt(gain, i.currency)}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <div className="vf-section-header"><BarChart3 size={18} /><h3>Inversiones</h3>{investments.length > 0 && <span className="vf-badge">{fmt(investmentValue, currency)}</span>}</div>
+                    {investments.length > 0 ? (
+                        <div className="vf-cards">
+                            {investments.map(i => {
+                                const val = i.quantity * (i.current_price || i.purchase_price);
+                                const cost = i.quantity * i.purchase_price;
+                                const gain = val - cost;
+                                return (
+                                    <div key={i.id} className="vf-card">
+                                        <span className="vf-card-name">{i.symbol || i.name}</span>
+                                        <span className="vf-card-value">{fmt(val, i.currency)}</span>
+                                        <span className={`vf-card-sub ${gain >= 0 ? 'positive' : 'negative'}`}>{gain >= 0 ? '+' : ''}{fmt(gain, i.currency)}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin inversiones registradas aún</p>}
                 </div>
             )}
 
             {/* Warranties */}
-            {shared.includes('warranties') && warranties.length > 0 && (
+            {shared.includes('warranties') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><ShieldCheck size={18} /><h3>Garantías</h3><span className="vf-badge">{warranties.length}</span></div>
-                    <div className="vf-cards">
-                        {warranties.map(w => {
-                            const days = Math.ceil((new Date(w.warranty_end_date).getTime() - Date.now()) / 86400000);
-                            return (
-                                <div key={w.id} className="vf-card">
-                                    <span className="vf-card-name">{w.product_name}</span>
-                                    <span className="vf-card-sub">{w.brand || ''}{w.store ? ` · ${w.store}` : ''}</span>
-                                    <span className={`vf-card-sub ${days < 0 ? 'negative' : days <= 30 ? 'warning' : 'positive'}`}>
-                                        {days < 0 ? 'Vencida' : `${days} días restantes`}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <div className="vf-section-header"><ShieldCheck size={18} /><h3>Garantías</h3>{warranties.length > 0 && <span className="vf-badge">{warranties.length}</span>}</div>
+                    {warranties.length > 0 ? (
+                        <div className="vf-cards">
+                            {warranties.map(w => {
+                                const days = Math.ceil((new Date(w.warranty_end_date).getTime() - Date.now()) / 86400000);
+                                return (
+                                    <div key={w.id} className="vf-card">
+                                        <span className="vf-card-name">{w.product_name}</span>
+                                        <span className="vf-card-sub">{w.brand || ''}{w.store ? ` · ${w.store}` : ''}</span>
+                                        <span className={`vf-card-sub ${days < 0 ? 'negative' : days <= 30 ? 'warning' : 'positive'}`}>
+                                            {days < 0 ? 'Vencida' : `${days} días restantes`}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin garantías registradas aún</p>}
                 </div>
             )}
 
             {/* Pets */}
-            {shared.includes('pets') && pets.length > 0 && (
+            {shared.includes('pets') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><PawPrint size={18} /><h3>Mascotas</h3><span className="vf-badge">{pets.length}</span></div>
-                    <div className="vf-cards">
-                        {pets.map(p => (
-                            <div key={p.id} className="vf-card">
-                                <span className="vf-card-name">{p.name}</span>
-                                <span className="vf-card-sub">{p.species}{p.breed ? ` · ${p.breed}` : ''}{p.weight ? ` · ${p.weight}kg` : ''}</span>
-                            </div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><PawPrint size={18} /><h3>Mascotas</h3>{pets.length > 0 && <span className="vf-badge">{pets.length}</span>}</div>
+                    {pets.length > 0 ? (
+                        <div className="vf-cards">
+                            {pets.map(p => (
+                                <div key={p.id} className="vf-card">
+                                    <span className="vf-card-name">{p.name}</span>
+                                    <span className="vf-card-sub">{p.species}{p.breed ? ` · ${p.breed}` : ''}{p.weight ? ` · ${p.weight}kg` : ''}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin mascotas registradas aún</p>}
                 </div>
             )}
 
             {/* Shopping Lists */}
-            {shared.includes('shopping') && shoppingLists.length > 0 && (
+            {shared.includes('shopping') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><ShoppingCart size={18} /><h3>Listas de Compras</h3><span className="vf-badge">{shoppingLists.length} activas</span></div>
-                    <div className="vf-list">
-                        {shoppingLists.map(l => (
-                            <div key={l.id} className="vf-list-item">
-                                <span className="vf-li-desc">{l.name}</span>
-                                {l.budget_limit && <span className="vf-li-amount expense">Límite: {fmt(l.budget_limit, currency)}</span>}
-                            </div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><ShoppingCart size={18} /><h3>Listas de Compras</h3>{shoppingLists.length > 0 && <span className="vf-badge">{shoppingLists.length} activas</span>}</div>
+                    {shoppingLists.length > 0 ? (
+                        <div className="vf-list">
+                            {shoppingLists.map(l => (
+                                <div key={l.id} className="vf-list-item">
+                                    <span className="vf-li-desc">{l.name}</span>
+                                    {l.budget_limit && <span className="vf-li-amount expense">Límite: {fmt(l.budget_limit, currency)}</span>}
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin listas de compras activas</p>}
                 </div>
             )}
 
             {/* Home Items */}
-            {shared.includes('home') && homeItems.length > 0 && (
+            {shared.includes('home') && (
                 <div className="vf-section">
-                    <div className="vf-section-header"><Hammer size={18} /><h3>Hogar</h3><span className="vf-badge">{homeItems.length} elementos</span></div>
-                    <div className="vf-cards">
-                        {homeItems.map(h => (
-                            <div key={h.id} className="vf-card">
-                                <span className="vf-card-name">{h.name}</span>
-                                <span className="vf-card-sub">{h.area}{h.brand ? ` · ${h.brand}` : ''}</span>
-                            </div>
-                        ))}
-                    </div>
+                    <div className="vf-section-header"><Hammer size={18} /><h3>Hogar</h3>{homeItems.length > 0 && <span className="vf-badge">{homeItems.length} elementos</span>}</div>
+                    {homeItems.length > 0 ? (
+                        <div className="vf-cards">
+                            {homeItems.map(h => (
+                                <div key={h.id} className="vf-card">
+                                    <span className="vf-card-name">{h.name}</span>
+                                    <span className="vf-card-sub">{h.area}{h.brand ? ` · ${h.brand}` : ''}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="vf-empty-section">Sin elementos del hogar registrados aún</p>}
                 </div>
             )}
         </div>

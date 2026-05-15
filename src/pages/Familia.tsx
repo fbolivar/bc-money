@@ -6,7 +6,7 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Family, FamilyMember } from '../lib/supabase';
+import type { Family, FamilyMember, Budget, Category } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import './Familia.css';
 
@@ -51,6 +51,11 @@ export function Familia() {
     const [savingModules, setSavingModules] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
+    // Presupuesto colaborativo
+    const [famBudgets, setFamBudgets] = useState<Budget[]>([]);
+    const [famCategories, setFamCategories] = useState<Category[]>([]);
+    const [memberSpending, setMemberSpending] = useState<Record<string, Record<string, number>>>({}); // userId -> catId -> amount
+
     const showToast = useCallback((msg: string, type: 'success' | 'error') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); }, []);
 
     const fetchData = useCallback(async () => {
@@ -81,6 +86,49 @@ export function Familia() {
     }, [user, profile]);
 
     useEffect(() => { if (user) fetchData(); }, [user, fetchData]);
+
+    // Presupuesto colaborativo: carga cuando hay familia con módulo budgets compartido
+    useEffect(() => {
+        if (!family || !user) return;
+        const shared = family.shared_modules || [];
+        if (!shared.includes('budgets')) return;
+
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        const lastDay = `${y}-${String(m + 1).padStart(2, '0')}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, '0')}`;
+
+        async function loadCollabBudgets() {
+            const ownerId = family!.owner_id;
+            const [budgetsRes, catsRes] = await Promise.all([
+                supabase.from('budgets').select('*').eq('user_id', ownerId),
+                supabase.from('categories').select('*').or(`user_id.eq.${ownerId},is_system.eq.true`),
+            ]);
+            setFamBudgets(budgetsRes.data || []);
+            setFamCategories(catsRes.data || []);
+
+            // Gasto del mes por cada miembro activo
+            const activeMembers = members.filter(mem => mem.status === 'active');
+            const spending: Record<string, Record<string, number>> = {};
+            await Promise.all(activeMembers.map(async mem => {
+                const { data: txs } = await supabase
+                    .from('transactions')
+                    .select('category_id, amount')
+                    .eq('user_id', mem.user_id)
+                    .eq('type', 'expense')
+                    .gte('date', firstDay)
+                    .lte('date', lastDay);
+                spending[mem.user_id] = {};
+                for (const t of txs ?? []) {
+                    if (!t.category_id) continue;
+                    spending[mem.user_id][t.category_id] = (spending[mem.user_id][t.category_id] ?? 0) + Number(t.amount);
+                }
+            }));
+            setMemberSpending(spending);
+        }
+        loadCollabBudgets();
+    }, [family, members, user]);
 
     const isOwner = family && family.owner_id === user?.id;
 
@@ -221,6 +269,58 @@ export function Familia() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Presupuesto Familiar Colaborativo */}
+                    {famBudgets.length > 0 && members.filter(m => m.status === 'active').length > 0 && (
+                        <div className="fam-collab-budget">
+                            <h3><Wallet size={18} /> Presupuesto Familiar — {new Date().toLocaleString('es-CO', { month: 'long', year: 'numeric' })}</h3>
+                            <p className="fam-collab-desc">Gasto del mes actual de cada miembro vs el objetivo</p>
+                            <div className="fam-collab-table">
+                                <div className="fam-collab-head">
+                                    <span>Categoría / Objetivo</span>
+                                    {members.filter(m => m.status === 'active').map(m => (
+                                        <span key={m.user_id} className="fam-collab-member-name">
+                                            {(m.full_name || m.email || '?')[0].toUpperCase()}
+                                            <small>{(m.full_name || m.email || '').split(' ')[0]}</small>
+                                        </span>
+                                    ))}
+                                </div>
+                                {famBudgets.map(b => {
+                                    const cat = famCategories.find(c => c.id === b.category_id);
+                                    const target = Number(b.amount);
+                                    const activeMembers = members.filter(m => m.status === 'active');
+                                    return (
+                                        <div key={b.id} className="fam-collab-row">
+                                            <div className="fam-collab-cat">
+                                                <span className="fam-collab-cat-dot" style={{ backgroundColor: cat?.color ?? '#6B7280' }} />
+                                                <div>
+                                                    <strong>{cat?.name ?? 'Sin nombre'}</strong>
+                                                    <small>{profile?.currency} {target.toLocaleString()}</small>
+                                                </div>
+                                            </div>
+                                            {activeMembers.map(m => {
+                                                const spent = memberSpending[m.user_id]?.[b.category_id] ?? 0;
+                                                const pct = target > 0 ? Math.min((spent / target) * 100, 100) : 0;
+                                                const over = target > 0 && spent > target;
+                                                return (
+                                                    <div key={m.user_id} className="fam-collab-cell">
+                                                        <div className="fam-collab-bar-wrap">
+                                                            <div
+                                                                className={`fam-collab-bar ${over ? 'over' : pct > 80 ? 'warn' : 'ok'}`}
+                                                                style={{ width: `${pct}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className={`fam-collab-pct ${over ? 'over' : ''}`}>{pct.toFixed(0)}%</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <p className="fam-collab-note">* Los porcentajes muestran el gasto de cada miembro respecto al objetivo de presupuesto del propietario</p>
                         </div>
                     )}
 

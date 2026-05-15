@@ -2,8 +2,9 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
+import { BackupRestore } from '../components/BackupRestore';
 import { createBackup, restoreBackup } from '../lib/backup';
-import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle, Moon, Sun, BellRing } from 'lucide-react';
+import { User, Shield, Lock, Save, DollarSign, Bell, HardDrive, Download, Upload, AlertTriangle, CheckCircle, Moon, Sun, BellRing, Mail } from 'lucide-react';
 import { requestNotificationPermission, canNotify } from '../lib/notifications';
 import './Configuracion.css';
 
@@ -31,6 +32,8 @@ export function Configuracion() {
         alert_debt_days: profile?.alert_debt_days ?? 7,
         alert_budget_pct: profile?.alert_budget_pct ?? 80,
     });
+    const [emailAlertsEnabled, setEmailAlertsEnabled] = useState<boolean>(profile?.email_alerts_enabled ?? false);
+    const [savingEmailAlert, setSavingEmailAlert] = useState(false);
     const [backupPassword, setBackupPassword] = useState('');
     const [backupConfirmPassword, setBackupConfirmPassword] = useState('');
     const [restorePassword, setRestorePassword] = useState('');
@@ -64,6 +67,16 @@ export function Configuracion() {
             await refreshProfile();
         }
         setSavingCurrency(false);
+    };
+
+    const handleEmailAlertToggle = async (enabled: boolean) => {
+        if (!user) return;
+        setEmailAlertsEnabled(enabled);
+        setSavingEmailAlert(true);
+        const { error } = await supabase.from('profiles').update({ email_alerts_enabled: enabled }).eq('id', user.id);
+        if (error) setMessage({ type: 'error', text: 'Error al guardar: ' + error.message });
+        else { setMessage({ type: 'success', text: enabled ? 'Resumen semanal activado' : 'Resumen semanal desactivado' }); await refreshProfile(); }
+        setSavingEmailAlert(false);
     };
 
     const handleSaveAlerts = async () => {
@@ -437,6 +450,25 @@ export function Configuracion() {
                                     {canNotify() && <span style={{ color: '#10B981', fontWeight: 600, fontSize: '0.85rem' }}>Activas</span>}
                                 </div>
 
+                                <div className="profile-card" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <Mail size={20} />
+                                        <div>
+                                            <span style={{ fontWeight: 600 }}>Alertas por correo</span>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0 }}>Resumen financiero semanal por correo</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleEmailAlertToggle(!emailAlertsEnabled)}
+                                        disabled={savingEmailAlert}
+                                        className={`theme-toggle ${emailAlertsEnabled ? 'dark' : ''}`}
+                                        title="Activar resumen semanal por correo"
+                                    >
+                                        <span className="theme-toggle-knob"></span>
+                                    </button>
+                                </div>
+
                                 <div className="alerts-grid">
                                     <div className="form-group">
                                         <label>Días aviso garantías</label>
@@ -616,6 +648,9 @@ export function Configuracion() {
                                     {message.text}
                                 </div>
                             )}
+
+                            {/* JSON Backup / Restore — exporta más tablas sin cifrado */}
+                            <BackupRestore />
                         </div>
                     )}
 

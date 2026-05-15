@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AppLayout } from './components/AppLayout';
 
 // Lazy loading components
@@ -29,12 +30,31 @@ const ImportarExtractos = lazy(() => import('./pages/ImportarExtractos').then(mo
 const Inversiones = lazy(() => import('./pages/Inversiones').then(module => ({ default: module.Inversiones })));
 const Familia = lazy(() => import('./pages/Familia').then(module => ({ default: module.Familia })));
 const VistaFamiliar = lazy(() => import('./pages/VistaFamiliar').then(module => ({ default: module.VistaFamiliar })));
-const ApiDocs = lazy(() => import('./pages/ApiDocs').then(module => ({ default: module.ApiDocs })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
+const Facturacion = lazy(() => import('./pages/Facturacion').then(module => ({ default: module.Facturacion })));
+const AsistenteIA = lazy(() => import('./pages/AsistenteIA').then(module => ({ default: module.AsistenteIA })));
+const Declaracion = lazy(() => import('./pages/Declaracion').then(module => ({ default: module.Declaracion })));
+const Calculadora = lazy(() => import('./pages/Calculadora').then(module => ({ default: module.Calculadora })));
+const Proyeccion = lazy(() => import('./pages/Proyeccion').then(module => ({ default: module.Proyeccion })));
+const Prestamos = lazy(() => import('./pages/Prestamos').then(module => ({ default: module.Prestamos })));
+const Documentos = lazy(() => import('./pages/Documentos').then(module => ({ default: module.Documentos })));
+const ReglasCategorizacion = lazy(() => import('./pages/ReglasCategorizacion').then(module => ({ default: module.ReglasCategorizacion })));
+const Nomina = lazy(() => import('./pages/Nomina').then(module => ({ default: module.Nomina })));
+const Vencimientos = lazy(() => import('./pages/Vencimientos').then(module => ({ default: module.Vencimientos })));
+const Division = lazy(() => import('./pages/Division').then(module => ({ default: module.Division })));
+const FondoEmergencia = lazy(() => import('./pages/FondoEmergencia').then(module => ({ default: module.FondoEmergencia })));
+const Eventos = lazy(() => import('./pages/Eventos').then(module => ({ default: module.Eventos })));
+const SimuladorCredito = lazy(() => import('./pages/SimuladorCredito').then(module => ({ default: module.SimuladorCredito })));
+const Recordatorios = lazy(() => import('./pages/Recordatorios').then(module => ({ default: module.Recordatorios })));
+const ModoViaje = lazy(() => import('./pages/ModoViaje').then(module => ({ default: module.ModoViaje })));
+const Transferencias = lazy(() => import('./pages/Transferencias').then(module => ({ default: module.Transferencias })));
+const Retos = lazy(() => import('./pages/Retos').then(module => ({ default: module.Retos })));
+const AlcanciaDigital = lazy(() => import('./pages/AlcanciaDigital').then(module => ({ default: module.AlcanciaDigital })));
+const Benchmarks = lazy(() => import('./pages/Benchmarks').then(module => ({ default: module.Benchmarks })));
 
 function LoadingFallback() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <div className="app-loading-fallback">
       <div className="loading-spinner"></div>
     </div>
   );
@@ -42,6 +62,7 @@ function LoadingFallback() {
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<LoadingFallback />}>
@@ -73,9 +94,28 @@ function App() {
               <Route path="/inversiones" element={<Inversiones />} />
               <Route path="/familia" element={<Familia />} />
               <Route path="/vista-familiar" element={<VistaFamiliar />} />
-              <Route path="/api" element={<ApiDocs />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
+              <Route path="/facturacion" element={<Facturacion />} />
+              <Route path="/asistente-ia" element={<AsistenteIA />} />
+              <Route path="/calculadora" element={<Calculadora />} />
+              <Route path="/declaracion" element={<Declaracion />} />
+              <Route path="/proyeccion" element={<Proyeccion />} />
+              <Route path="/documentos" element={<Documentos />} />
+              <Route path="/prestamos" element={<Prestamos />} />
+              <Route path="/reglas-categorias" element={<ReglasCategorizacion />} />
+              <Route path="/nomina" element={<Nomina />} />
+              <Route path="/vencimientos" element={<Vencimientos />} />
+              <Route path="/division" element={<Division />} />
+              <Route path="/fondo-emergencia" element={<FondoEmergencia />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/simulador-credito" element={<SimuladorCredito />} />
+              <Route path="/recordatorios" element={<Recordatorios />} />
+              <Route path="/modo-viaje" element={<ModoViaje />} />
+              <Route path="/transferencias" element={<Transferencias />} />
+              <Route path="/retos" element={<Retos />} />
+              <Route path="/alcancia" element={<AlcanciaDigital />} />
+              <Route path="/benchmarks" element={<Benchmarks />} />
 
             </Route>
 
@@ -85,6 +125,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -278,3 +278,196 @@
         width: 100%;
     }
 }
+
+.billing-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border, rgba(0,0,0,0.1));
+    background: var(--color-background);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.billing-toggle-btn:hover {
+    background: rgba(79,70,229,0.08);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.billing-toggle-btn.enabled {
+    background: rgba(79,70,229,0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* ── Tarjetas de métricas ───────────────────────────────────────────────── */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 900px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.metric-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+}
+
+.metric-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.metric-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.metric-icon--total   { background: rgba(79, 70, 229, 0.1); }
+.metric-icon--active  { background: rgba(16, 185, 129, 0.1); }
+.metric-icon--banned  { background: rgba(239, 68, 68, 0.1); }
+.metric-icon--billing { background: rgba(245, 158, 11, 0.1); }
+
+.metric-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+/* ── Gráfica ────────────────────────────────────────────────────────────── */
+.chart-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.chart-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: flex-start;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chart-toggle-btn:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.chart-container {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInDown 0.25s ease-out;
+    will-change: opacity, transform;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.chart-title {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+/* ── Botones de tabla ───────────────────────────────────────────────────── */
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+}
+
+/* ── Columnas extra de tabla ────────────────────────────────────────────── */
+.text-nowrap {
+    white-space: nowrap;
+}
+
+.last-access-cell {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+}
+
+/* ── Modal de confirmación ──────────────────────────────────────────────── */
+.modal--confirm {
+    max-width: 400px;
+    text-align: center;
+    padding: 2rem;
+}
+
+.confirm-title {
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--color-text-primary);
+}
+
+.confirm-body {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.confirm-actions .btn {
+    flex: 1;
+}

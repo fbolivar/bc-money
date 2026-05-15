@@ -1,0 +1,208 @@
+.bench-page {
+  padding: 1.5rem;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bench-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.bench-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.bench-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.bench-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bench-period-select {
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #111827);
+  font-size: 0.85rem;
+}
+
+/* Summary */
+.bench-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.bench-stat {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bench-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.bench-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+/* Card */
+.bench-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.bench-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.bench-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.5;
+}
+
+/* Table */
+.bench-table-wrap { overflow-x: auto; }
+
+.bench-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.bench-table th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
+}
+
+.bench-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  vertical-align: middle;
+}
+
+.bench-table tr:last-child td { border-bottom: none; }
+
+.bench-cat-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dot-indigo  { background: #6366f1; }
+.dot-emerald { background: #10b981; }
+.dot-amber   { background: #f59e0b; }
+.dot-red     { background: #ef4444; }
+.dot-violet  { background: #8b5cf6; }
+.dot-pink    { background: #ec4899; }
+.dot-cyan    { background: #06b6d4; }
+.dot-slate   { background: #64748b; }
+.dot-gray    { background: #94a3b8; }
+
+.bench-dane-pct { color: var(--text-secondary, #6b7280); }
+
+.bench-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+.bench-diff.over    { color: #ef4444; background: #fee2e2; }
+.bench-diff.under   { color: #10b981; background: #d1fae5; }
+.bench-diff.neutral { color: #6b7280; background: var(--hover-bg, #f3f4f6); }
+
+.bench-amount {
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.text-right { text-align: right; }
+
+/* Others */
+.bench-others {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bench-other-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  font-size: 0.85rem;
+}
+
+.bench-other-item:last-child { border-bottom: none; }
+.bench-other-name { flex: 1; color: var(--text-primary, #111827); }
+.bench-other-pct  { color: var(--text-secondary, #6b7280); min-width: 45px; text-align: right; }
+.bench-other-amt  { font-weight: 600; min-width: 110px; text-align: right; }
+
+/* Empty */
+.bench-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary, #6b7280);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Spin */
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .bench-page { padding: 1rem; }
+  .bench-header { flex-direction: column; }
+}

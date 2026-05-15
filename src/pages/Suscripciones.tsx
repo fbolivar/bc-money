@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Plus, Edit2, Trash2, X, Search, AlertTriangle, Clock,
+    Plus, Edit2, Trash2, X, Search, AlertTriangle, Clock, TrendingUp,
     Tv, Monitor, Music, Gamepad2, Dumbbell, GraduationCap, Newspaper,
     Cloud, Shield, Users, MoreHorizontal, Pause, Play, Ban,
-    CalendarClock, RefreshCw,
+    CalendarClock, RefreshCw, Sparkles, ChevronDown, ChevronUp, Check,
     type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Subscription } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Suscripciones.css';
 
@@ -69,6 +69,73 @@ const DEFAULT_FORM: SubFormData = {
     auto_renew: true, color: '#3B82F6', provider: '', status: 'active', notes: '',
 };
 
+const DISMISSED_KEY = 'bc-detected-subs-dismissed';
+
+interface DetectedCandidate {
+    key: string;
+    name: string;
+    amount: number;
+    currency: string;
+    billing_cycle: 'weekly' | 'biweekly' | 'monthly';
+    lastDate: string;
+}
+
+function detectSubscriptions(transactions: { description: string; merchant?: string | null; amount: number; currency: string; date: string }[]): DetectedCandidate[] {
+    const groups: Record<string, typeof transactions> = {};
+    for (const tx of transactions) {
+        const key = (tx.merchant || tx.description || '').trim().toLowerCase();
+        if (!key) continue;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(tx);
+    }
+
+    const candidates: DetectedCandidate[] = [];
+
+    for (const [key, txs] of Object.entries(groups)) {
+        if (txs.length < 2) continue;
+        const sorted = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const intervals: number[] = [];
+        for (let i = 1; i < sorted.length; i++) {
+            intervals.push(differenceInDays(new Date(sorted[i].date), new Date(sorted[i - 1].date)));
+        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        let billing_cycle: DetectedCandidate['billing_cycle'] | null = null;
+        if (Math.abs(avgInterval - 7) <= 3) billing_cycle = 'weekly';
+        else if (Math.abs(avgInterval - 14) <= 3) billing_cycle = 'biweekly';
+        else if (Math.abs(avgInterval - 30) <= 3) billing_cycle = 'monthly';
+        if (!billing_cycle) continue;
+
+        const amounts = sorted.map(t => t.amount);
+        const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const allSimilar = amounts.every(a => Math.abs(a - avgAmount) / avgAmount <= 0.05);
+        if (!allSimilar) continue;
+
+        const name = (sorted[0].merchant || sorted[0].description || key).trim();
+        candidates.push({
+            key,
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            amount: Math.round(avgAmount),
+            currency: sorted[0].currency,
+            billing_cycle,
+            lastDate: sorted[sorted.length - 1].date,
+        });
+    }
+
+    return candidates;
+}
+
+const CYCLE_LABEL_DETECTED: Record<DetectedCandidate['billing_cycle'], string> = {
+    weekly: 'Semanal',
+    biweekly: 'Quincenal',
+    monthly: 'Mensual',
+};
+
+const CYCLE_DAYS: Record<DetectedCandidate['billing_cycle'], number> = {
+    weekly: 7,
+    biweekly: 14,
+    monthly: 30,
+};
+
 export function Suscripciones() {
     const { user, profile } = useAuth();
     const [subs, setSubs] = useState<Subscription[]>([]);
@@ -82,6 +149,61 @@ export function Suscripciones() {
     const [formData, setFormData] = useState<SubFormData>(DEFAULT_FORM);
 
     const currency = profile?.currency || 'COP';
+
+    const [detectedCandidates, setDetectedCandidates] = useState<DetectedCandidate[]>([]);
+    const [detectionDismissed, setDetectionDismissed] = useState(() => localStorage.getItem(DISMISSED_KEY) === '1');
+    const [detectionExpanded, setDetectionExpanded] = useState(true);
+    const [addingKey, setAddingKey] = useState<string | null>(null);
+
+    const runDetection = useCallback(async () => {
+        if (!user) return;
+        const since = new Date();
+        since.setDate(since.getDate() - 90);
+        const { data } = await supabase
+            .from('transactions')
+            .select('description, merchant, amount, currency, date')
+            .eq('user_id', user.id)
+            .eq('type', 'gasto')
+            .gte('date', since.toISOString().slice(0, 10));
+        if (data) setDetectedCandidates(detectSubscriptions(data));
+    }, [user]);
+
+    useEffect(() => { if (user && !detectionDismissed) runDetection(); }, [user, detectionDismissed, runDetection]);
+
+    async function handleAddDetected(candidate: DetectedCandidate) {
+        if (!user || addingKey) return;
+        setAddingKey(candidate.key);
+        try {
+            const nextDate = addDays(new Date(candidate.lastDate), CYCLE_DAYS[candidate.billing_cycle]);
+            await supabase.from('subscriptions').insert({
+                user_id: user.id,
+                name: candidate.name,
+                amount: candidate.amount,
+                currency: candidate.currency,
+                billing_cycle: candidate.billing_cycle === 'biweekly' ? 'monthly' : candidate.billing_cycle,
+                next_billing_date: format(nextDate, 'yyyy-MM-dd'),
+                category: 'other',
+                status: 'active',
+                auto_renew: true,
+                color: '#6366F1',
+            });
+            setDetectedCandidates(prev => prev.filter(c => c.key !== candidate.key));
+            fetchData();
+            showToast(`${candidate.name} agregada`, 'success');
+        } catch { showToast('Error al agregar', 'error'); }
+        finally { setAddingKey(null); }
+    }
+
+    function handleIgnoreDetected(key: string) {
+        setDetectedCandidates(prev => prev.filter(c => c.key !== key));
+    }
+
+    function handleDismissDetection() {
+        localStorage.setItem(DISMISSED_KEY, '1');
+        setDetectionDismissed(true);
+    }
+
+    const showDetectionBanner = !detectionDismissed && detectedCandidates.length > 0;
 
     const showToast = useCallback((msg: string, type: 'success' | 'error') => {
         setToast({ message: msg, type });
@@ -119,6 +241,32 @@ export function Suscripciones() {
         activeSubs.reduce((sum, s) => sum + toMonthly(s.amount, s.billing_cycle), 0),
         [activeSubs]
     );
+
+    const subAnalysis = useMemo(() => {
+        const active = subs.filter(s => s.status === 'active');
+        const catGroups: Record<string, typeof active> = {};
+        for (const s of active) {
+            if (!catGroups[s.category]) catGroups[s.category] = [];
+            catGroups[s.category].push(s);
+        }
+        const duplicateCategories = Object.entries(catGroups)
+            .filter(([, arr]) => arr.length > 1)
+            .map(([cat, arr]) => ({ cat, subs: arr }));
+
+        let savingsFromDuplicates = 0;
+        for (const { subs: arr } of duplicateCategories) {
+            const sorted = [...arr].sort((a, b) => toMonthly(a.amount, a.billing_cycle) - toMonthly(b.amount, b.billing_cycle));
+            savingsFromDuplicates += sorted.slice(1).reduce((s, sub) => s + toMonthly(sub.amount, sub.billing_cycle), 0);
+        }
+
+        const monthlyBilledSubs = active.filter(s => s.billing_cycle === 'monthly');
+        const potentialAnnualSavings = monthlyBilledSubs.reduce((s, sub) => s + toMonthly(sub.amount, sub.billing_cycle) * 0.17 * 12, 0);
+
+        const hasOpportunities = duplicateCategories.length > 0 || potentialAnnualSavings > 0;
+        return { duplicateCategories, savingsFromDuplicates, monthlyBilledSubs, potentialAnnualSavings, hasOpportunities };
+    }, [subs]);
+
+    const [showAnalysis, setShowAnalysis] = useState(false);
 
     const upcomingRenewals = useMemo(() =>
         activeSubs.filter(s => {
@@ -219,6 +367,45 @@ export function Suscripciones() {
                 </div>
             )}
 
+            {showDetectionBanner && (
+                <div className="detected-subs-banner">
+                    <div className="detected-subs-header">
+                        <div className="detected-subs-title">
+                            <Sparkles size={18} />
+                            <span>Suscripciones detectadas ({detectedCandidates.length})</span>
+                        </div>
+                        <div className="detected-subs-controls">
+                            <button type="button" className="detected-toggle-btn" onClick={() => setDetectionExpanded(v => !v)}>
+                                {detectionExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                            <button type="button" className="detected-dismiss-btn" title="Descartar" onClick={handleDismissDetection}><X size={16} /></button>
+                        </div>
+                    </div>
+                    {detectionExpanded && (
+                        <ul className="detected-subs-list">
+                            {detectedCandidates.map(c => (
+                                <li key={c.key} className="detected-sub-item">
+                                    <div className="detected-sub-info">
+                                        <span className="detected-sub-name">{c.name}</span>
+                                        <span className="detected-sub-meta">
+                                            {fmt(c.amount, c.currency)} · {CYCLE_LABEL_DETECTED[c.billing_cycle]}
+                                        </span>
+                                    </div>
+                                    <div className="detected-sub-actions">
+                                        <button type="button" className="detected-add-btn" disabled={addingKey === c.key} onClick={() => handleAddDetected(c)}>
+                                            <Check size={14} /> {addingKey === c.key ? 'Agregando...' : 'Añadir'}
+                                        </button>
+                                        <button type="button" className="detected-ignore-btn" title="Ignorar" onClick={() => handleIgnoreDetected(c.key)}>
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
+
             <div className="subs-header">
                 <div>
                     <h1>Suscripciones</h1>
@@ -245,6 +432,40 @@ export function Suscripciones() {
                     <span className="scard-amount">{fmt(totalMonthly * 12, currency)}</span>
                 </div>
             </div>
+
+            {/* Smart Analysis */}
+            {subAnalysis.hasOpportunities && (
+                <div className="subs-analysis">
+                    <button type="button" className="subs-analysis-toggle" onClick={() => setShowAnalysis(v => !v)}>
+                        <Sparkles size={16} />
+                        <span>Análisis inteligente — posible ahorro {fmt(subAnalysis.savingsFromDuplicates + subAnalysis.potentialAnnualSavings / 12, currency)}/mes</span>
+                        {showAnalysis ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                    {showAnalysis && (
+                        <div className="subs-analysis-body">
+                            {subAnalysis.duplicateCategories.map(({ cat, subs: arr }) => (
+                                <div key={cat} className="analysis-tip duplicate">
+                                    <AlertTriangle size={14} />
+                                    <span>
+                                        Tienes <strong>{arr.length}</strong> suscripciones de <strong>{CATEGORY_MAP[cat]?.label || cat}</strong>:{' '}
+                                        {arr.map(s => s.name).join(', ')}.
+                                        Podrías ahorrar <strong>{fmt(subAnalysis.savingsFromDuplicates, currency)}/mes</strong> cancelando la(s) más cara(s).
+                                    </span>
+                                </div>
+                            ))}
+                            {subAnalysis.monthlyBilledSubs.length > 0 && subAnalysis.potentialAnnualSavings > 0 && (
+                                <div className="analysis-tip annual">
+                                    <TrendingUp size={14} />
+                                    <span>
+                                        Tienes <strong>{subAnalysis.monthlyBilledSubs.length}</strong> suscripción(es) de pago mensual.
+                                        Cambiando a plan anual (≈17% desc.) ahorrarías ~<strong>{fmt(subAnalysis.potentialAnnualSavings, currency)}/año</strong>.
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Search */}
             <div className="subs-search">

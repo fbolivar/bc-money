@@ -1,0 +1,209 @@
+.ws-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ws-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ws-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.ws-range {
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.ws-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ws-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-hover);
+}
+
+.ws-row-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ws-row-label.income-dot::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10B981;
+    flex-shrink: 0;
+}
+
+.ws-row-label.expense-dot::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #EF4444;
+    flex-shrink: 0;
+}
+
+.ws-row-value {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+.ws-row-value.income { color: #10B981; }
+.ws-row-value.expense { color: #EF4444; }
+
+.ws-arrow {
+    flex-shrink: 0;
+}
+
+.ws-arrow.up { color: #10B981; }
+.ws-arrow.down { color: #EF4444; }
+.ws-arrow.neutral { color: var(--color-text-tertiary); }
+
+.ws-row-prev {
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.ws-top-cat {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-hover);
+}
+
+.ws-top-cat-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.ws-top-cat-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.ws-top-cat-label {
+    font-size: 0.65rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.ws-top-cat-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ws-top-cat-amount {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #EF4444;
+    flex-shrink: 0;
+}
+
+.ws-month-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ws-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ws-progress-label {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.ws-progress-pct {
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.ws-progress-track {
+    height: 6px;
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.ws-progress-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.6s ease;
+}
+
+.ws-sk-title {
+    height: 20px;
+    width: 40%;
+    border-radius: var(--radius-sm);
+    background: var(--color-border);
+    animation: ws-pulse 1.4s ease-in-out infinite;
+}
+
+.ws-sk-row {
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-border);
+    animation: ws-pulse 1.4s ease-in-out infinite;
+}
+
+.ws-sk-row.short {
+    width: 60%;
+    height: 20px;
+}
+
+@keyframes ws-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+}
+
+@media (max-width: 768px) {
+    .ws-row-prev {
+        display: none;
+    }
+}

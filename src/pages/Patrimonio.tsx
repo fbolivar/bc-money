@@ -1,23 +1,35 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { TrendingUp, TrendingDown, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, RefreshCw, Calendar } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Account, Debt, NetWorthSnapshot } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { format } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 import { parseLocalDate } from '../lib/dates';
 import { es } from 'date-fns/locale';
 import './Patrimonio.css';
 
 function fmt(n: number, c: string) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n); }
 
+interface NetWorthHistory {
+    id: string;
+    user_id: string;
+    snapshot_date: string;
+    total_assets: number;
+    total_liabilities: number;
+    net_worth: number;
+    created_at: string;
+}
+
 export function Patrimonio() {
     const { user, profile } = useAuth();
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [debts, setDebts] = useState<Debt[]>([]);
     const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([]);
+    const [history, setHistory] = useState<NetWorthHistory[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [savingHistory, setSavingHistory] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
     const currency = profile?.currency || 'COP';
@@ -25,12 +37,17 @@ export function Patrimonio() {
 
     const fetchData = useCallback(async () => {
         if (!user) return;
-        const [aRes, dRes, sRes] = await Promise.all([
+        const [aRes, dRes, sRes, hRes] = await Promise.all([
             supabase.from('accounts').select('*').eq('user_id', user.id),
             supabase.from('debts').select('*').eq('user_id', user.id).eq('status', 'active'),
             supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('date', { ascending: true }),
+            supabase.from('net_worth_history').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }).limit(12),
         ]);
-        setAccounts(aRes.data || []); setDebts(dRes.data || []); setSnapshots(sRes.data || []); setLoading(false);
+        setAccounts(aRes.data || []);
+        setDebts(dRes.data || []);
+        setSnapshots(sRes.data || []);
+        setHistory(hRes.data || []);
+        setLoading(false);
     }, [user]);
 
     useEffect(() => { if (user) fetchData(); }, [user, fetchData]);
@@ -49,10 +66,40 @@ export function Patrimonio() {
             activos: Number(s.total_assets),
             pasivos: Number(s.total_liabilities),
         }));
-        // Add current
         data.push({ date: 'Hoy', patrimonio: netWorth, activos: totalAssets, pasivos: totalLiabilities });
         return data;
     }, [snapshots, netWorth, totalAssets, totalLiabilities]);
+
+    const historyChartData = useMemo(() => {
+        return history.map(h => ({
+            date: format(parseLocalDate(h.snapshot_date), 'MMM yy', { locale: es }),
+            activos: Number(h.total_assets),
+            pasivos: Number(h.total_liabilities),
+            patrimonio: Number(h.net_worth),
+        }));
+    }, [history]);
+
+    const upsertMonthlySnapshot = useCallback(async (assets: number, liabilities: number) => {
+        if (!user) return;
+        const firstOfMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+        await supabase.from('net_worth_history').upsert(
+            { user_id: user.id, snapshot_date: firstOfMonth, total_assets: assets, total_liabilities: liabilities },
+            { onConflict: 'user_id,snapshot_date' }
+        );
+    }, [user]);
+
+    useEffect(() => {
+        if (!user || loading) return;
+        const firstOfMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+        const alreadyExists = history.some(h => h.snapshot_date === firstOfMonth);
+        if (!alreadyExists) {
+            upsertMonthlySnapshot(totalAssets, totalLiabilities).then(() => {
+                supabase.from('net_worth_history').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }).limit(12).then(({ data }) => {
+                    setHistory(data || []);
+                });
+            });
+        }
+    }, [user, loading, history, totalAssets, totalLiabilities, upsertMonthlySnapshot]);
 
     const saveSnapshot = async () => {
         if (!user) return;
@@ -69,6 +116,18 @@ export function Patrimonio() {
         showToast('Snapshot guardado', 'success'); setSaving(false); fetchData();
     };
 
+    const forceHistorySnapshot = async () => {
+        if (!user) return;
+        setSavingHistory(true);
+        const firstOfMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+        const { error } = await supabase.from('net_worth_history').upsert(
+            { user_id: user.id, snapshot_date: firstOfMonth, total_assets: totalAssets, total_liabilities: totalLiabilities },
+            { onConflict: 'user_id,snapshot_date' }
+        );
+        if (error) { showToast('Error al guardar', 'error'); } else { showToast('Snapshot mensual actualizado', 'success'); fetchData(); }
+        setSavingHistory(false);
+    };
+
     if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
 
     return (
@@ -82,7 +141,6 @@ export function Patrimonio() {
                 </button>
             </div>
 
-            {/* Summary Cards */}
             <div className="pat-summary">
                 <div className="pat-card main">
                     <span className="pat-label">Patrimonio Neto</span>
@@ -106,7 +164,6 @@ export function Patrimonio() {
                 </div>
             </div>
 
-            {/* Chart */}
             {chartData.length > 1 && (
                 <div className="pat-chart-card">
                     <h3>Evolución del Patrimonio</h3>
@@ -128,7 +185,55 @@ export function Patrimonio() {
                 </div>
             )}
 
-            {/* Detail Tables */}
+            <div className="pat-chart-card">
+                <div className="pat-history-header">
+                    <div>
+                        <h3>Evolución histórica</h3>
+                        <p className="pat-history-subtitle">Registro mensual automático del primer día de cada mes</p>
+                    </div>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={forceHistorySnapshot} disabled={savingHistory}>
+                        <Calendar size={14} /> {savingHistory ? 'Guardando...' : 'Registrar snapshot ahora'}
+                    </button>
+                </div>
+                {historyChartData.length < 2 ? (
+                    <div className="pat-history-empty">
+                        <Calendar size={32} />
+                        <p>Se irá construyendo mes a mes automáticamente</p>
+                        <span>El primer snapshot se registró este mes. Vuelve el mes próximo para ver la evolución.</span>
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={historyChartData}>
+                            <defs>
+                                <linearGradient id="gradAssets" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="gradLiabilities" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="gradHistory" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                            <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} />
+                            <YAxis stroke="#94A3B8" fontSize={11} />
+                            <Tooltip
+                                contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                formatter={(v: unknown, name: string) => [fmt(Number(v), currency), name]}
+                            />
+                            <Legend />
+                            <Area type="monotone" dataKey="activos" stroke="#3B82F6" fill="url(#gradAssets)" strokeWidth={2} name="Activos" />
+                            <Area type="monotone" dataKey="pasivos" stroke="#EF4444" fill="url(#gradLiabilities)" strokeWidth={2} name="Pasivos" />
+                            <Area type="monotone" dataKey="patrimonio" stroke="#10B981" fill="url(#gradHistory)" strokeWidth={2} name="Patrimonio neto" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
+
             <div className="pat-details">
                 <div className="pat-detail-card">
                     <h3>Activos</h3>
@@ -153,7 +258,6 @@ export function Patrimonio() {
                 </div>
             </div>
 
-            {/* History */}
             {snapshots.length > 0 && (
                 <div className="pat-history">
                     <h3>Historial de Snapshots ({snapshots.length})</h3>

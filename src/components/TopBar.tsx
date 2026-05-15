@@ -1,9 +1,10 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Menu, ShieldAlert, CreditCard, Wallet, X, Search } from 'lucide-react';
+import { Menu, ShieldAlert, CreditCard, Wallet, X, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { differenceInDays, startOfMonth, endOfMonth, format } from 'date-fns';
+import { NotificationBell } from './NotificationBell';
 import './TopBar.css';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -169,11 +170,14 @@ export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
                     <button
                         className={`topbar-btn ${alerts.length > 0 ? 'has-alerts' : ''}`}
                         type="button"
-                        title="Alertas"
+                        title="Alertas del sistema"
                         onClick={() => setIsOpen(!isOpen)}
                     >
-                        <Bell size={20} />
                         {alerts.length > 0 && <span className="notification-badge">{alerts.length}</span>}
+                        {alerts.length > 0
+                            ? (() => { const Icon = typeIcons[alerts[0].type]; return <Icon size={20} />; })()
+                            : <ShieldAlert size={20} />
+                        }
                     </button>
 
                     {isOpen && (
@@ -201,6 +205,7 @@ export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
                         </div>
                     )}
                 </div>
+                <NotificationBell userId={user?.id} />
             </div>
         </header>
     );

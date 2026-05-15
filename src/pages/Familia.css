@@ -75,3 +75,144 @@
 .fam-modal-mod-label svg { color: var(--color-text-tertiary); }
 
 @media (max-width: 768px) { .fam-modules-grid { grid-template-columns: 1fr; } .fam-modal-modules { grid-template-columns: 1fr; } }
+
+/* ── Presupuesto familiar colaborativo ── */
+.fam-collab-budget {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.fam-collab-budget h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.fam-collab-desc {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.fam-collab-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.fam-collab-head {
+    display: grid;
+    grid-template-columns: 1fr repeat(var(--member-count, 2), 80px);
+    background: var(--color-bg-secondary);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    gap: 0.5rem;
+}
+
+.fam-collab-member-name {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.fam-collab-member-name small {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+.fam-collab-row {
+    display: grid;
+    grid-template-columns: 1fr repeat(auto-fill, 80px);
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.fam-collab-row:last-child { border-bottom: none; }
+.fam-collab-row:hover { background: var(--color-bg-secondary); }
+
+.fam-collab-cat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fam-collab-cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.fam-collab-cat strong {
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+    display: block;
+}
+
+.fam-collab-cat small {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.fam-collab-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.fam-collab-bar-wrap {
+    width: 100%;
+    height: 6px;
+    background: var(--color-bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.fam-collab-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.fam-collab-bar.ok   { background: #10B981; }
+.fam-collab-bar.warn { background: #F59E0B; }
+.fam-collab-bar.over { background: #EF4444; }
+
+.fam-collab-pct {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.fam-collab-pct.over { color: #EF4444; font-weight: 700; }
+
+.fam-collab-note {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-style: italic;
+}

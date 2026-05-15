@@ -158,6 +158,43 @@
     font-weight: var(--font-weight-medium);
 }
 
+.goal-completed-date {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6b7280);
+    margin: 0;
+}
+
+/* Badges */
+.badges-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.badge-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 2px solid;
+}
+
+.badge-amber  { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.badge-amber  svg { color: #f59e0b; }
+.badge-indigo { background: #ede9fe; color: #4c1d95; border-color: #c4b5fd; }
+.badge-indigo svg { color: #6366f1; }
+.badge-pink   { background: #fce7f3; color: #831843; border-color: #f9a8d4; }
+.badge-pink   svg { color: #ec4899; }
+.badge-emerald { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.badge-emerald svg { color: #10b981; }
+.badge-red    { background: #fee2e2; color: #7f1d1d; border-color: #fca5a5; }
+.badge-red    svg { color: #ef4444; }
+.badge-blue   { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.badge-blue   svg { color: #3b82f6; }
+
 .goal-type-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -264,6 +301,85 @@
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
 }
+/* Savings Rules Modal */
+.modal-rules {
+    max-width: 460px;
+}
+
+.rules-modal-hint {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.45;
+}
+
+.rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.rules-empty {
+    font-size: 0.82rem;
+    color: var(--color-text-tertiary);
+    padding: 0.5rem 0;
+}
+
+.rule-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    background-color: var(--color-surface-hover, #f8fafc);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+}
+
+.rule-pct {
+    font-weight: 600;
+    color: var(--color-primary);
+    min-width: 3rem;
+}
+
+.rule-toggle {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    height: auto;
+}
+
+.btn-success-ghost {
+    color: var(--color-success);
+    background: transparent;
+    border: 1px solid var(--color-success);
+}
+
+.btn-success-ghost:hover {
+    background-color: rgba(16, 185, 129, 0.08);
+}
+
+.rule-delete-confirm {
+    display: flex;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+.rule-add-form {
+    border-top: 1px solid var(--color-border);
+    padding-top: 1rem;
+}
+
+.rule-add-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.rule-add-row .form-input {
+    flex: 1;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .metas-page .toolbar {

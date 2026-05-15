@@ -54,3 +54,10 @@
     .vf-metrics { flex-direction: column; }
     .vf-cards { grid-template-columns: 1fr; }
 }
+
+.vf-empty-section {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-style: italic;
+    padding: 0.5rem 0;
+}

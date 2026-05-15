@@ -1,0 +1,258 @@
+.viaje-page {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.viaje-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.viaje-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.viaje-header p {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.875rem;
+}
+
+.viaje-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.viaje-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  color: var(--text-primary, #111827);
+}
+
+/* Converter */
+.viaje-converter {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.vc-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vc-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #111827);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.vc-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1.5px solid var(--primary, #6366f1);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #111827);
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.vc-result {
+  padding: 0.75rem;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary, #6366f1);
+  background: var(--primary-light, #eff6ff);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.vc-swap-btn {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 50%;
+  background: var(--card-bg, #fff);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  margin-top: 32px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.vc-swap-btn:hover {
+  background: var(--primary, #6366f1);
+  color: #fff;
+  border-color: var(--primary, #6366f1);
+}
+
+.vc-rate {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+}
+
+/* Per diem */
+.viaje-perdiem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.vp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vp-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vp-total {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.vpt-usd, .vpt-home {
+  background: var(--hover-bg, #f9fafb);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vpt-usd span, .vpt-home span {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.vpt-usd strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.vpt-home strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary, #6366f1);
+}
+
+/* Common expenses */
+.viaje-expenses-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ve-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.55rem 0.25rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  font-size: 0.875rem;
+}
+
+.ve-item:last-child { border-bottom: none; }
+
+.ve-emoji { font-size: 1.1rem; }
+
+.ve-label { color: var(--text-primary, #111827); }
+
+.ve-usd {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.78rem;
+}
+
+.ve-converted {
+  font-weight: 600;
+  color: var(--primary, #6366f1);
+  text-align: right;
+  min-width: 90px;
+}
+
+/* Reference grid */
+.viaje-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.vr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  background: var(--hover-bg, #f9fafb);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.vr-item strong {
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+/* Spin animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+  .viaje-page { padding: 1rem; }
+  .viaje-converter { grid-template-columns: 1fr; }
+  .vc-swap-btn { margin: 0 auto; transform: rotate(90deg); }
+  .viaje-perdiem-grid { grid-template-columns: 1fr; }
+  .vp-total { grid-template-columns: 1fr; }
+  .ve-item { grid-template-columns: 28px 1fr auto; }
+  .ve-usd { display: none; }
+}

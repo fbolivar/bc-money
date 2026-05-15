@@ -263,3 +263,103 @@
     .ob-features { grid-template-columns: 1fr; }
     .ob-field-row { grid-template-columns: 1fr; }
 }
+
+/* ── Onboarding inteligente ── */
+.ob-smart-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.ob-smart-header svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.ob-smart-header h1 { margin: 0; }
+.ob-smart-header p { margin: 0; }
+
+.ob-smmlv-hint {
+    font-size: 0.78rem;
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.ob-budget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.ob-budget-list-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ob-budget-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    width: 100%;
+}
+
+.ob-budget-item:hover {
+    border-color: var(--color-primary);
+}
+
+.ob-budget-item.selected {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.ob-budget-emoji {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ob-budget-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ob-budget-info strong {
+    font-size: 0.88rem;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.ob-budget-info span {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+
+.ob-budget-check {
+    color: var(--color-primary);
+    width: 18px;
+    flex-shrink: 0;
+}
+
+.ob-budget-empty {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    margin: 0;
+}

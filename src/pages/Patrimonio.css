@@ -50,6 +50,16 @@
 .ph-assets { color: #10B981; }
 .ph-liabilities { color: #EF4444; }
 
+.pat-history-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+.pat-history-header h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+.pat-history-subtitle { font-size: 0.75rem; color: var(--color-text-tertiary); margin: 0; }
+.btn-sm { padding: 0.4rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+
+.pat-history-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 2.5rem 1rem; color: var(--color-text-tertiary); text-align: center; }
+.pat-history-empty svg { opacity: 0.35; }
+.pat-history-empty p { font-size: 1rem; font-weight: 600; color: var(--color-text-secondary); margin: 0; }
+.pat-history-empty span { font-size: 0.8rem; max-width: 28rem; }
+
 @media (max-width: 768px) {
     .pat-summary { grid-template-columns: 1fr; }
     .pat-details { grid-template-columns: 1fr; }

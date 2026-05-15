@@ -1,13 +1,16 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
+import { WifiOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { checkAndNotify, canNotify } from '../lib/notifications';
+import { useOfflineStatus } from '../hooks/useOfflineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppLayout() {
     const { user, loading, profile } = useAuth();
+    const isOffline = useOfflineStatus();
     useKeyboardShortcuts();
 
     // Push notifications check on load
@@ -47,6 +50,12 @@ export function AppLayout() {
             <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
                 <TopBar onMenuClick={openSidebar} />
+                {isOffline && (
+                    <div className="offline-banner">
+                        <WifiOff size={16} />
+                        <span>Sin conexión — mostrando datos guardados localmente</span>
+                    </div>
+                )}
                 <div className="page-content">
                     <Outlet />
                     <footer className="app-footer">

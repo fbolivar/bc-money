@@ -4,9 +4,14 @@ import {
     Landmark, PiggyBank, CreditCard, Banknote, Bitcoin, TrendingUp,
     type LucideIcon,
 } from 'lucide-react';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Account } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { subMonths, subDays, format, startOfMonth, endOfMonth } from 'date-fns';
+import { es } from 'date-fns/locale';
 import './Cuentas.css';
 
 interface AccountFormData {
@@ -18,6 +23,7 @@ interface AccountFormData {
     icon: string;
     institution: string;
     account_number: string;
+    min_balance_alert: string;
 }
 
 const ACCOUNT_TYPES: { value: Account['type']; label: string }[] = [
@@ -48,7 +54,7 @@ function AccountIcon({ name, size = 20 }: { name: string; size?: number }) {
 
 const DEFAULT_FORM: AccountFormData = {
     name: '', type: 'checking', currency: 'COP', balance: 0,
-    color: '#3B82F6', icon: 'Landmark', institution: '', account_number: '',
+    color: '#3B82F6', icon: 'Landmark', institution: '', account_number: '', min_balance_alert: '',
 };
 
 function formatMoney(amount: number, currency: string) {
@@ -69,6 +75,8 @@ export function Cuentas() {
     const [formData, setFormData] = useState<AccountFormData>(DEFAULT_FORM);
 
     const currency = profile?.currency || 'COP';
+    const [balanceHistory, setBalanceHistory] = useState<{ month: string; saldo: number }[]>([]);
+    const [dailyBurnRate, setDailyBurnRate] = useState<number>(0);
 
     const showToast = useCallback((message: string, type: 'success' | 'error') => {
         setToast({ message, type });
@@ -96,6 +104,51 @@ export function Cuentas() {
         if (user) fetchAccounts();
     }, [user, fetchAccounts]);
 
+    useEffect(() => {
+        if (!user) return;
+        (async () => {
+            const since = subDays(new Date(), 30).toISOString().slice(0, 10);
+            const { data } = await supabase
+                .from('transactions').select('amount')
+                .eq('user_id', user.id).eq('type', 'expense').gte('date', since);
+            const total = (data || []).reduce((s, t) => s + Number(t.amount), 0);
+            setDailyBurnRate(total / 30);
+        })();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user || accounts.length === 0) return;
+        (async () => {
+            const now = new Date();
+            const { data: txs } = await supabase
+                .from('transactions')
+                .select('amount, type, date')
+                .eq('user_id', user.id)
+                .gte('date', subMonths(now, 5).toISOString().slice(0, 10));
+
+            const currentTotal = accounts.reduce((s, a) => s + a.balance, 0);
+            const history: { month: string; saldo: number }[] = [];
+
+            for (let i = 5; i >= 0; i--) {
+                const monthDate = subMonths(now, i);
+                const mEnd = endOfMonth(monthDate);
+                // Future months (shouldn't exist) use current total
+                const txsAfter = (txs ?? []).filter(t => {
+                    const d = new Date(t.date);
+                    return d > mEnd;
+                });
+                const deltaAfter = txsAfter.reduce((s, t) => {
+                    return s + (t.type === 'income' ? -Number(t.amount) : Number(t.amount));
+                }, 0);
+                history.push({
+                    month: format(monthDate, 'MMM', { locale: es }),
+                    saldo: Math.round(currentTotal + deltaAfter),
+                });
+            }
+            setBalanceHistory(history);
+        })();
+    }, [user, accounts]);
+
     const filtered = useMemo(() => {
         if (!searchTerm) return accounts;
         const term = searchTerm.toLowerCase();
@@ -109,11 +162,13 @@ export function Cuentas() {
         if (!user || saving) return;
         setSaving(true);
         try {
+            const minBalanceAlert = formData.min_balance_alert !== '' ? parseFloat(formData.min_balance_alert) : null;
             if (editingAccount) {
                 const { error } = await supabase.from('accounts').update({
                     name: formData.name, type: formData.type, currency: formData.currency,
                     balance: formData.balance, color: formData.color, icon: formData.icon,
                     institution: formData.institution || null, account_number: formData.account_number || null,
+                    min_balance_alert: minBalanceAlert,
                 }).eq('id', editingAccount.id);
                 if (error) throw error;
                 showToast('Cuenta actualizada', 'success');
@@ -123,6 +178,7 @@ export function Cuentas() {
                     currency: formData.currency, balance: formData.balance, color: formData.color,
                     icon: formData.icon, institution: formData.institution || null,
                     account_number: formData.account_number || null,
+                    min_balance_alert: minBalanceAlert,
                 }]);
                 if (error) throw error;
                 showToast('Cuenta creada', 'success');
@@ -163,6 +219,7 @@ export function Cuentas() {
             name: account.name, type: account.type, currency: account.currency,
             balance: account.balance, color: account.color, icon: account.icon,
             institution: account.institution || '', account_number: account.account_number || '',
+            min_balance_alert: account.min_balance_alert != null ? String(account.min_balance_alert) : '',
         });
         setIsModalOpen(true);
     }
@@ -194,6 +251,31 @@ export function Cuentas() {
                     <span className="summary-amount">{accounts.length}</span>
                 </div>
             </div>
+
+            {/* Balance History */}
+            {balanceHistory.length > 0 && (
+                <div className="cuentas-history">
+                    <h3>Evolución del saldo total (6 meses)</h3>
+                    <ResponsiveContainer width="100%" height={140}>
+                        <AreaChart data={balanceHistory} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color,#e5e7eb)" vertical={false} />
+                            <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                            <YAxis hide />
+                            <Tooltip
+                                formatter={(v: number) => [formatMoney(v, currency), 'Saldo']}
+                                contentStyle={{ background: 'var(--card-bg,#fff)', border: '1px solid var(--border-color,#e5e7eb)', borderRadius: 8, fontSize: 12 }}
+                            />
+                            <Area type="monotone" dataKey="saldo" stroke="#6366F1" strokeWidth={2} fill="url(#balGrad)" dot={false} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
             {/* Search */}
             <div className="cuentas-search">
@@ -235,7 +317,22 @@ export function Cuentas() {
                                 <span className={`account-balance ${account.balance < 0 ? 'negative' : ''}`}>
                                     {showBalances ? formatMoney(account.balance, account.currency) : '••••••'}
                                 </span>
+                                {account.min_balance_alert != null && account.balance <= account.min_balance_alert && (
+                                    <span className="min-balance-badge" title={`Saldo por debajo del mínimo definido (${formatMoney(account.min_balance_alert, account.currency)})`}>
+                                        <AlertTriangle size={14} />
+                                    </span>
+                                )}
                             </div>
+                            {dailyBurnRate > 0 && account.balance >= 0 && (() => {
+                                const daysLeft = Math.floor(account.balance / dailyBurnRate);
+                                const cls = daysLeft > 30 ? 'burn-ok' : daysLeft > 15 ? 'burn-warn' : 'burn-critical';
+                                const label = daysLeft > 365 ? '+365 días de fondos' : `~${daysLeft} días de fondos`;
+                                return (
+                                    <div className={`account-burn-rate ${cls}`} title="Estimación basada en gastos de los últimos 30 días">
+                                        {label}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     ))}
                 </div>
@@ -282,7 +379,7 @@ export function Cuentas() {
                             <div className="form-row two-cols">
                                 <div className="form-group">
                                     <label>Saldo Actual</label>
-                                    <input type="number" className="form-input" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} step="0.01" />
+                                    <input type="number" className="form-input" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} step="0.01" placeholder="0" />
                                 </div>
                                 <div className="form-group">
                                     <label>Entidad</label>
@@ -293,6 +390,11 @@ export function Cuentas() {
                             <div className="form-group">
                                 <label>Número de cuenta (opcional)</label>
                                 <input type="text" className="form-input" value={formData.account_number} onChange={e => setFormData({ ...formData, account_number: e.target.value })} placeholder="Últimos 4 dígitos" />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Saldo mínimo de alerta (opcional)</label>
+                                <input type="number" className="form-input" value={formData.min_balance_alert} onChange={e => setFormData({ ...formData, min_balance_alert: e.target.value })} placeholder="Ej: 100000" min="0" step="0.01" />
                             </div>
 
                             <div className="form-group">

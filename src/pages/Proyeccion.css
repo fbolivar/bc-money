@@ -1,0 +1,424 @@
+/* ============================================================
+   Proyeccion.css — BC Money Design System
+   ============================================================ */
+
+/* ── Page wrapper ─────────────────────────────────────────── */
+.proyeccion-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+/* ── Loading state ────────────────────────────────────────── */
+.proyeccion-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl);
+    color: var(--color-text-secondary);
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.proyeccion-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.proyeccion-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.proyeccion-updated {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-xs);
+}
+
+/* ── Controls ─────────────────────────────────────────────── */
+.proyeccion-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.proyeccion-horizon-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 0.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.proyeccion-horizon-selector > svg {
+    margin-left: 0.5rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.proyeccion-horizon-btn {
+    padding: 0.35rem 0.85rem;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.proyeccion-horizon-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
+}
+
+.proyeccion-horizon-btn.active {
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgb(79 70 229 / 0.25);
+}
+
+.proyeccion-refresh-btn {
+    white-space: nowrap;
+}
+
+/* ── Alert banner ─────────────────────────────────────────── */
+.proyeccion-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    animation: alertPulse 0.4s ease-out;
+}
+
+@keyframes alertPulse {
+    from { transform: translateY(-6px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+}
+
+.proyeccion-alert--danger {
+    background: var(--color-danger-light);
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+}
+
+.proyeccion-alert--danger svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.proyeccion-alert strong {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 0.2rem;
+}
+
+.proyeccion-alert p {
+    font-size: var(--font-size-sm);
+    margin: 0;
+    color: inherit;
+}
+
+/* ── KPI Cards ────────────────────────────────────────────── */
+.proyeccion-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-lg);
+}
+
+.proyeccion-kpi-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-fast);
+}
+
+.proyeccion-kpi-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.proyeccion-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.proyeccion-kpi-icon--primary {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.proyeccion-kpi-icon--success {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.proyeccion-kpi-icon--danger {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+}
+
+.proyeccion-kpi-icon--warning {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.proyeccion-kpi-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin: 0 0 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proyeccion-kpi-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* ── Chart card ───────────────────────────────────────────── */
+.proyeccion-chart-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.proyeccion-chart-legend {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.proyeccion-legend-item {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-text-secondary);
+}
+
+.proyeccion-legend-item::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.proyeccion-legend-item--balance::before { background: var(--color-primary); }
+.proyeccion-legend-item--income::before  { background: var(--color-success); }
+.proyeccion-legend-item--expense::before { background: var(--color-danger);  }
+
+.proyeccion-chart-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Range info below chart */
+.proyeccion-range-info {
+    display: flex;
+    gap: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+.proyeccion-range-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.proyeccion-range-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.proyeccion-range-value {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* ── Table ────────────────────────────────────────────────── */
+.proyeccion-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.proyeccion-table {
+    min-width: 640px;
+}
+
+.proyeccion-table thead th {
+    background: var(--color-surface-hover);
+}
+
+.proyeccion-month-cell {
+    min-width: 150px;
+}
+
+.proyeccion-month-label {
+    font-weight: var(--font-weight-medium);
+    text-transform: capitalize;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.proyeccion-amount-cell {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.proyeccion-balance-cell {
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Negative row highlight */
+.proyeccion-row--danger td {
+    background: var(--color-danger-light) !important;
+}
+
+.proyeccion-balance-cell--negative {
+    color: var(--color-danger) !important;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────── */
+.proyeccion-tooltip {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 190px;
+    font-size: var(--font-size-sm);
+}
+
+.proyeccion-tooltip--danger {
+    border-color: var(--color-danger);
+}
+
+.proyeccion-tooltip__label {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+    text-transform: capitalize;
+}
+
+.proyeccion-tooltip__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: 0.2rem 0;
+    color: var(--color-text-secondary);
+}
+
+.proyeccion-tooltip__row--income  { color: var(--color-success); }
+.proyeccion-tooltip__row--expense { color: var(--color-danger);  }
+.proyeccion-tooltip__row--balance {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.25rem;
+    padding-top: 0.4rem;
+}
+.proyeccion-tooltip__row--negative {
+    color: var(--color-danger) !important;
+}
+
+/* ── Methodology note ─────────────────────────────────────── */
+.proyeccion-methodology {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-md) var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.proyeccion-methodology p {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin: 0;
+}
+
+.proyeccion-methodology strong {
+    color: var(--color-text-primary);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .proyeccion-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .proyeccion-controls {
+        width: 100%;
+    }
+
+    .proyeccion-horizon-selector {
+        flex: 1;
+    }
+
+    .proyeccion-kpis {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .proyeccion-kpi-value {
+        font-size: var(--font-size-md);
+    }
+
+    .proyeccion-chart-legend {
+        gap: var(--spacing-sm);
+    }
+
+    .proyeccion-range-info {
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .proyeccion-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .proyeccion-horizon-selector {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

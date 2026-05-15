@@ -1,18 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/supabase';
-import { Shield, User, Ban, CheckCircle, Search, Filter, Plus, Trash2, Edit2, X, Eye, EyeOff } from 'lucide-react';
-import { format } from 'date-fns';
+import { Shield, User, Ban, CheckCircle, Search, Filter, Plus, Trash2, Edit2, X, Eye, EyeOff, Receipt, Download, BarChart3 } from 'lucide-react';
+import { format, formatDistanceToNow, subMonths, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import * as XLSX from 'xlsx';
 import './UsersTab.css';
 
 export function UsersTab() {
-    const { isAdmin, profile: currentProfile } = useAuth();
+    const { isAdmin, profile: currentProfile, refreshProfile } = useAuth();
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [showChart, setShowChart] = useState(false);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -38,7 +42,6 @@ export function UsersTab() {
             .order('created_at', { ascending: false });
 
         if (error) {
-            // console.error('Error fetching profiles:', error);
             alert('Error al cargar la lista de usuarios. Asegúrate de tener permisos de administrador.');
         } else {
             setProfiles(data as Profile[]);
@@ -52,6 +55,59 @@ export function UsersTab() {
         }
     }, [isAdmin]);
 
+    // ─── Métricas ────────────────────────────────────────────────────────────
+    const metrics = useMemo(() => {
+        const total = profiles.length;
+        const active = profiles.filter(p => !p.status || p.status === 'active').length;
+        const banned = profiles.filter(p => p.status === 'banned').length;
+        const billingEnabled = profiles.filter(p => p.billing_enabled).length;
+        return { total, active, banned, billingEnabled };
+    }, [profiles]);
+
+    // ─── Gráfica: registros por mes (últimos 6 meses) ─────────────────────
+    const chartData = useMemo(() => {
+        const now = new Date();
+        return Array.from({ length: 6 }, (_, i) => {
+            const monthStart = startOfMonth(subMonths(now, 5 - i));
+            const monthEnd = startOfMonth(subMonths(now, 4 - i));
+            const label = format(monthStart, 'MMM', { locale: es });
+            const count = profiles.filter(p => {
+                const d = new Date(p.created_at);
+                return d >= monthStart && d < monthEnd;
+            }).length;
+            return { mes: label, registros: count };
+        });
+    }, [profiles]);
+
+    // ─── Filtrado ─────────────────────────────────────────────────────────
+    const filteredProfiles = profiles.filter(p => {
+        const matchesSearch =
+            p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = roleFilter === 'all' || p.role === roleFilter;
+        const effectiveStatus = p.status || 'active';
+        const matchesStatus = statusFilter === 'all' || effectiveStatus === statusFilter;
+        return matchesSearch && matchesRole && matchesStatus;
+    });
+
+    // ─── Exportar CSV ─────────────────────────────────────────────────────
+    const handleExportCSV = () => {
+        const rows = filteredProfiles.map(p => ({
+            email: p.email,
+            nombre: p.full_name || '',
+            rol: p.role || 'user',
+            status: p.status || 'active',
+            fecha_registro: format(new Date(p.created_at), 'dd/MM/yyyy', { locale: es }),
+            billing_enabled: p.billing_enabled ? 'Sí' : 'No',
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+        XLSX.writeFile(wb, `bc-money-usuarios-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    };
+
+    // ─── Handlers ────────────────────────────────────────────────────────
     const handleCreateUser = () => {
         setFormData({ email: '', full_name: '', password: '', role: 'user', currency: 'USD' });
         setModalMode('create');
@@ -85,13 +141,24 @@ export function UsersTab() {
 
             if (fnError) throw fnError;
 
-            // Also remove from local list for immediate feedback
             setProfiles(prev => prev.filter(p => p.id !== userId));
             alert('Usuario eliminado correctamente.');
         } catch (error) {
-            // console.error('Delete error:', error);
             const message = error instanceof Error ? error.message : 'Error desconocido';
             alert('Error al eliminar usuario: ' + message);
+        }
+    };
+
+    const handleBillingToggle = async (targetUserId: string, current: boolean) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ billing_enabled: !current })
+            .eq('id', targetUserId);
+        if (error) {
+            alert('Error al actualizar');
+        } else {
+            setProfiles(prev => prev.map(p => p.id === targetUserId ? { ...p, billing_enabled: !current } : p));
+            if (targetUserId === currentProfile?.id) await refreshProfile();
         }
     };
 
@@ -133,11 +200,9 @@ export function UsersTab() {
 
                 alert('Usuario creado exitosamente. Se ha enviado un correo de confirmación (si está configurado).');
                 setShowModal(false);
-                fetchProfiles(); // Refresh list
+                fetchProfiles();
             } else {
-                // Edit existing user
                 if (editingUser) {
-                    // 1. Update Profile Data
                     await supabase
                         .from('profiles')
                         .update({
@@ -147,7 +212,6 @@ export function UsersTab() {
                         })
                         .eq('id', editingUser.id);
 
-                    // 2. Update Auth Data if needed (Email/Password)
                     if (formData.password || formData.email !== editingUser.email) {
                         const updates: Record<string, unknown> = { userId: editingUser.id };
                         if (formData.password) updates.password = formData.password;
@@ -166,21 +230,12 @@ export function UsersTab() {
                 }
             }
         } catch (error) {
-            // console.error('Submit error:', error);
             const message = error instanceof Error ? error.message : 'Intente nuevamente.';
             alert('Error al guardar usuario: ' + message);
         } finally {
             setFormLoading(false);
         }
     };
-
-    const filteredProfiles = profiles.filter(p => {
-        const matchesSearch =
-            p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'all' || p.role === roleFilter;
-        return matchesSearch && matchesRole;
-    });
 
     if (!isAdmin) return null;
 
@@ -190,6 +245,90 @@ export function UsersTab() {
 
     return (
         <div className="users-tab animate-fadeIn">
+
+            {/* ── Tarjetas de métricas ── */}
+            <div className="metrics-grid">
+                <div className="metric-card">
+                    <div className="metric-icon metric-icon--total">👥</div>
+                    <div className="metric-body">
+                        <span className="metric-value">{metrics.total}</span>
+                        <span className="metric-label">Total usuarios</span>
+                    </div>
+                </div>
+                <div className="metric-card">
+                    <div className="metric-icon metric-icon--active">✅</div>
+                    <div className="metric-body">
+                        <span className="metric-value">{metrics.active}</span>
+                        <span className="metric-label">Activos</span>
+                    </div>
+                </div>
+                <div className="metric-card">
+                    <div className="metric-icon metric-icon--banned">🚫</div>
+                    <div className="metric-body">
+                        <span className="metric-value">{metrics.banned}</span>
+                        <span className="metric-label">Suspendidos</span>
+                    </div>
+                </div>
+                <div className="metric-card">
+                    <div className="metric-icon metric-icon--billing">💳</div>
+                    <div className="metric-body">
+                        <span className="metric-value">{metrics.billingEnabled}</span>
+                        <span className="metric-label">Billing activo</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Gráfica de registros ── */}
+            <div className="chart-section">
+                <button
+                    className="chart-toggle-btn"
+                    onClick={() => setShowChart(v => !v)}
+                >
+                    <BarChart3 size={16} />
+                    {showChart ? 'Ocultar gráfica' : 'Ver registros por mes'}
+                </button>
+
+                {showChart && (
+                    <div className="chart-container">
+                        <h4 className="chart-title">Registros de usuarios — últimos 6 meses</h4>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={chartData} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis
+                                    dataKey="mes"
+                                    tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    allowDecimals={false}
+                                    tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: 'var(--color-surface)',
+                                        border: '1px solid var(--color-border)',
+                                        borderRadius: '8px',
+                                        fontSize: '0.85rem',
+                                    }}
+                                    cursor={{ fill: 'var(--color-bg-secondary)' }}
+                                    formatter={(value: number) => [value, 'Registros']}
+                                />
+                                <Bar
+                                    dataKey="registros"
+                                    fill="var(--color-primary)"
+                                    radius={[4, 4, 0, 0]}
+                                    maxBarSize={48}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Barra de filtros + acciones ── */}
             <div className="flex justify-between items-center mb-md">
                 <div className="filters-bar flex-1">
                     <div className="search-wrapper">
@@ -214,12 +353,30 @@ export function UsersTab() {
                             <option value="user">Usuarios</option>
                         </select>
                     </div>
+                    <div className="filter-wrapper">
+                        <Filter size={18} className="filter-icon" />
+                        <select
+                            className="form-select filter-select"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="all">Todos los estados</option>
+                            <option value="active">Activo</option>
+                            <option value="banned">Suspendido</option>
+                        </select>
+                    </div>
                 </div>
-                <button className="btn btn-primary" onClick={handleCreateUser}>
-                    <Plus size={18} /> Nuevo Usuario
-                </button>
+                <div className="table-actions">
+                    <button type="button" className="btn btn-secondary" onClick={handleExportCSV} title="Exportar a Excel">
+                        <Download size={16} /> Exportar
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={handleCreateUser}>
+                        <Plus size={18} /> Nuevo Usuario
+                    </button>
+                </div>
             </div>
 
+            {/* ── Tabla de usuarios ── */}
             <div className="users-table-container">
                 <table className="table">
                     <thead>
@@ -227,7 +384,9 @@ export function UsersTab() {
                             <th>Usuario</th>
                             <th>Estado</th>
                             <th>Rol</th>
+                            <th>Facturación</th>
                             <th>Registro</th>
+                            <th>Último acceso</th>
                             <th className="text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -256,7 +415,25 @@ export function UsersTab() {
                                         <span className="capitalize">{p.role || 'user'}</span>
                                     </div>
                                 </td>
-                                <td>{format(new Date(p.created_at), 'd MMM yyyy', { locale: es })}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        className={`billing-toggle-btn ${p.billing_enabled ? 'enabled' : ''}`}
+                                        onClick={() => handleBillingToggle(p.id, !!p.billing_enabled)}
+                                        title={p.billing_enabled ? 'Desactivar facturación' : 'Activar facturación'}
+                                    >
+                                        <Receipt size={14} />
+                                        {p.billing_enabled ? 'Activo' : 'Inactivo'}
+                                    </button>
+                                </td>
+                                <td className="text-nowrap">
+                                    {format(new Date(p.created_at), 'd MMM yyyy', { locale: es })}
+                                </td>
+                                <td className="text-nowrap last-access-cell">
+                                    {p.updated_at
+                                        ? formatDistanceToNow(new Date(p.updated_at), { addSuffix: true, locale: es })
+                                        : '—'}
+                                </td>
                                 <td className="text-right">
                                     <div className="flex justify-end gap-2">
                                         <button
@@ -291,11 +468,19 @@ export function UsersTab() {
                                 </td>
                             </tr>
                         ))}
+
+                        {filteredProfiles.length === 0 && (
+                            <tr>
+                                <td colSpan={7} style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem' }}>
+                                    No se encontraron usuarios con los filtros actuales.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Modal */}
+            {/* ── Modal crear / editar ── */}
             {showModal && (
                 <div className="modal-overlay">
                     <div className="modal">
@@ -391,14 +576,15 @@ export function UsersTab() {
                 </div>
             )}
 
+            {/* ── Modal confirmar eliminación ── */}
             {deleteUserId && (
                 <div className="modal-overlay" onClick={() => setDeleteUserId(null)}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, textAlign: 'center', padding: '2rem' }}>
-                        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>¿Eliminar este usuario?</h2>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Esta acción es permanente y no se puede deshacer.</p>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setDeleteUserId(null)}>Cancelar</button>
-                            <button type="button" className="btn btn-danger" style={{ flex: 1 }} onClick={confirmDeleteUser}>Eliminar</button>
+                    <div className="modal modal--confirm" onClick={e => e.stopPropagation()}>
+                        <h2 className="confirm-title">¿Eliminar este usuario?</h2>
+                        <p className="confirm-body">Esta acción es permanente y no se puede deshacer.</p>
+                        <div className="confirm-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setDeleteUserId(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-danger" onClick={confirmDeleteUser}>Eliminar</button>
                         </div>
                     </div>
                 </div>
