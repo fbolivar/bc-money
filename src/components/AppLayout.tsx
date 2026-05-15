@@ -97,8 +97,8 @@ export function AppLayout() {
                 if (surplus <= 0) continue;
                 const contribution = Math.round(surplus * rule.percentage / 100);
                 if (contribution <= 0) continue;
-                const { data: goalData } = await supabase.from('goals').select('current_amount').eq('id', rule.goalId).single();
-                if (goalData) await supabase.from('goals').update({ current_amount: Number(goalData.current_amount) + contribution }).eq('id', rule.goalId);
+                const { data: goalData } = await supabase.from('goals').select('current_amount').eq('id', rule.goalId).eq('user_id', user.id).single();
+                if (goalData) await supabase.from('goals').update({ current_amount: Number(goalData.current_amount) + contribution }).eq('id', rule.goalId).eq('user_id', user.id);
             }
         })();
     }, [user]);
