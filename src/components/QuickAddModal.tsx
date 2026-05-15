@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Plus, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, Plus, TrendingUp, TrendingDown, Bookmark, BookmarkCheck, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
@@ -9,6 +9,25 @@ import './QuickAddModal.css';
 interface Props {
     onClose: () => void;
     onSaved: () => void;
+}
+
+interface Template {
+    id: string;
+    type: 'income' | 'expense';
+    amount: string;
+    categoryId: string;
+    accountId: string;
+    description: string;
+    label: string;
+}
+
+const TEMPLATES_KEY = 'qam_templates_v1';
+
+function loadTemplates(): Template[] {
+    try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]'); } catch { return []; }
+}
+function saveTemplates(ts: Template[]) {
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(ts));
 }
 
 export function QuickAddModal({ onClose, onSaved }: Props) {
@@ -24,6 +43,9 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [templates, setTemplates] = useState<Template[]>(loadTemplates);
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [savedFeedback, setSavedFeedback] = useState(false);
 
     const loadData = useCallback(async () => {
         if (!user) return;
@@ -41,6 +63,37 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
     const filteredCats = categories.filter(c =>
         type === 'income' ? c.type === 'income' || c.type === 'both' : c.type === 'expense' || c.type === 'both'
     );
+
+    function applyTemplate(t: Template) {
+        setType(t.type);
+        setAmount(t.amount);
+        setCategoryId(t.categoryId);
+        setAccountId(t.accountId);
+        setDescription(t.description);
+        setShowTemplates(false);
+    }
+
+    function saveAsTemplate() {
+        if (!amount || Number(amount) <= 0) return;
+        const cat = categories.find(c => c.id === categoryId);
+        const label = description || cat?.name || `${type === 'expense' ? 'Gasto' : 'Ingreso'} ${amount}`;
+        const t: Template = {
+            id: Date.now().toString(),
+            type, amount, categoryId, accountId, description,
+            label,
+        };
+        const updated = [t, ...templates].slice(0, 12);
+        setTemplates(updated);
+        saveTemplates(updated);
+        setSavedFeedback(true);
+        setTimeout(() => setSavedFeedback(false), 1500);
+    }
+
+    function deleteTemplate(id: string) {
+        const updated = templates.filter(t => t.id !== id);
+        setTemplates(updated);
+        saveTemplates(updated);
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -76,8 +129,39 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
             <div className="qam-panel" onClick={e => e.stopPropagation()}>
                 <div className="qam-header">
                     <h2>Agregar transacción</h2>
-                    <button type="button" title="Cerrar" className="qam-close" onClick={onClose}><X size={20} /></button>
+                    <div className="qam-header-actions">
+                        <button
+                            type="button"
+                            title={templates.length > 0 ? `Plantillas (${templates.length})` : 'Sin plantillas guardadas'}
+                            className={`qam-tpl-btn ${showTemplates ? 'active' : ''}`}
+                            onClick={() => setShowTemplates(v => !v)}
+                        >
+                            <Bookmark size={17} />
+                            {templates.length > 0 && <span className="qam-tpl-count">{templates.length}</span>}
+                        </button>
+                        <button type="button" title="Cerrar" className="qam-close" onClick={onClose}><X size={20} /></button>
+                    </div>
                 </div>
+
+                {/* Templates panel */}
+                {showTemplates && (
+                    <div className="qam-templates">
+                        {templates.length === 0 ? (
+                            <p className="qam-tpl-empty">Sin plantillas. Llena el formulario y usa el ícono <BookmarkCheck size={13} /> para guardar.</p>
+                        ) : templates.map(t => (
+                            <div key={t.id} className="qam-tpl-item">
+                                <button type="button" className="qam-tpl-apply" onClick={() => applyTemplate(t)}>
+                                    <span className={`qam-tpl-dot ${t.type}`} />
+                                    <span className="qam-tpl-label">{t.label}</span>
+                                    <span className="qam-tpl-amt">{currency} {Number(t.amount).toLocaleString()}</span>
+                                </button>
+                                <button type="button" className="qam-tpl-del" title="Eliminar plantilla" onClick={() => deleteTemplate(t.id)}>
+                                    <Trash2 size={13} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="qam-form">
                     {/* Type toggle */}
@@ -92,7 +176,18 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
 
                     {/* Amount */}
                     <div className="qam-field">
-                        <label>Monto ({currency})</label>
+                        <div className="qam-amount-row">
+                            <label>Monto ({currency})</label>
+                            <button
+                                type="button"
+                                className={`qam-save-tpl ${savedFeedback ? 'saved' : ''}`}
+                                title="Guardar como plantilla"
+                                onClick={saveAsTemplate}
+                            >
+                                {savedFeedback ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+                                {savedFeedback ? 'Guardada' : 'Guardar plantilla'}
+                            </button>
+                        </div>
                         <input
                             type="number"
                             min="0"

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
 import { supabase, createTemporaryClient } from '../lib/supabase';
 import { UsersTab } from '../components/UsersTab';
 import { BackupRestore } from '../components/BackupRestore';
@@ -42,15 +43,10 @@ export function Configuracion() {
     const [backupResult, setBackupResult] = useState<Record<string, number> | null>(null);
     const [restoreResult, setRestoreResult] = useState<Record<string, number> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [darkMode, setDarkMode] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
+    const { theme, toggleTheme } = useTheme();
+    const darkMode = theme === 'dark';
+    const toggleDarkMode = toggleTheme;
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
-    const toggleDarkMode = () => {
-        const next = !darkMode;
-        setDarkMode(next);
-        document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-        localStorage.setItem('bc-money-theme', next ? 'dark' : 'light');
-    };
 
     const handleCurrencyChange = async (newCurrency: string) => {
         if (!user || newCurrency === profile?.currency) return;

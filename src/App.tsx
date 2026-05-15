@@ -51,6 +51,7 @@ const Transferencias = lazy(() => import('./pages/Transferencias').then(module =
 const Retos = lazy(() => import('./pages/Retos').then(module => ({ default: module.Retos })));
 const AlcanciaDigital = lazy(() => import('./pages/AlcanciaDigital').then(module => ({ default: module.AlcanciaDigital })));
 const Benchmarks = lazy(() => import('./pages/Benchmarks').then(module => ({ default: module.Benchmarks })));
+const FlujoCaja = lazy(() => import('./pages/FlujoCaja').then(module => ({ default: module.FlujoCaja })));
 
 function LoadingFallback() {
   return (
@@ -116,6 +117,7 @@ function App() {
               <Route path="/retos" element={<Retos />} />
               <Route path="/alcancia" element={<AlcanciaDigital />} />
               <Route path="/benchmarks" element={<Benchmarks />} />
+              <Route path="/flujo-caja" element={<FlujoCaja />} />
 
             </Route>
 
