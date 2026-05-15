@@ -5,19 +5,26 @@ export function useRealtimeSync(userId: string | undefined, onUpdate: () => void
     useEffect(() => {
         if (!userId) return;
 
-        const txChannel = supabase
-            .channel(`realtime-transactions-${userId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${userId}` }, () => onUpdate())
-            .subscribe();
+        let txChannel: ReturnType<typeof supabase.channel> | null = null;
+        let accChannel: ReturnType<typeof supabase.channel> | null = null;
 
-        const accChannel = supabase
-            .channel(`realtime-accounts-${userId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts', filter: `user_id=eq.${userId}` }, () => onUpdate())
-            .subscribe();
+        try {
+            txChannel = supabase
+                .channel(`realtime-transactions-${userId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${userId}` }, () => onUpdate())
+                .subscribe();
+        } catch { /* WebSocket unavailable — live sync disabled */ }
+
+        try {
+            accChannel = supabase
+                .channel(`realtime-accounts-${userId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts', filter: `user_id=eq.${userId}` }, () => onUpdate())
+                .subscribe();
+        } catch { /* WebSocket unavailable */ }
 
         return () => {
-            supabase.removeChannel(txChannel);
-            supabase.removeChannel(accChannel);
+            if (txChannel) supabase.removeChannel(txChannel);
+            if (accChannel) supabase.removeChannel(accChannel);
         };
     }, [userId, onUpdate]);
 }

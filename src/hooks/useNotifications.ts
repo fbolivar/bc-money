@@ -46,18 +46,21 @@ export function useNotifications(userId: string | undefined) {
     fetchNotifications();
     triggerGenerate();
 
-    const channel = supabase
-      .channel(`app_notifications:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'app_notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          setNotifications(prev => [payload.new as AppNotification, ...prev]);
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`app_notifications:${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'app_notifications', filter: `user_id=eq.${userId}` },
+          (payload) => {
+            setNotifications(prev => [payload.new as AppNotification, ...prev]);
+          }
+        )
+        .subscribe();
+    } catch { /* WebSocket unavailable */ }
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, [userId, fetchNotifications, triggerGenerate]);
 
   const markAsRead = useCallback(async (id: string) => {
