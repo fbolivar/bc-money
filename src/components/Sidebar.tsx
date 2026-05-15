@@ -6,7 +6,7 @@ import {
     ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
     StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
     Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
-    MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets,
+    MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets, Zap,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -35,6 +35,7 @@ const NAV_SECTIONS = [
             { path: '/inversiones', icon: BarChart3, label: 'Inversiones' },
             { path: '/proyeccion', icon: Activity, label: 'Proyección Flujo' },
             { path: '/flujo-caja', icon: Droplets, label: 'Flujo de Caja' },
+            { path: '/reglas-ahorro', icon: Zap, label: 'Reglas de Ahorro' },
             { path: '/prestamos', icon: Users, label: 'Préstamos' },
             { path: '/division', icon: Split, label: 'División Gastos' },
             { path: '/simulador-credito', icon: PiggyBank, label: 'Simulador Crédito' },

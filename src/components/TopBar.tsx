@@ -34,6 +34,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/vista-familiar': 'Vista Familiar',
     '/onboarding': 'Configuración Inicial',
     '/flujo-caja': 'Flujo de Caja',
+    '/reglas-ahorro': 'Reglas de Ahorro Automático',
 };
 
 interface Alert {
