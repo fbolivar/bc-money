@@ -36,6 +36,9 @@ const PAGE_TITLES: Record<string, string> = {
     '/flujo-caja': 'Flujo de Caja',
     '/reglas-ahorro': 'Reglas de Ahorro Automático',
     '/comercios': 'Análisis por Comercio',
+    '/seguros': 'Seguros y Pólizas',
+    '/informe-anual': 'Informe Anual',
+    '/precios': 'Seguimiento de Precios',
 };
 
 interface Alert {

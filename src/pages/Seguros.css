@@ -1,0 +1,96 @@
+.seguros-page { padding: 1.25rem; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+
+.seg-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; }
+.seg-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 1rem 1.1rem; display: flex; align-items: center; gap: 0.85rem; }
+.seg-card-icon { flex-shrink: 0; }
+.seg-card-icon.blue { color: #6366f1; }
+.seg-card-icon.orange { color: #f59e0b; }
+.seg-card-icon.green { color: #10b981; }
+.seg-card { display: flex; }
+.seg-card > div { display: flex; flex-direction: column; gap: 2px; }
+.seg-card-label { font-size: 0.75rem; color: var(--color-text-secondary); }
+.seg-card-val { font-size: 1.15rem; font-weight: 800; color: var(--color-text-primary); }
+
+.seg-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.seg-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.seg-filter-btn { display: flex; align-items: center; gap: 5px; padding: 0.3rem 0.7rem; border-radius: 20px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-secondary); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.seg-filter-btn.active { background: var(--color-primary,#6366f1); color: #fff; border-color: var(--color-primary,#6366f1); }
+.seg-filter-btn:hover:not(.active) { border-color: var(--color-primary,#6366f1); color: var(--color-primary,#6366f1); }
+.seg-add-btn { display: flex; align-items: center; gap: 5px; padding: 0.45rem 1rem; border-radius: 8px; border: none; background: var(--color-primary,#6366f1); color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.seg-add-btn:hover { opacity: 0.9; }
+
+.seg-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; color: var(--color-text-secondary); text-align: center; }
+
+.seg-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.seg-item { display: flex; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.1rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; transition: box-shadow 0.15s; }
+.seg-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.seg-item.inactive { opacity: 0.55; }
+
+.seg-type-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.seg-type-salud { background: #dbeafe; color: #2563eb; }
+.seg-type-auto { background: #d1fae5; color: #059669; }
+.seg-type-vida { background: #ede9fe; color: #7c3aed; }
+.seg-type-hogar { background: #fef3c7; color: #d97706; }
+.seg-type-otro { background: var(--color-surface-hover); color: var(--color-text-secondary); }
+
+.seg-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.seg-item-top { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.seg-item-name { font-size: 0.95rem; font-weight: 700; color: var(--color-text-primary); }
+.seg-inactive-tag { font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; background: var(--color-surface-hover); color: var(--color-text-secondary); font-weight: 600; }
+.seg-badge { font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.seg-badge-ok { background: #d1fae5; color: #065f46; }
+.seg-badge-warn { background: #fef3c7; color: #92400e; }
+.seg-badge-urgent { background: #fee2e2; color: #991b1b; }
+.seg-badge-expired { background: #fca5a5; color: #7f1d1d; }
+
+.seg-item-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.78rem; color: var(--color-text-secondary); }
+.seg-item-meta span { white-space: nowrap; }
+.seg-item-notes { font-size: 0.78rem; color: var(--color-text-secondary); margin: 0; font-style: italic; }
+
+.seg-item-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.seg-item-actions button { background: none; border: 1px solid var(--color-border); border-radius: 7px; padding: 5px; cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; }
+.seg-item-actions button:hover { border-color: var(--color-primary,#6366f1); color: var(--color-primary,#6366f1); }
+.seg-item-actions button.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+/* Modal */
+.seg-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.seg-modal { background: var(--color-surface); border-radius: 16px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.seg-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem 1rem; border-bottom: 1px solid var(--color-border); }
+.seg-modal-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: var(--color-text-primary); }
+.seg-modal-header button { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 4px; border-radius: 50%; }
+.seg-modal-header button:hover { background: var(--color-surface-hover); }
+
+.seg-modal-body { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.seg-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.seg-field label { font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); }
+.seg-field input, .seg-field textarea, .seg-field select { padding: 0.55rem 0.75rem; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-hover); color: var(--color-text-primary); font-size: 0.9rem; }
+.seg-field input:focus, .seg-field textarea:focus, .seg-field select:focus { outline: none; border-color: var(--color-primary,#6366f1); }
+.seg-field-row { display: flex; gap: 0.75rem; }
+.seg-select-wrap { position: relative; }
+.seg-select-wrap select { width: 100%; appearance: none; padding-right: 2rem; }
+.seg-chevron { position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--color-text-secondary); }
+
+.seg-type-picker { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.seg-type-opt { display: flex; align-items: center; gap: 5px; padding: 0.3rem 0.65rem; border-radius: 20px; border: 1px solid var(--color-border); background: var(--color-surface-hover); color: var(--color-text-secondary); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.seg-type-opt.active { background: var(--color-primary,#6366f1); color: #fff; border-color: var(--color-primary,#6366f1); }
+
+.seg-active-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text-primary); cursor: pointer; }
+
+.seg-modal-footer { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 1rem 1.5rem; border-top: 1px solid var(--color-border); }
+.seg-btn-cancel { background: none; border: 1px solid var(--color-border); border-radius: 8px; padding: 0.55rem 1rem; cursor: pointer; font-size: 0.85rem; color: var(--color-text-secondary); }
+.seg-btn-save { padding: 0.55rem 1.25rem; border: none; border-radius: 8px; background: var(--color-primary,#6366f1); color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.seg-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.seg-confirm { background: var(--color-surface); border-radius: 16px; padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 320px; width: 100%; }
+.seg-confirm-icon { color: #f59e0b; }
+.seg-confirm p { font-size: 0.95rem; font-weight: 600; color: var(--color-text-primary); margin: 0; }
+.seg-confirm-btns { display: flex; gap: 0.5rem; }
+.seg-confirm-btns button { padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; }
+.seg-confirm-btns button:first-child { background: none; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+.seg-confirm-btns button.danger { background: #ef4444; border: none; color: #fff; }
+
+@media (max-width: 600px) {
+  .seg-cards { grid-template-columns: 1fr; }
+  .seg-field-row { flex-direction: column; }
+  .seg-modal { max-height: 95vh; }
+}

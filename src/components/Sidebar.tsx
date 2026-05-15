@@ -7,6 +7,7 @@ import {
     StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
     Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
     MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets, Zap, Store,
+    ShieldAlert, FileBarChart2, LineChart,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -50,10 +51,12 @@ const NAV_SECTIONS = [
         title: 'SEGUIMIENTO',
         items: [
             { path: '/garantias', icon: ShieldCheck, label: 'Garantías' },
+            { path: '/seguros', icon: ShieldAlert, label: 'Seguros y Pólizas' },
             { path: '/mascotas', icon: PawPrint, label: 'Mascotas' },
             { path: '/compras', icon: ShoppingCart, label: 'Compras' },
             { path: '/hogar', icon: Hammer, label: 'Hogar' },
             { path: '/eventos', icon: MapPin, label: 'Viajes & Eventos' },
+            { path: '/precios', icon: LineChart, label: 'Seguimiento Precios' },
         ],
     },
     {
@@ -67,6 +70,7 @@ const NAV_SECTIONS = [
             { path: '/importar', icon: Upload, label: 'Importar' },
             { path: '/benchmarks', icon: Globe2, label: 'Benchmarks' },
             { path: '/comercios', icon: Store, label: 'Análisis Comercios' },
+            { path: '/informe-anual', icon: FileBarChart2, label: 'Informe Anual' },
             { path: '/familia', icon: Users, label: 'Familia' },
             { path: '/vista-familiar', icon: Eye, label: 'Vista Familiar' },
             { path: '/declaracion', icon: ClipboardList, label: 'Declaración Renta' },

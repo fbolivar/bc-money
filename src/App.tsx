@@ -54,6 +54,9 @@ const Benchmarks = lazy(() => import('./pages/Benchmarks').then(module => ({ def
 const FlujoCaja = lazy(() => import('./pages/FlujoCaja').then(module => ({ default: module.FlujoCaja })));
 const ReglasAhorro = lazy(() => import('./pages/ReglasAhorro').then(module => ({ default: module.ReglasAhorro })));
 const Comercios = lazy(() => import('./pages/Comercios').then(module => ({ default: module.Comercios })));
+const Seguros = lazy(() => import('./pages/Seguros').then(module => ({ default: module.Seguros })));
+const InformeAnual = lazy(() => import('./pages/InformeAnual').then(module => ({ default: module.InformeAnual })));
+const SeguimientoPrecios = lazy(() => import('./pages/SeguimientoPrecios').then(module => ({ default: module.SeguimientoPrecios })));
 
 function LoadingFallback() {
   return (
@@ -122,6 +125,9 @@ function App() {
               <Route path="/flujo-caja" element={<FlujoCaja />} />
               <Route path="/reglas-ahorro" element={<ReglasAhorro />} />
               <Route path="/comercios" element={<Comercios />} />
+              <Route path="/seguros" element={<Seguros />} />
+              <Route path="/informe-anual" element={<InformeAnual />} />
+              <Route path="/precios" element={<SeguimientoPrecios />} />
 
             </Route>
 
