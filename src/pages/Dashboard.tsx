@@ -22,6 +22,7 @@ import { OnboardingChecklist } from '../components/OnboardingChecklist';
 import { TRMWidget } from '../components/TRMWidget';
 import { HealthScore } from '../components/HealthScore';
 import { WeeklySummary } from '../components/WeeklySummary';
+import { SemaforoWidget } from '../components/SemaforoWidget';
 import { useExchangeRates } from '../hooks/useExchangeRates';
 import { useRealtimeSync } from '../hooks/useRealtimeSync';
 import { parseLocalDate } from '../lib/dates';
@@ -384,6 +385,9 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Semáforo del Mes */}
+            <SemaforoWidget />
 
             {/* Onboarding Checklist — visible solo para usuarios nuevos */}
             <OnboardingChecklist />
