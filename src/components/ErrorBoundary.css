@@ -1,0 +1,68 @@
+.eb-overlay {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f3f4f6);
+  color: var(--text-primary, #111827);
+  padding: 2rem;
+  text-align: center;
+}
+
+.eb-card {
+  padding: 2rem;
+  background: var(--bg-secondary, #fff);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.eb-icon { flex-shrink: 0; }
+
+.eb-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.eb-desc {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+}
+
+.eb-error-msg {
+  display: block;
+  width: 100%;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  text-align: left;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.eb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.eb-btn:hover { opacity: 0.9; }

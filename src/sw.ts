@@ -6,6 +6,12 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 declare let self: ServiceWorkerGlobalScope;
 
+// Force new SW to activate immediately, replacing the old one
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
 // Workbox precaching (manifest injected by vite-plugin-pwa)
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
