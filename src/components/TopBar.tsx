@@ -35,6 +35,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/onboarding': 'Configuración Inicial',
     '/flujo-caja': 'Flujo de Caja',
     '/reglas-ahorro': 'Reglas de Ahorro Automático',
+    '/comercios': 'Análisis por Comercio',
 };
 
 interface Alert {

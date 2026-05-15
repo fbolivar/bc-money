@@ -12,6 +12,7 @@ import { TopBar } from './TopBar';
 import { QuickAddModal } from './QuickAddModal';
 import { MonthlySummary } from './MonthlySummary';
 import { AppTour, shouldShowTour } from './AppTour';
+import { RevisionMensual, shouldShowRevision } from './RevisionMensual';
 import { format } from 'date-fns';
 import { subMonths } from 'date-fns';
 
@@ -36,6 +37,7 @@ export function AppLayout() {
     const [showMonthlySummary, setShowMonthlySummary] = useState(false);
     const [recurringDismissed, setRecurringDismissed] = useState(false);
     const [showTour, setShowTour] = useState(false);
+    const [showRevision, setShowRevision] = useState(false);
 
     const { createdCount } = useRecurringTransactions(user?.id);
 
@@ -57,9 +59,9 @@ export function AppLayout() {
     // Show tour once after onboarding is done
     useEffect(() => {
         if (!user) return;
-        // Small delay so the dashboard renders first
         const t = setTimeout(() => {
             if (shouldShowTour()) setShowTour(true);
+            else if (shouldShowRevision()) setShowRevision(true);
         }, 1200);
         return () => clearTimeout(t);
     }, [user]);
@@ -180,6 +182,9 @@ export function AppLayout() {
 
             {showTour && (
                 <AppTour onDone={() => setShowTour(false)} />
+            )}
+            {showRevision && (
+                <RevisionMensual onClose={() => setShowRevision(false)} />
             )}
         </div>
     );

@@ -53,6 +53,7 @@ const AlcanciaDigital = lazy(() => import('./pages/AlcanciaDigital').then(module
 const Benchmarks = lazy(() => import('./pages/Benchmarks').then(module => ({ default: module.Benchmarks })));
 const FlujoCaja = lazy(() => import('./pages/FlujoCaja').then(module => ({ default: module.FlujoCaja })));
 const ReglasAhorro = lazy(() => import('./pages/ReglasAhorro').then(module => ({ default: module.ReglasAhorro })));
+const Comercios = lazy(() => import('./pages/Comercios').then(module => ({ default: module.Comercios })));
 
 function LoadingFallback() {
   return (
@@ -120,6 +121,7 @@ function App() {
               <Route path="/benchmarks" element={<Benchmarks />} />
               <Route path="/flujo-caja" element={<FlujoCaja />} />
               <Route path="/reglas-ahorro" element={<ReglasAhorro />} />
+              <Route path="/comercios" element={<Comercios />} />
 
             </Route>
 

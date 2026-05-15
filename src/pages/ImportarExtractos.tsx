@@ -39,6 +39,7 @@ interface ColumnHints {
     debit: string[];
     credit: string[];
     amount: string[];
+    merchant?: string[];
 }
 
 interface BankPreset {
@@ -302,6 +303,28 @@ function analysisToPreset(analysis: StatementAnalysis): BankPreset {
 }
 
 // ─── Core Parser ─────────────────────────────────────────────────────────────
+// Extract merchant name from bank description strings
+function extractMerchant(desc: string): string | null {
+    if (!desc) return null;
+    // Bancolombia: "COMPRA ESTABLECIMIENTO RAPPI S.A.S" → "RAPPI S.A.S"
+    const estMatch = desc.match(/ESTABLECIMIENTO\s+(.+?)(?:\s{2,}|$)/i);
+    if (estMatch) return estMatch[1].trim();
+    // "PAGO PSE * ESTABLECIMIENTO" or "PAGO * NETFLIX"
+    const pseMatch = desc.match(/(?:PSE|PAGO)\s*\*\s*(.+?)(?:\s{2,}|$)/i);
+    if (pseMatch) return pseMatch[1].trim();
+    // "TC COMPRA EXT 001 RAPPI" → "RAPPI"
+    const tcMatch = desc.match(/TC\s+COMPRA(?:\s+\w+){1,3}\s+(.+?)(?:\s{2,}|$)/i);
+    if (tcMatch) return tcMatch[1].trim();
+    // "COMPRA EN EXITO CHAPINERO" → "EXITO CHAPINERO"
+    const compraMatch = desc.match(/COMPRA\s+EN\s+(.+?)(?:\s{2,}|$)/i);
+    if (compraMatch) return compraMatch[1].trim();
+    // First 3 meaningful words as fallback merchant name (skip generic prefixes)
+    const skipWords = /^(PAGO|COMPRA|RETIRO|TRANSFERENCIA|ABONO|CARGO|TR|TX|REF|NUM|NO\.?|#)/i;
+    const words = desc.split(/\s+/).filter(w => w.length > 2 && !skipWords.test(w));
+    if (words.length > 0) return words.slice(0, 3).join(' ').substring(0, 40);
+    return null;
+}
+
 function parseRows(
     headers: string[],
     rows: unknown[][],
@@ -325,6 +348,7 @@ function parseRows(
     const amountIdx = findColumnIndex(h, colHints.amount);
     const debitIdx = findColumnIndex(h, colHints.debit);
     const creditIdx = findColumnIndex(h, colHints.credit);
+    const merchantIdx = colHints.merchant ? findColumnIndex(h, colHints.merchant) : findColumnIndex(h, ['comercio', 'merchant', 'establecimiento', 'tienda', 'lugar', 'nombre comercio']);
 
     const nequiStyle = preset?.nequiStyle ?? false;
 
@@ -365,8 +389,9 @@ function parseRows(
 
         const date = parseDate(dateIdx >= 0 ? row[dateIdx] : null);
         const description = descIdx >= 0 ? String(row[descIdx] || '').trim() : '';
+        const merchant = merchantIdx >= 0 ? String(row[merchantIdx] || '').trim() || null : extractMerchant(description);
 
-        results.push({ date, description, amount, type, selected: true });
+        results.push({ date, description, amount, type, selected: true, merchant });
     }
     return results;
 }
@@ -596,6 +621,7 @@ export function ImportarExtractos() {
                 user_id: user.id, type: tx.type, amount: tx.amount,
                 description: tx.description || null, date: tx.date, payment_method: 'other',
                 category_id: tx.category_id || null,
+                merchant: tx.merchant || null,
             });
             if (!error) count++;
         }
