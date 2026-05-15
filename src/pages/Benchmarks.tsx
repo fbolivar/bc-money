@@ -61,16 +61,20 @@ export function Benchmarks() {
         const end = endOfMonth(now).toISOString().slice(0, 10);
 
         Promise.all([
-            supabase.from('transactions').select('amount, type').eq('user_id', user.id).gte('date', start).lte('date', end),
-            supabase.from('transactions').select('amount, categories(name)').eq('user_id', user.id).eq('type', 'expense').gte('date', start).lte('date', end),
+            supabase.from('transactions').select('amount, type, category_id').eq('user_id', user.id).gte('date', start).lte('date', end),
+            supabase.from('categories').select('id, name').eq('user_id', user.id),
         ]).then(([txRes, catRes]) => {
             const txs = txRes.data || [];
+            const cats = catRes.data || [];
+            const catNameById: Record<string, string> = {};
+            for (const c of cats) catNameById[c.id] = c.name;
+
             const totalInc = txs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
             setIncome(totalInc / monthsBack);
 
             const catMap: Record<string, number> = {};
-            for (const tx of catRes.data || []) {
-                const name = (tx.categories as { name: string } | null)?.name || 'Sin categoría';
+            for (const tx of txs.filter(t => t.type === 'expense')) {
+                const name = tx.category_id ? (catNameById[tx.category_id] || 'Sin categoría') : 'Sin categoría';
                 catMap[name] = (catMap[name] || 0) + Number(tx.amount);
             }
             const sorted = Object.entries(catMap)
