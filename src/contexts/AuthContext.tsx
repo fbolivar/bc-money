@@ -75,17 +75,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(s.user);
                 await fetchProfile(s.user.id);
 
-                // Suscripcion realtime al perfil propio: detecta cambios externos
-                // (ej: otro usuario asigna family_id al invitar a esta cuenta)
-                profileChannel = supabase
-                    .channel(`profile-${s.user.id}`)
-                    .on('postgres_changes', {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'profiles',
-                        filter: `id=eq.${s.user.id}`,
-                    }, () => fetchProfile(s.user.id))
-                    .subscribe();
+                // Realtime profile sync — wrapped in try/catch because
+                // iOS Safari blocks WebSocket in certain PWA contexts
+                try {
+                    profileChannel = supabase
+                        .channel(`profile-${s.user.id}`)
+                        .on('postgres_changes', {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'profiles',
+                            filter: `id=eq.${s.user.id}`,
+                        }, () => fetchProfile(s.user.id))
+                        .subscribe();
+                } catch {
+                    // WebSocket unavailable — profile updates require manual refresh
+                }
             }
             clearTimeout(fallbackTimer);
             setLoading(false);

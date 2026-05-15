@@ -3,8 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create client with optimized settings for concurrent usage
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+const CLIENT_OPTIONS = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -18,7 +17,27 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
       'x-app-name': 'bc-money',
     },
   },
-});
+  // Disable realtime auto-connect to avoid WebSocket errors on restrictive browsers
+  realtime: {
+    timeout: 30000,
+  },
+} as const;
+
+function createSupabaseClient(): SupabaseClient {
+  try {
+    return createClient(supabaseUrl, supabaseAnonKey, CLIENT_OPTIONS);
+  } catch (e) {
+    console.error('Supabase createClient error:', e);
+    // Return a minimal client without realtime to avoid crashing the app
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: CLIENT_OPTIONS.auth,
+      db: CLIENT_OPTIONS.db,
+      global: CLIENT_OPTIONS.global,
+    });
+  }
+}
+
+export const supabase: SupabaseClient = createSupabaseClient();
 
 // Check if properly configured
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
