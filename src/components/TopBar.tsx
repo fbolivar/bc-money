@@ -37,6 +37,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/reglas-ahorro': 'Reglas de Ahorro Automático',
     '/comercios': 'Análisis por Comercio',
     '/seguros': 'Seguros y Pólizas',
+    '/tarjetas': 'Tarjetas de Crédito',
     '/informe-anual': 'Informe Anual',
     '/precios': 'Seguimiento de Precios',
 };

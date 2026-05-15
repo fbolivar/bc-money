@@ -55,6 +55,7 @@ const FlujoCaja = lazy(() => import('./pages/FlujoCaja').then(module => ({ defau
 const ReglasAhorro = lazy(() => import('./pages/ReglasAhorro').then(module => ({ default: module.ReglasAhorro })));
 const Comercios = lazy(() => import('./pages/Comercios').then(module => ({ default: module.Comercios })));
 const Seguros = lazy(() => import('./pages/Seguros').then(module => ({ default: module.Seguros })));
+const TarjetasCredito = lazy(() => import('./pages/TarjetasCredito').then(module => ({ default: module.TarjetasCredito })));
 const InformeAnual = lazy(() => import('./pages/InformeAnual').then(module => ({ default: module.InformeAnual })));
 const SeguimientoPrecios = lazy(() => import('./pages/SeguimientoPrecios').then(module => ({ default: module.SeguimientoPrecios })));
 
@@ -126,6 +127,7 @@ function App() {
               <Route path="/reglas-ahorro" element={<ReglasAhorro />} />
               <Route path="/comercios" element={<Comercios />} />
               <Route path="/seguros" element={<Seguros />} />
+              <Route path="/tarjetas" element={<TarjetasCredito />} />
               <Route path="/informe-anual" element={<InformeAnual />} />
               <Route path="/precios" element={<SeguimientoPrecios />} />
 

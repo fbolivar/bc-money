@@ -7,7 +7,7 @@ import {
     StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
     Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
     MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets, Zap, Store,
-    ShieldAlert, FileBarChart2, LineChart,
+    ShieldAlert, FileBarChart2, LineChart, CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -31,6 +31,7 @@ const NAV_SECTIONS = [
             { path: '/metas', icon: Target, label: 'Metas' },
             { path: '/fondo-emergencia', icon: ShieldCheck, label: 'Fondo Emergencia' },
             { path: '/deudas', icon: CircleDollarSign, label: 'Deudas' },
+            { path: '/tarjetas', icon: CreditCard, label: 'Tarjetas de Crédito' },
             { path: '/suscripciones', icon: Repeat, label: 'Suscripciones' },
             { path: '/plan-deudas', icon: Calculator, label: 'Plan Deudas' },
             { path: '/inversiones', icon: BarChart3, label: 'Inversiones' },
