@@ -52,44 +52,53 @@ export function VistaFamiliar() {
 
         if (isOwner) { setLoading(false); return; } // Owner doesn't need this view
 
+        // Get all active member IDs (owner + members)
+        const { data: members } = await supabase
+            .from('family_members')
+            .select('user_id')
+            .eq('family_id', fam.id)
+            .eq('status', 'active');
+        const memberIds = members?.map(m => m.user_id).filter(Boolean) as string[] || [ownerId];
+
         const shared = fam.shared_modules || [];
 
-        // Fetch shared data in parallel
+        // Fetch shared data in parallel from all active members
         const promises: Promise<void>[] = [];
 
         if (shared.includes('transactions')) {
-            promises.push(supabase.from('transactions').select('*').eq('user_id', ownerId).order('date', { ascending: false }).limit(50).then(r => { setTransactions(r.data || []); }));
+            promises.push(supabase.from('transactions').select('*').in('user_id', memberIds).order('date', { ascending: false }).limit(50).then(r => { setTransactions(r.data || []); }));
         }
         if (shared.includes('accounts')) {
-            promises.push(supabase.from('accounts').select('*').eq('user_id', ownerId).then(r => { setAccounts(r.data || []); }));
+            promises.push(supabase.from('accounts').select('*').in('user_id', memberIds).then(r => { setAccounts(r.data || []); }));
         }
         if (shared.includes('budgets')) {
-            promises.push(supabase.from('budgets').select('*').eq('user_id', ownerId).then(r => { setBudgets(r.data || []); }));
-            promises.push(supabase.from('categories').select('*').or(`user_id.eq.${ownerId},is_system.eq.true`).then(r => { setCategories(r.data || []); }));
+            promises.push(supabase.from('budgets').select('*').in('user_id', memberIds).then(r => { setBudgets(r.data || []); }));
+            const categoryFilter = memberIds.map(id => `user_id.eq.${id}`).join(',') + ',is_system.eq.true';
+            promises.push(supabase.from('categories').select('*').or(categoryFilter).then(r => { setCategories(r.data || []); }));
         }
         if (shared.includes('goals')) {
-            promises.push(supabase.from('goals').select('*').eq('user_id', ownerId).eq('status', 'active').then(r => { setGoals(r.data || []); }));
+            promises.push(supabase.from('goals').select('*').in('user_id', memberIds).eq('status', 'active').then(r => { setGoals(r.data || []); }));
         }
         if (shared.includes('debts')) {
-            promises.push(supabase.from('debts').select('*').eq('user_id', ownerId).eq('status', 'active').then(r => { setDebts(r.data || []); }));
+            promises.push(supabase.from('debts').select('*').in('user_id', memberIds).eq('status', 'active').then(r => { setDebts(r.data || []); }));
         }
         if (shared.includes('subscriptions')) {
-            promises.push(supabase.from('subscriptions').select('*').eq('user_id', ownerId).eq('status', 'active').then(r => { setSubscriptions(r.data || []); }));
+            promises.push(supabase.from('subscriptions').select('*').in('user_id', memberIds).eq('status', 'active').then(r => { setSubscriptions(r.data || []); }));
         }
         if (shared.includes('investments')) {
-            promises.push(supabase.from('investments').select('*').eq('user_id', ownerId).then(r => { setInvestments(r.data || []); }));
+            promises.push(supabase.from('investments').select('*').in('user_id', memberIds).then(r => { setInvestments(r.data || []); }));
         }
         if (shared.includes('warranties')) {
-            promises.push(supabase.from('warranties').select('*').eq('user_id', ownerId).then(r => { setWarranties(r.data || []); }));
+            promises.push(supabase.from('warranties').select('*').in('user_id', memberIds).then(r => { setWarranties(r.data || []); }));
         }
         if (shared.includes('pets')) {
-            promises.push(supabase.from('pets').select('*').eq('user_id', ownerId).then(r => { setPets(r.data || []); }));
+            promises.push(supabase.from('pets').select('*').in('user_id', memberIds).then(r => { setPets(r.data || []); }));
         }
         if (shared.includes('shopping')) {
-            promises.push(supabase.from('shopping_lists').select('*').eq('user_id', ownerId).eq('status', 'active').then(r => { setShoppingLists(r.data || []); }));
+            promises.push(supabase.from('shopping_lists').select('*').in('user_id', memberIds).eq('status', 'active').then(r => { setShoppingLists(r.data || []); }));
         }
         if (shared.includes('home')) {
-            promises.push(supabase.from('home_items').select('*').eq('user_id', ownerId).then(r => { setHomeItems(r.data || []); }));
+            promises.push(supabase.from('home_items').select('*').in('user_id', memberIds).then(r => { setHomeItems(r.data || []); }));
         }
 
         await Promise.all(promises);
