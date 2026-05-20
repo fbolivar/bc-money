@@ -44,13 +44,10 @@ export function VistaFamiliar() {
         setFamily(fam);
 
         const ownerId = fam.owner_id;
-        const isOwner = ownerId === user.id;
 
         // Get owner's name
         const { data: ownerProfile } = await supabase.from('profiles').select('full_name').eq('id', ownerId).single();
         setOwnerName(ownerProfile?.full_name || 'Propietario');
-
-        if (isOwner) { setLoading(false); return; } // Owner doesn't need this view
 
         // Get all active member IDs (owner + members)
         const { data: members } = await supabase
@@ -108,7 +105,6 @@ export function VistaFamiliar() {
     useEffect(() => { fetchData(); }, [fetchData]);
 
     const shared = family?.shared_modules || [];
-    const isOwner = family && family.owner_id === user?.id;
 
     // Computed values
     const totalBalance = accounts.reduce((s, a) => s + Number(a.balance), 0);
@@ -129,16 +125,10 @@ export function VistaFamiliar() {
         );
     }
 
-    if (isOwner) {
-        return (
-            <div className="vf-page"><div className="vf-empty"><Users size={48} /><h3>Eres el propietario de "{family.name}"</h3><p>Esta vista es para los miembros de tu familia. Ellos verán aquí los módulos que compartiste.</p></div></div>
-        );
-    }
-
     return (
         <div className="vf-page animate-fadeIn">
             <div className="vf-header">
-                <div><h1>Vista Familiar</h1><p>Datos compartidos por <strong>{ownerName}</strong> en "{family.name}"</p></div>
+                <div><h1>Vista Familiar</h1><p>Datos compartidos de todos los miembros de <strong>"{family.name}"</strong></p></div>
             </div>
 
             {shared.length === 0 && (
