@@ -87,7 +87,7 @@ export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
                     .or(`description.ilike.%${q}%,merchant.ilike.%${q}%`)
                     .order('date', { ascending: false })
                     .limit(20),
-                supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+                supabase.from('categories').select('id,name'),
             ]);
             const cats = catRes.data || [];
             const results: SearchResult[] = (txRes.data || []).map(t => ({
@@ -186,7 +186,7 @@ export const TopBar = memo(function TopBar({ onMenuClick }: TopBarProps) {
         const [budgetsRes, txRes, catRes] = await Promise.all([
             supabase.from('budgets').select('id,category_id,amount').eq('user_id', user.id),
             supabase.from('transactions').select('category_id,amount').eq('user_id', user.id).eq('type', 'expense').gte('date', format(monthStart, 'yyyy-MM-dd')).lte('date', format(monthEnd, 'yyyy-MM-dd')),
-            supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+            supabase.from('categories').select('id,name'),
         ]);
         if (budgetsRes.data && txRes.data && catRes.data) {
             for (const b of budgetsRes.data) {

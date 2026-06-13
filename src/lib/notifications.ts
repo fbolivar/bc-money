@@ -82,7 +82,7 @@ export async function checkAndNotify(userId: string, settings: {
             .gte('date', format(monthStart, 'yyyy-MM-dd')).lte('date', format(monthEnd, 'yyyy-MM-dd')),
     ]);
     if (budgetsRes.data && txRes.data) {
-        const catRes = await supabase.from('categories').select('id,name').or(`user_id.eq.${userId},is_system.eq.true`);
+        const catRes = await supabase.from('categories').select('id,name');
         for (const b of budgetsRes.data) {
             const spent = txRes.data.filter(t => t.category_id === b.category_id).reduce((s, t) => s + Number(t.amount), 0);
             const pct = Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0;

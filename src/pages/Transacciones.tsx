@@ -98,7 +98,7 @@ export function Transacciones() {
     const getTransactionsData = useCallback(async (userId: string) => {
         const [txRes, catRes, accRes, goalRes, evRes] = await Promise.all([
             supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(2000),
-            supabase.from('categories').select('*').or(`user_id.eq.${userId},is_system.eq.true`),
+            supabase.from('categories').select('*'),
             supabase.from('accounts').select('*').eq('user_id', userId).order('name'),
             supabase.from('goals').select('*').eq('user_id', userId).eq('status', 'active').order('name'),
             supabase.from('events').select('*').eq('user_id', userId).eq('status', 'active').order('name'),

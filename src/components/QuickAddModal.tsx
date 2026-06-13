@@ -50,7 +50,7 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
     const loadData = useCallback(async () => {
         if (!user) return;
         const [catRes, accRes] = await Promise.all([
-            supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`).order('name'),
+            supabase.from('categories').select('*').order('name'),
             supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true).order('name'),
         ]);
         setCategories(catRes.data || []);

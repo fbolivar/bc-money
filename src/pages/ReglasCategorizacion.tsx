@@ -70,7 +70,6 @@ export function ReglasCategorizacion() {
                 supabase
                     .from('categories')
                     .select('*')
-                    .or(`user_id.eq.${user.id},is_system.eq.true`)
                     .order('name'),
             ]);
             if (rulesRes.error) throw rulesRes.error;

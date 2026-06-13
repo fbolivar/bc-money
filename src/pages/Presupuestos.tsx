@@ -89,7 +89,7 @@ export function Presupuestos() {
 
             const [budgetsRes, categoriesRes, currentTxRes, prevTxRes] = await Promise.all([
                 supabase.from('budgets').select('*').eq('user_id', user.id),
-                supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
+                supabase.from('categories').select('*'),
                 supabase.from('transactions').select('*')
                     .eq('user_id', user.id).eq('type', 'expense')
                     .gte('date', format(yearStart, 'yyyy-MM-dd'))

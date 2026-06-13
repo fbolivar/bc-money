@@ -98,7 +98,7 @@ export function SemaforoWidget() {
             supabase.from('transactions').select('category_id,amount,type')
                 .eq('user_id', user.id).gte('date', monthStart).lte('date', monthEnd),
             supabase.from('budgets').select('category_id,amount').eq('user_id', user.id),
-            supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+            supabase.from('categories').select('id,name'),
         ]);
 
         const txs = txRes.data || [];

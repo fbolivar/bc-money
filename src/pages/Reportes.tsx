@@ -139,7 +139,7 @@ export function Reportes() {
             const [txRes, catRes, accRes, budRes, debtRes, warRes, subRes] = await Promise.all([
                 supabase.from('transactions').select('*').eq('user_id', user.id)
                     .gte('date', firstDay).lte('date', lastDay),
-                supabase.from('categories').select('*').or(`user_id.eq.${user.id},is_system.eq.true`),
+                supabase.from('categories').select('*'),
                 supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
                 supabase.from('budgets').select('*').eq('user_id', user.id),
                 supabase.from('debts').select('*').eq('user_id', user.id),

@@ -62,7 +62,7 @@ export async function fetchCategories(userId: string): Promise<Category[]> {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .or(`user_id.eq.${userId},is_system.eq.true`);
+      ;
 
     if (error) throw error;
     const rows = (data ?? []) as Category[];

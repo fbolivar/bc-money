@@ -65,7 +65,7 @@ export function RevisionMensual({ onClose }: Props) {
             supabase.from('transactions').select('type,amount,category_id').eq('user_id', user.id).gte('date', prevStart).lte('date', prevEnd),
             supabase.from('transactions').select('type,amount').eq('user_id', user.id).gte('date', ppStart).lte('date', ppEnd),
             supabase.from('budgets').select('id,category_id,amount').eq('user_id', user.id),
-            supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+            supabase.from('categories').select('id,name'),
             supabase.from('goals').select('id,name,current_amount,target_amount,status').eq('user_id', user.id),
             supabase.from('subscriptions').select('name,amount,status').eq('user_id', user.id).eq('status', 'active'),
         ]);

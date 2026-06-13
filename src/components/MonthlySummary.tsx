@@ -47,7 +47,7 @@ export function MonthlySummary({ onClose }: Props) {
             try {
                 const [txRes, catRes, budgetRes, goalRes] = await Promise.all([
                     supabase.from('transactions').select('amount,type,category_id').eq('user_id', user!.id).gte('date', start).lte('date', end),
-                    supabase.from('categories').select('id,name').or(`user_id.eq.${user!.id},is_system.eq.true`),
+                    supabase.from('categories').select('id,name'),
                     supabase.from('budgets').select('id,category_id,amount').eq('user_id', user!.id),
                     supabase.from('goals').select('id,current_amount,target_amount').eq('user_id', user!.id),
                 ]);

@@ -53,7 +53,7 @@ export function ReglasAhorro() {
         const [goalsRes, budgetsRes, catsRes] = await Promise.all([
             supabase.from('goals').select('*').eq('user_id', user.id).eq('status', 'active'),
             supabase.from('budgets').select('id,category_id,amount').eq('user_id', user.id),
-            supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+            supabase.from('categories').select('id,name'),
         ]);
         setGoals(goalsRes.data || []);
         const cats = catsRes.data || [];

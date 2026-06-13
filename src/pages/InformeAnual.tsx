@@ -58,7 +58,7 @@ export function InformeAnual() {
         const [txRes, catRes, goalsRes] = await Promise.all([
             supabase.from('transactions').select('amount,type,date,category_id')
                 .eq('user_id', user.id).gte('date', yearStart).lte('date', yearEnd),
-            supabase.from('categories').select('id,name').or(`user_id.eq.${user.id},is_system.eq.true`),
+            supabase.from('categories').select('id,name'),
             supabase.from('goals').select('id,current_amount,target_amount').eq('user_id', user.id),
         ]);
 
