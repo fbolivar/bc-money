@@ -82,7 +82,7 @@ export function Transacciones() {
 
     const [formData, setFormData] = useState({
         type: (isValidInitialType ? initialNewType : 'expense') as 'income' | 'expense',
-        amount: '', category_id: '', account_id: '', goal_id: '', event_id: '', description: '',
+        amount: '', currency: profile?.currency || 'COP', category_id: '', account_id: '', goal_id: '', event_id: '', description: '',
         date: format(new Date(), 'yyyy-MM-dd'), is_essential: false, is_recurring: false,
         payment_method: 'debit' as 'cash' | 'debit' | 'credit' | 'transfer' | 'other',
         tags: [] as string[],
@@ -192,7 +192,7 @@ export function Transacciones() {
         const dateStr = String(formData.date).slice(0, 10);
         const txAmount = parseFloat(formData.amount);
         const txData = {
-            user_id: user!.id, type: formData.type, amount: txAmount,
+            user_id: user!.id, type: formData.type, amount: txAmount, currency: formData.currency,
             category_id: formData.category_id || null, account_id: formData.account_id || null,
             goal_id: formData.goal_id || null, event_id: formData.event_id || null,
             description: formData.description || null,
@@ -219,6 +219,7 @@ export function Transacciones() {
         setEditingTx(tx);
         setFormData({
             type: tx.type as 'income' | 'expense', amount: tx.amount.toString(),
+            currency: tx.currency || profile?.currency || 'COP',
             category_id: tx.category_id || '', account_id: tx.account_id || '',
             goal_id: tx.goal_id || '', event_id: tx.event_id || '', description: tx.description || '', date: tx.date,
             is_essential: tx.is_essential, is_recurring: tx.is_recurring, payment_method: tx.payment_method,
@@ -599,7 +600,7 @@ export function Transacciones() {
                                         <td><span className="category-tag" style={{ backgroundColor: category?.color || '#6B7280' }}>{category?.name || 'Sin categoría'}</span></td>
                                         <td>{account?.name || '—'}</td>
                                         <td><span className={`type-badge ${tx.type}`}>{tx.type === 'income' ? 'Ingreso' : 'Gasto'}</span></td>
-                                        <td className={`text-right amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{currency} {Number(tx.amount).toLocaleString()}</td>
+                                        <td className={`text-right amount ${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{tx.currency || currency} {Number(tx.amount).toLocaleString()}</td>
                                         <td>
                                             <div className="actions">
                                                 <button
@@ -724,7 +725,15 @@ export function Transacciones() {
                                 <button type="button" className={`toggle-btn ${formData.type === 'income' ? 'active income' : ''}`} onClick={() => setFormData(p => ({ ...p, type: 'income' }))}><ArrowUpRight size={18} /> Ingreso</button>
                                 <button type="button" className={`toggle-btn ${formData.type === 'expense' ? 'active expense' : ''}`} onClick={() => setFormData(p => ({ ...p, type: 'expense' }))}><ArrowDownRight size={18} /> Gasto</button>
                             </div>
-                            <div className="form-group"><label className="form-label">Monto ({currency})</label><input type="number" className="form-input amount-input" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} placeholder="0.00" step="0.01" min="0" required /></div>
+                            <div className="form-group">
+                                <label className="form-label">Monto</label>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <select className="form-select" style={{ width: '6rem', flexShrink: 0 }} value={formData.currency} onChange={e => setFormData(p => ({ ...p, currency: e.target.value }))} title="Moneda">
+                                        {['COP','USD','EUR','MXN','GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <input type="number" className="form-input amount-input" style={{ flex: 1 }} value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} placeholder="0.00" step="0.01" min="0" required />
+                                </div>
+                            </div>
                             <div className="form-row">
                                 <div className="form-group">
                                     <label className="form-label">Categoría</label>

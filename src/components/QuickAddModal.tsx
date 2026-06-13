@@ -55,6 +55,10 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
     const [showTemplates, setShowTemplates] = useState(false);
     const [savedFeedback, setSavedFeedback] = useState(false);
 
+    useEffect(() => {
+        if (profile?.currency) setCurrency(profile.currency);
+    }, [profile?.currency]);
+
     const loadData = useCallback(async () => {
         if (!user) return;
         const [catRes, accRes] = await Promise.all([
