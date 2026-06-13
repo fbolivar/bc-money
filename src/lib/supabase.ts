@@ -287,6 +287,7 @@ export type Transaction = {
   id: string;
   user_id: string;
   amount: number;
+  currency: string;
   type: 'income' | 'expense' | 'transfer';
   category_id: string | null;
   account_id: string | null;

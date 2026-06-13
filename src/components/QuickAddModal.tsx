@@ -30,11 +30,19 @@ function saveTemplates(ts: Template[]) {
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(ts));
 }
 
+const CURRENCIES = [
+    { value: 'COP', label: 'COP' },
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'MXN', label: 'MXN' },
+    { value: 'GBP', label: 'GBP' },
+];
+
 export function QuickAddModal({ onClose, onSaved }: Props) {
     const { user, profile } = useAuth();
-    const currency = profile?.currency || 'COP';
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [amount, setAmount] = useState('');
+    const [currency, setCurrency] = useState(profile?.currency || 'COP');
     const [categoryId, setCategoryId] = useState('');
     const [accountId, setAccountId] = useState('');
     const [description, setDescription] = useState('');
@@ -105,6 +113,7 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
                 user_id: user.id,
                 type,
                 amount: parseFloat(amount),
+                currency,
                 category_id: categoryId || null,
                 account_id: accountId || null,
                 description: description || null,
@@ -174,10 +183,10 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
                         </button>
                     </div>
 
-                    {/* Amount */}
+                    {/* Amount + Currency */}
                     <div className="qam-field">
                         <div className="qam-amount-row">
-                            <label>Monto ({currency})</label>
+                            <label>Monto</label>
                             <button
                                 type="button"
                                 className={`qam-save-tpl ${savedFeedback ? 'saved' : ''}`}
@@ -188,17 +197,29 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
                                 {savedFeedback ? 'Guardada' : 'Guardar plantilla'}
                             </button>
                         </div>
-                        <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            placeholder="0"
-                            value={amount}
-                            onChange={e => setAmount(e.target.value)}
-                            className="qam-input qam-amount"
-                            autoFocus
-                            required
-                        />
+                        <div className="qam-amount-currency-row">
+                            <select
+                                className="qam-select qam-currency-select"
+                                value={currency}
+                                onChange={e => setCurrency(e.target.value)}
+                                title="Moneda"
+                            >
+                                {CURRENCIES.map(c => (
+                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                ))}
+                            </select>
+                            <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                placeholder="0"
+                                value={amount}
+                                onChange={e => setAmount(e.target.value)}
+                                className="qam-input qam-amount"
+                                autoFocus
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div className="qam-row">

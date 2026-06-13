@@ -180,7 +180,9 @@
 
 .qam-input:focus, .qam-select:focus { border-color: var(--primary, #6366f1); }
 
-.qam-amount { font-size: 1.4rem; font-weight: 700; text-align: center; height: 3rem; }
+.qam-amount-currency-row { display: flex; gap: 0.5rem; align-items: center; }
+.qam-currency-select { width: 5rem; flex-shrink: 0; font-weight: 600; text-align: center; }
+.qam-amount { font-size: 1.4rem; font-weight: 700; text-align: center; height: 3rem; flex: 1; }
 
 .qam-error { color: #ef4444; font-size: 0.82rem; margin: 0; }
 
