@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+export const TX_SAVED_EVENT = 'bc-money:tx-saved';
+
+export function dispatchTxSaved() {
+    window.dispatchEvent(new CustomEvent(TX_SAVED_EVENT));
+}
+
 export function useRealtimeSync(userId: string | undefined, onUpdate: () => void) {
     useEffect(() => {
         if (!userId) return;
@@ -22,9 +28,13 @@ export function useRealtimeSync(userId: string | undefined, onUpdate: () => void
                 .subscribe();
         } catch { /* WebSocket unavailable */ }
 
+        // Fallback: listen for manual save events (e.g. from QuickAddModal)
+        window.addEventListener(TX_SAVED_EVENT, onUpdate);
+
         return () => {
             if (txChannel) supabase.removeChannel(txChannel);
             if (accChannel) supabase.removeChannel(accChannel);
+            window.removeEventListener(TX_SAVED_EVENT, onUpdate);
         };
     }, [userId, onUpdate]);
 }

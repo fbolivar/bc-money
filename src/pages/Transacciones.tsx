@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'react-router-dom';
 import { SkeletonTable } from '../components/Skeleton';
-import { useRealtimeSync } from '../hooks/useRealtimeSync';
+import { useRealtimeSync, dispatchTxSaved } from '../hooks/useRealtimeSync';
 import { parseLocalDate } from '../lib/dates';
 import './Transacciones.css';
 
@@ -203,6 +203,7 @@ export function Transacciones() {
         else await supabase.from('transactions').insert(txData);
         setShowModal(false); setEditingTx(null); resetForm(); setBudgetWarning(null); setTagInput('');
         showToast(editingTx ? 'Transacción actualizada' : 'Transacción creada', 'success');
+        dispatchTxSaved();
         refreshData();
         if (!editingTx && formData.type === 'income') {
             const { data: rulesData } = await supabase

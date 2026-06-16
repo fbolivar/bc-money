@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import type { Category, Account } from '../lib/supabase';
+import { dispatchTxSaved } from '../hooks/useRealtimeSync';
 import './QuickAddModal.css';
 
 interface Props {
@@ -129,6 +130,7 @@ export function QuickAddModal({ onClose, onSaved }: Props) {
                 tags: [],
             });
             if (err) throw err;
+            dispatchTxSaved();
             onSaved();
             onClose();
         } catch {
