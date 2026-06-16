@@ -228,49 +228,32 @@ export function Familia() {
                         </div>
                     )}
 
-                    {/* Shared Modules Selection */}
-                    {isOwner && (
-                        <div className="fam-modules-card">
-                            <div className="fam-modules-header">
-                                <h3>Módulos Compartidos</h3>
-                                <button type="button" className="btn btn-primary btn-sm" onClick={saveSharedModules} disabled={savingModules}>
-                                    <Save size={14} /> {savingModules ? 'Guardando...' : 'Guardar'}
-                                </button>
-                            </div>
-                            <p className="fam-modules-desc">Selecciona qué módulos pueden ver los miembros de tu familia</p>
-                            <div className="fam-modules-grid">
-                                {ALL_MODULES.map(mod => (
-                                    <button key={mod.key} type="button"
-                                        className={`fam-module-btn ${sharedModules.includes(mod.key) ? 'active' : ''}`}
-                                        onClick={() => toggleModule(mod.key)}>
-                                        <mod.icon size={20} />
-                                        <div className="fam-mod-info">
-                                            <strong>{mod.label}</strong>
-                                            <span>{mod.desc}</span>
-                                        </div>
-                                        <div className={`fam-mod-check ${sharedModules.includes(mod.key) ? 'on' : ''}`}>
-                                            {sharedModules.includes(mod.key) && <CheckCircle size={16} />}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                    {/* Shared Modules Selection — any active member can configure */}
+                    <div className="fam-modules-card">
+                        <div className="fam-modules-header">
+                            <h3>Módulos Compartidos</h3>
+                            <button type="button" className="btn btn-primary btn-sm" onClick={saveSharedModules} disabled={savingModules}>
+                                <Save size={14} /> {savingModules ? 'Guardando...' : 'Guardar'}
+                            </button>
                         </div>
-                    )}
-
-                    {/* View shared modules for non-owners */}
-                    {!isOwner && sharedModules.length > 0 && (
-                        <div className="fam-modules-card">
-                            <h3>Módulos Compartidos Contigo</h3>
-                            <div className="fam-modules-grid">
-                                {ALL_MODULES.filter(m => sharedModules.includes(m.key)).map(mod => (
-                                    <div key={mod.key} className="fam-module-btn active readonly">
-                                        <mod.icon size={20} />
-                                        <div className="fam-mod-info"><strong>{mod.label}</strong><span>{mod.desc}</span></div>
+                        <p className="fam-modules-desc">Selecciona qué módulos pueden ver los miembros de tu familia</p>
+                        <div className="fam-modules-grid">
+                            {ALL_MODULES.map(mod => (
+                                <button key={mod.key} type="button"
+                                    className={`fam-module-btn ${sharedModules.includes(mod.key) ? 'active' : ''}`}
+                                    onClick={() => toggleModule(mod.key)}>
+                                    <mod.icon size={20} />
+                                    <div className="fam-mod-info">
+                                        <strong>{mod.label}</strong>
+                                        <span>{mod.desc}</span>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className={`fam-mod-check ${sharedModules.includes(mod.key) ? 'on' : ''}`}>
+                                        {sharedModules.includes(mod.key) && <CheckCircle size={16} />}
+                                    </div>
+                                </button>
+                            ))}
                         </div>
-                    )}
+                    </div>
 
                     {/* Presupuesto Familiar Colaborativo */}
                     {famBudgets.length > 0 && members.filter(m => m.status === 'active').length > 0 && (
