@@ -58,6 +58,7 @@ const Seguros = lazy(() => import('./pages/Seguros').then(module => ({ default: 
 const TarjetasCredito = lazy(() => import('./pages/TarjetasCredito').then(module => ({ default: module.TarjetasCredito })));
 const InformeAnual = lazy(() => import('./pages/InformeAnual').then(module => ({ default: module.InformeAnual })));
 const SeguimientoPrecios = lazy(() => import('./pages/SeguimientoPrecios').then(module => ({ default: module.SeguimientoPrecios })));
+const GastosCompartidos = lazy(() => import('./pages/GastosCompartidos').then(module => ({ default: module.GastosCompartidos })));
 
 function LoadingFallback() {
   return (
@@ -130,6 +131,7 @@ function App() {
               <Route path="/tarjetas" element={<TarjetasCredito />} />
               <Route path="/informe-anual" element={<InformeAnual />} />
               <Route path="/precios" element={<SeguimientoPrecios />} />
+              <Route path="/gastos-compartidos" element={<GastosCompartidos />} />
 
             </Route>
 

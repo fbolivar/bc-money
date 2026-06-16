@@ -536,6 +536,19 @@ export type FamilyMember = {
   created_at: string;
 };
 
+export type SharedExpense = {
+  id: string;
+  family_id: string;
+  added_by: string;
+  description: string;
+  amount: number;
+  currency: string;
+  category: string | null;
+  date: string;
+  is_settled: boolean;
+  created_at: string;
+};
+
 export type Investment = {
   id: string;
   user_id: string;

@@ -7,7 +7,7 @@ import {
     StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
     Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
     MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets, Zap, Store,
-    ShieldAlert, FileBarChart2, LineChart, CreditCard,
+    ShieldAlert, FileBarChart2, LineChart, CreditCard, HeartHandshake,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -61,6 +61,14 @@ const NAV_SECTIONS = [
         ],
     },
     {
+        title: 'FAMILIA',
+        items: [
+            { path: '/familia', icon: Users, label: 'Familia' },
+            { path: '/vista-familiar', icon: Eye, label: 'Vista Familiar' },
+            { path: '/gastos-compartidos', icon: HeartHandshake, label: 'Gastos Compartidos' },
+        ],
+    },
+    {
         title: 'INFORMES',
         items: [
             { path: '/patrimonio', icon: TrendingUp, label: 'Patrimonio' },
@@ -72,8 +80,6 @@ const NAV_SECTIONS = [
             { path: '/benchmarks', icon: Globe2, label: 'Benchmarks' },
             { path: '/comercios', icon: Store, label: 'Análisis Comercios' },
             { path: '/informe-anual', icon: FileBarChart2, label: 'Informe Anual' },
-            { path: '/familia', icon: Users, label: 'Familia' },
-            { path: '/vista-familiar', icon: Eye, label: 'Vista Familiar' },
             { path: '/declaracion', icon: ClipboardList, label: 'Declaración Renta' },
             { path: '/calculadora', icon: Calculator, label: 'Calc. Freelancer' },
             { path: '/asistente-ia', icon: Bot, label: 'BC Asesor IA' },
