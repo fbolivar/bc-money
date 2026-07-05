@@ -363,7 +363,7 @@ export type Account = {
   id: string;
   user_id: string;
   name: string;
-  type: 'checking' | 'savings' | 'credit_card' | 'cash' | 'crypto' | 'investment';
+  type: 'checking' | 'savings' | 'credit_card' | 'cash' | 'crypto' | 'investment' | 'real_estate' | 'vehicle' | 'other_asset';
   currency: string;
   balance: number;
   color: string;

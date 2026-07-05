@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Plus, Edit2, Trash2, X, Search, AlertTriangle, Eye, EyeOff,
     Landmark, PiggyBank, CreditCard, Banknote, Bitcoin, TrendingUp,
+    Home, Car, Package,
     type LucideIcon,
 } from 'lucide-react';
 import {
@@ -26,11 +27,15 @@ interface AccountFormData {
     min_balance_alert: string;
 }
 
-const ACCOUNT_TYPES: { value: Account['type']; label: string }[] = [
-    { value: 'checking', label: 'Cuenta Corriente' },
-    { value: 'savings', label: 'Cuenta de Ahorro' },
-    { value: 'cash', label: 'Efectivo' },
-    { value: 'crypto', label: 'Criptomonedas' },
+const ACCOUNT_TYPES: { value: Account['type']; label: string; group: string }[] = [
+    { value: 'checking',    label: 'Cuenta Corriente',  group: 'Financiero' },
+    { value: 'savings',     label: 'Cuenta de Ahorro',  group: 'Financiero' },
+    { value: 'cash',        label: 'Efectivo',           group: 'Financiero' },
+    { value: 'crypto',      label: 'Criptomonedas',      group: 'Financiero' },
+    { value: 'investment',  label: 'Inversión',          group: 'Financiero' },
+    { value: 'real_estate', label: 'Inmueble / Propiedad', group: 'Activo Real' },
+    { value: 'vehicle',     label: 'Vehículo',           group: 'Activo Real' },
+    { value: 'other_asset', label: 'Otro Activo',        group: 'Activo Real' },
 ];
 
 const TYPE_LABELS: Record<string, string> = Object.fromEntries(
@@ -43,7 +48,7 @@ const COLORS = [
 ];
 
 const ICON_MAP: Record<string, LucideIcon> = {
-    Landmark, PiggyBank, CreditCard, Banknote, Bitcoin, TrendingUp,
+    Landmark, PiggyBank, CreditCard, Banknote, Bitcoin, TrendingUp, Home, Car, Package,
 };
 const ICON_NAMES = Object.keys(ICON_MAP);
 
@@ -363,7 +368,12 @@ export function Cuentas() {
                                 <div className="form-group">
                                     <label>Tipo</label>
                                     <select className="form-select" title="Tipo de cuenta" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as Account['type'] })}>
-                                        {ACCOUNT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                        <optgroup label="── Financiero ──">
+                                            {ACCOUNT_TYPES.filter(t => t.group === 'Financiero').map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                        </optgroup>
+                                        <optgroup label="── Activo Real ──">
+                                            {ACCOUNT_TYPES.filter(t => t.group === 'Activo Real').map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div className="form-group">
