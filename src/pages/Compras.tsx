@@ -733,10 +733,6 @@ export function Compras() {
                                         {'  ·  '}{checkedCount}/{activeItems.length} listos
                                     </p>
                                 </div>
-                                <button className="btn-success-sm" onClick={completeList}>
-                                    <Check size={14} />
-                                    Finalizar
-                                </button>
                             </div>
 
                             <div className="active-list-progress">
