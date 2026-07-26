@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Plus, Trash2, X, Check, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp,
+    Plus, Trash2, X, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp,
     Archive, CheckCircle2, Circle, ArrowUp, Minus, Equal,
     Apple, SprayCanIcon, User, Pill, Smartphone, Shirt, Home, PawPrint, Package,
     ClipboardList,
@@ -336,7 +336,6 @@ export function Compras() {
                                     </div>
                                     <div className="list-actions">
                                         <button type="button" title="Agregar producto" className="la-btn add" onClick={e => { e.stopPropagation(); openAddItem(list.id); }}><Plus size={16} /></button>
-                                        <button type="button" title="Completar" className="la-btn done" onClick={e => { e.stopPropagation(); completeList(list.id); }}><Check size={16} /></button>
                                         <button type="button" title="Archivar" className="la-btn" onClick={e => { e.stopPropagation(); archiveList(list.id); }}><Archive size={16} /></button>
                                         <button type="button" title="Eliminar" className="la-btn del" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'list', id: list.id, name: list.name }); }}><Trash2 size={16} /></button>
                                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
