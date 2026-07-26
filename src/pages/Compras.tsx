@@ -179,21 +179,12 @@ export function Compras() {
         setLoading(true);
         setLoadError(null);
         try {
-            // Stores
-            let { data: storesData, error: storesErr } = await supabase
+            // Catálogo compartido — todos los usuarios ven las mismas tiendas y productos
+            const { data: storesData, error: storesErr } = await supabase
                 .from('market_stores')
                 .select('*')
                 .order('sort_order');
             if (storesErr) throw storesErr;
-
-            if (!storesData || storesData.length === 0) {
-                const { data: seeded, error: seedErr } = await supabase
-                    .from('market_stores')
-                    .insert(DEFAULT_STORES.map((s, i) => ({ ...s, user_id: user.id, sort_order: i })))
-                    .select();
-                if (seedErr) throw seedErr;
-                storesData = seeded || [];
-            }
             setStores(storesData || []);
 
             // Products
@@ -202,31 +193,7 @@ export function Compras() {
                 .select('*')
                 .order('name');
             if (productsErr) throw productsErr;
-
-            // Si el usuario tiene tiendas pero sin productos, sembrar productos por defecto
-            if (storesData && storesData.length > 0 && (!productsData || productsData.length === 0)) {
-                // Ordenar las tiendas por sort_order para alinear con DEFAULT_PRODUCTS
-                const sortedStores = [...storesData].sort((a, b) => a.sort_order - b.sort_order);
-                const productRows = sortedStores.flatMap((store, storeIdx) =>
-                    (DEFAULT_PRODUCTS[storeIdx] || []).map((p, pi) => ({
-                        user_id: user.id,
-                        store_id: store.id,
-                        name: p.name,
-                        unit: p.unit,
-                        sort_order: pi,
-                    }))
-                );
-                if (productRows.length > 0) {
-                    const { data: seededProds, error: prodSeedErr } = await supabase
-                        .from('market_products')
-                        .insert(productRows)
-                        .select();
-                    if (prodSeedErr) console.warn('Seed products error:', prodSeedErr);
-                    else setProducts(seededProds || []);
-                }
-            } else {
-                setProducts(productsData || []);
-            }
+            setProducts(productsData || []);
 
             // Active list
             const { data: listData, error: listErr } = await supabase
