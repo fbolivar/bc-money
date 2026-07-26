@@ -31,15 +31,12 @@ const Inversiones = lazy(() => import('./pages/Inversiones').then(module => ({ d
 const Familia = lazy(() => import('./pages/Familia').then(module => ({ default: module.Familia })));
 const VistaFamiliar = lazy(() => import('./pages/VistaFamiliar').then(module => ({ default: module.VistaFamiliar })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(module => ({ default: module.Configuracion })));
-const Facturacion = lazy(() => import('./pages/Facturacion').then(module => ({ default: module.Facturacion })));
 const AsistenteIA = lazy(() => import('./pages/AsistenteIA').then(module => ({ default: module.AsistenteIA })));
 const Declaracion = lazy(() => import('./pages/Declaracion').then(module => ({ default: module.Declaracion })));
 const Calculadora = lazy(() => import('./pages/Calculadora').then(module => ({ default: module.Calculadora })));
 const Proyeccion = lazy(() => import('./pages/Proyeccion').then(module => ({ default: module.Proyeccion })));
 const Prestamos = lazy(() => import('./pages/Prestamos').then(module => ({ default: module.Prestamos })));
-const Documentos = lazy(() => import('./pages/Documentos').then(module => ({ default: module.Documentos })));
 const ReglasCategorizacion = lazy(() => import('./pages/ReglasCategorizacion').then(module => ({ default: module.ReglasCategorizacion })));
-const Nomina = lazy(() => import('./pages/Nomina').then(module => ({ default: module.Nomina })));
 const Vencimientos = lazy(() => import('./pages/Vencimientos').then(module => ({ default: module.Vencimientos })));
 const Division = lazy(() => import('./pages/Division').then(module => ({ default: module.Division })));
 const FondoEmergencia = lazy(() => import('./pages/FondoEmergencia').then(module => ({ default: module.FondoEmergencia })));
@@ -104,15 +101,12 @@ function App() {
               <Route path="/vista-familiar" element={<VistaFamiliar />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/reportes" element={<Reportes />} />
-              <Route path="/facturacion" element={<Facturacion />} />
               <Route path="/asistente-ia" element={<AsistenteIA />} />
               <Route path="/calculadora" element={<Calculadora />} />
               <Route path="/declaracion" element={<Declaracion />} />
               <Route path="/proyeccion" element={<Proyeccion />} />
-              <Route path="/documentos" element={<Documentos />} />
               <Route path="/prestamos" element={<Prestamos />} />
               <Route path="/reglas-categorias" element={<ReglasCategorizacion />} />
-              <Route path="/nomina" element={<Nomina />} />
               <Route path="/vencimientos" element={<Vencimientos />} />
               <Route path="/division" element={<Division />} />
               <Route path="/fondo-emergencia" element={<FondoEmergencia />} />

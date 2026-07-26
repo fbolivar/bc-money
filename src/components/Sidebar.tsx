@@ -4,8 +4,8 @@ import {
     LayoutDashboard, ArrowLeftRight, Wallet, Target, FileText, Settings, LogOut,
     DollarSign, Tags, Landmark, CircleDollarSign, ShieldCheck, PawPrint,
     ShoppingCart, Hammer, Repeat, TrendingUp, CalendarDays, Calculator,
-    StickyNote, Upload, BarChart3, Users, Eye, X, Receipt, Bot, ClipboardList,
-    Sun, Moon, Bell, BellOff, Activity, Briefcase, Wand2, CalendarClock, Split,
+    StickyNote, Upload, BarChart3, Users, Eye, X, Bot, ClipboardList,
+    Sun, Moon, Bell, BellOff, Activity, Wand2, CalendarClock, Split,
     MapPin, PiggyBank, AlarmClock, Plane, Trophy, Coins, Globe2, Droplets, Zap, Store,
     ShieldAlert, FileBarChart2, LineChart, CreditCard, HeartHandshake,
 } from 'lucide-react';
@@ -99,8 +99,6 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
     const { signOut, profile, isAdmin } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const { status: pushStatus, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
-    const showBilling = !!profile?.billing_enabled;
-
     const handleNavClick = useCallback(() => {
         if (isMobile()) onClose();
     }, [onClose]);
@@ -147,35 +145,6 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
                             ))}
                         </div>
                     ))}
-                    {showBilling && (
-                        <div className="nav-section">
-                            <span className="nav-section-title">NEGOCIOS</span>
-                            <NavLink
-                                to="/facturacion"
-                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
-                                onClick={handleNavClick}
-                            >
-                                <Receipt size={18} />
-                                <span>Facturación</span>
-                            </NavLink>
-                            <NavLink
-                                to="/documentos"
-                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
-                                onClick={handleNavClick}
-                            >
-                                <Briefcase size={18} />
-                                <span>Documentos</span>
-                            </NavLink>
-                            <NavLink
-                                to="/nomina"
-                                className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
-                                onClick={handleNavClick}
-                            >
-                                <Users size={18} />
-                                <span>Nómina</span>
-                            </NavLink>
-                        </div>
-                    )}
                 </nav>
 
                 <div className="sidebar-footer">
