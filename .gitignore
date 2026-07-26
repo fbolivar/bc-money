@@ -25,6 +25,9 @@ dist-ssr
 
 .vercel
 
+# Supabase local temp files (contain DB connection strings & project refs)
+supabase/.temp/
+
 # Environment variables
 .env
 .env.local

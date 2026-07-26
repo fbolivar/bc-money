@@ -85,20 +85,24 @@ export function AppLayout() {
         const prevEnd = format(new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0), 'yyyy-MM-dd');
 
         (async () => {
-            const [txRes, budgetsRes] = await Promise.all([
-                supabase.from('transactions').select('category_id,amount').eq('user_id', user.id).eq('type', 'expense').gte('date', prevStart).lte('date', prevEnd),
-                supabase.from('budgets').select('category_id,amount').eq('user_id', user.id),
-            ]);
-            for (const rule of activeRules) {
-                const budget = (budgetsRes.data || []).find(b => b.category_id === rule.categoryId);
-                if (!budget) continue;
-                const spent = (txRes.data || []).filter(t => t.category_id === rule.categoryId).reduce((s, t) => s + Number(t.amount), 0);
-                const surplus = Number(budget.amount) - spent;
-                if (surplus <= 0) continue;
-                const contribution = Math.round(surplus * rule.percentage / 100);
-                if (contribution <= 0) continue;
-                const { data: goalData } = await supabase.from('goals').select('current_amount').eq('id', rule.goalId).eq('user_id', user.id).single();
-                if (goalData) await supabase.from('goals').update({ current_amount: Number(goalData.current_amount) + contribution }).eq('id', rule.goalId).eq('user_id', user.id);
+            try {
+                const [txRes, budgetsRes] = await Promise.all([
+                    supabase.from('transactions').select('category_id,amount').eq('user_id', user.id).eq('type', 'expense').gte('date', prevStart).lte('date', prevEnd),
+                    supabase.from('budgets').select('category_id,amount').eq('user_id', user.id),
+                ]);
+                for (const rule of activeRules) {
+                    const budget = (budgetsRes.data || []).find(b => b.category_id === rule.categoryId);
+                    if (!budget) continue;
+                    const spent = (txRes.data || []).filter(t => t.category_id === rule.categoryId).reduce((s, t) => s + Number(t.amount), 0);
+                    const surplus = Number(budget.amount) - spent;
+                    if (surplus <= 0) continue;
+                    const contribution = Math.round(surplus * rule.percentage / 100);
+                    if (contribution <= 0) continue;
+                    const { data: goalData } = await supabase.from('goals').select('current_amount').eq('id', rule.goalId).eq('user_id', user.id).single();
+                    if (goalData) await supabase.from('goals').update({ current_amount: Number(goalData.current_amount) + contribution }).eq('id', rule.goalId).eq('user_id', user.id);
+                }
+            } catch (err) {
+                console.error('surplus rules:', err);
             }
         })();
     }, [user]);

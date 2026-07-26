@@ -91,6 +91,7 @@ export function Compras() {
 
     // UI
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddStore, setShowAddStore] = useState(false);
     const [showAddProduct, setShowAddProduct] = useState(false);
@@ -112,62 +113,73 @@ export function Compras() {
     const loadData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-
-        // Stores
-        let { data: storesData } = await supabase
-            .from('market_stores')
-            .select('*')
-            .order('sort_order');
-
-        if (!storesData || storesData.length === 0) {
-            const { data: seeded } = await supabase
+        setLoadError(null);
+        try {
+            // Stores
+            let { data: storesData, error: storesErr } = await supabase
                 .from('market_stores')
-                .insert(DEFAULT_STORES.map((s, i) => ({ ...s, user_id: user.id, sort_order: i })))
-                .select();
-            storesData = seeded || [];
-        }
-        setStores(storesData || []);
-
-        // Products
-        const { data: productsData } = await supabase
-            .from('market_products')
-            .select('*')
-            .order('name');
-        setProducts(productsData || []);
-
-        // Active list
-        const { data: listData } = await supabase
-            .from('shopping_lists')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('status', 'active')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (listData && listData.length > 0) {
-            setActiveList(listData[0]);
-            const { data: itemsData } = await supabase
-                .from('shopping_items')
                 .select('*')
-                .eq('list_id', listData[0].id)
-                .order('created_at');
-            setActiveItems(itemsData || []);
-        } else {
-            setActiveList(null);
-            setActiveItems([]);
+                .order('sort_order');
+            if (storesErr) throw storesErr;
+
+            if (!storesData || storesData.length === 0) {
+                const { data: seeded, error: seedErr } = await supabase
+                    .from('market_stores')
+                    .insert(DEFAULT_STORES.map((s, i) => ({ ...s, user_id: user.id, sort_order: i })))
+                    .select();
+                if (seedErr) throw seedErr;
+                storesData = seeded || [];
+            }
+            setStores(storesData || []);
+
+            // Products
+            const { data: productsData, error: productsErr } = await supabase
+                .from('market_products')
+                .select('*')
+                .order('name');
+            if (productsErr) throw productsErr;
+            setProducts(productsData || []);
+
+            // Active list
+            const { data: listData, error: listErr } = await supabase
+                .from('shopping_lists')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('status', 'active')
+                .order('created_at', { ascending: false })
+                .limit(1);
+            if (listErr) throw listErr;
+
+            if (listData && listData.length > 0) {
+                setActiveList(listData[0]);
+                const { data: itemsData, error: itemsErr } = await supabase
+                    .from('shopping_items')
+                    .select('*')
+                    .eq('list_id', listData[0].id)
+                    .order('created_at');
+                if (itemsErr) throw itemsErr;
+                setActiveItems(itemsData || []);
+            } else {
+                setActiveList(null);
+                setActiveItems([]);
+            }
+
+            // History
+            const { data: pastData, error: pastErr } = await supabase
+                .from('shopping_lists')
+                .select('*')
+                .eq('user_id', user.id)
+                .in('status', ['completed', 'archived'])
+                .order('created_at', { ascending: false })
+                .limit(30);
+            if (pastErr) throw pastErr;
+            setPastLists(pastData || []);
+        } catch (err) {
+            console.error('Compras loadData:', err);
+            setLoadError('No se pudo cargar el catálogo. Verifica tu conexión.');
+        } finally {
+            setLoading(false);
         }
-
-        // History
-        const { data: pastData } = await supabase
-            .from('shopping_lists')
-            .select('*')
-            .eq('user_id', user.id)
-            .in('status', ['completed', 'archived'])
-            .order('created_at', { ascending: false })
-            .limit(30);
-        setPastLists(pastData || []);
-
-        setLoading(false);
     }, [user]);
 
     useEffect(() => { loadData(); }, [loadData]);
@@ -235,7 +247,8 @@ export function Compras() {
 
     const deleteStore = async (storeId: string) => {
         if (!confirm('¿Eliminar esta categoría y todos sus productos?')) return;
-        await supabase.from('market_stores').delete().eq('id', storeId);
+        const { error } = await supabase.from('market_stores').delete().eq('id', storeId);
+        if (error) { console.error('deleteStore:', error); return; }
         setStores(prev => prev.filter(s => s.id !== storeId));
         setProducts(prev => prev.filter(p => p.store_id !== storeId));
         setSelection(prev => {
@@ -259,7 +272,8 @@ export function Compras() {
     };
 
     const deleteProduct = async (productId: string) => {
-        await supabase.from('market_products').delete().eq('id', productId);
+        const { error } = await supabase.from('market_products').delete().eq('id', productId);
+        if (error) { console.error('deleteProduct:', error); return; }
         setProducts(prev => prev.filter(p => p.id !== productId));
         setSelection(prev => { const next = new Map(prev); next.delete(productId); return next; });
     };
@@ -287,7 +301,12 @@ export function Compras() {
             is_checked: false,
             priority: 'normal' as const,
         }));
-        await supabase.from('shopping_items').insert(rows);
+        const { error: insertErr } = await supabase.from('shopping_items').insert(rows);
+        if (insertErr) {
+            console.error('createList items insert:', insertErr);
+            await supabase.from('shopping_lists').delete().eq('id', list.id);
+            return;
+        }
 
         setSelection(new Map());
         setView('list');
@@ -295,12 +314,20 @@ export function Compras() {
     };
 
     const toggleItem = async (item: ShoppingItem) => {
-        const { data } = await supabase
+        // Optimistic update so the checkbox feels instant
+        setActiveItems(prev => prev.map(i => i.id === item.id ? { ...i, is_checked: !item.is_checked } : i));
+        const { data, error } = await supabase
             .from('shopping_items')
             .update({ is_checked: !item.is_checked })
             .eq('id', item.id)
             .select().single();
-        if (data) setActiveItems(prev => prev.map(i => i.id === item.id ? data : i));
+        if (error) {
+            // Revert optimistic update on failure
+            setActiveItems(prev => prev.map(i => i.id === item.id ? item : i));
+            console.error('toggleItem:', error);
+        } else if (data) {
+            setActiveItems(prev => prev.map(i => i.id === item.id ? data : i));
+        }
     };
 
     const completeList = async () => {
@@ -354,6 +381,20 @@ export function Compras() {
                 <div className="compras-loading">
                     <ShoppingCart size={36} />
                     <p>Cargando catálogo...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="compras-page">
+                <div className="compras-loading">
+                    <AlertTriangle size={36} style={{ color: 'var(--color-danger)' }} />
+                    <p style={{ color: 'var(--color-danger)' }}>{loadError}</p>
+                    <button className="btn-primary" style={{ marginTop: '1rem' }} onClick={() => { setLoadError(null); loadData(); }}>
+                        <RotateCcw size={16} /> Reintentar
+                    </button>
                 </div>
             </div>
         );

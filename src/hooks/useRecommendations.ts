@@ -33,12 +33,17 @@ export function useRecommendations(
     const [loading, setLoading] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const mountedRef = useRef(true);
+    useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
     const load = useCallback(async (sid: string, selected: string[]) => {
         setLoading(true);
         const { data, error } = await supabase.rpc('get_store_recommendations', {
             p_store_id: sid,
             p_all_selected_ids: selected,
         });
+
+        if (!mountedRef.current) return;
 
         if (!error && data) {
             const selSet = new Set(selected);
