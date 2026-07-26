@@ -192,6 +192,7 @@ export function Compras() {
             const { data: productsData, error: productsErr } = await supabase
                 .from('market_products')
                 .select('*')
+                .order('section', { nullsFirst: false })
                 .order('name');
             if (productsErr) throw productsErr;
             setProducts(productsData || []);
@@ -253,14 +254,27 @@ export function Compras() {
         ? storeProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
         : storeProducts;
 
-    // Agrupar productos por sección (mantiene orden de primera aparición)
-    const productsBySection = filteredProducts.reduce<{ section: string; items: typeof filteredProducts }[]>((acc, p) => {
-        const sec = p.section || 'General';
-        const existing = acc.find(g => g.section === sec);
-        if (existing) existing.items.push(p);
-        else acc.push({ section: sec, items: [p] });
-        return acc;
-    }, []);
+    const SECTION_ORDER = [
+        'Frutas','Verduras y Hortalizas','Tubérculos y Plátanos',
+        'Lácteos y Huevos','Granos y Cereales','Aceites, Salsas y Condimentos',
+        'Panadería y Galletería','Snacks y Dulces','Embutidos y Enlatados','Bebidas',
+        'Aseo Personal','Aseo del Hogar',
+        'Pollo','Res','Cerdo','Mariscos',
+        'Otros','General',
+    ];
+
+    const productsBySection = Object.values(
+        filteredProducts.reduce<Record<string, { section: string; items: typeof filteredProducts }>>((acc, p) => {
+            const sec = p.section || 'General';
+            if (!acc[sec]) acc[sec] = { section: sec, items: [] };
+            acc[sec].items.push(p);
+            return acc;
+        }, {})
+    ).sort((a, b) => {
+        const ia = SECTION_ORDER.indexOf(a.section);
+        const ib = SECTION_ORDER.indexOf(b.section);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
 
     const countByStore = (sid: string) => products.filter(p => p.store_id === sid).length;
     const selectedByStore = (sid: string) =>
