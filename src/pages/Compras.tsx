@@ -3,6 +3,7 @@ import {
     Plus, Trash2, X, Check, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp,
     Archive, CheckCircle2, Circle, ArrowUp, Minus, Equal,
     Apple, SprayCanIcon, User, Pill, Smartphone, Shirt, Home, PawPrint, Package,
+    Users2,
     type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -36,6 +37,7 @@ export function Compras() {
     const [lists, setLists] = useState<ShoppingList[]>([]);
     const [items, setItems] = useState<ShoppingItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [familyId, setFamilyId] = useState<string | null>(null);
     const [expandedList, setExpandedList] = useState<string | null>(null);
     const [isListModal, setIsListModal] = useState(false);
     const [isItemModal, setIsItemModal] = useState(false);
@@ -50,11 +52,19 @@ export function Compras() {
 
     const showToast = useCallback((msg: string, type: 'success' | 'error') => { setToast({ message: msg, type }); setTimeout(() => setToast(null), 3000); }, []);
 
+    // Load familyId once
+    useEffect(() => {
+        if (!user) return;
+        supabase.from('family_members').select('family_id').eq('user_id', user.id).eq('status', 'active').maybeSingle()
+            .then(({ data }) => setFamilyId(data?.family_id ?? null));
+    }, [user]);
+
     const fetchData = useCallback(async () => {
         if (!user) return;
+        // RLS policies handle visibility: own lists + family-shared lists
         const [lRes, iRes] = await Promise.all([
-            supabase.from('shopping_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-            supabase.from('shopping_items').select('*').eq('user_id', user.id).order('is_checked').order('priority', { ascending: true }).order('created_at'),
+            supabase.from('shopping_lists').select('*').order('created_at', { ascending: false }),
+            supabase.from('shopping_items').select('*').order('is_checked').order('priority', { ascending: true }).order('created_at'),
         ]);
         setLists(lRes.data || []);
         setItems(iRes.data || []);
@@ -62,6 +72,16 @@ export function Compras() {
     }, [user]);
 
     useEffect(() => { if (user) fetchData(); }, [user, fetchData]);
+
+    // Realtime: refresh when family members change lists or items
+    useEffect(() => {
+        if (!familyId) return;
+        const channel = supabase.channel(`compras-family-${familyId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_lists', filter: `family_id=eq.${familyId}` }, fetchData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items' }, fetchData)
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [familyId, fetchData]);
 
     const activeLists = useMemo(() => lists.filter(l => l.status === 'active'), [lists]);
     const archivedLists = useMemo(() => lists.filter(l => l.status !== 'active'), [lists]);
@@ -94,6 +114,17 @@ export function Compras() {
     async function completeList(id: string) {
         await supabase.from('shopping_lists').update({ status: 'completed' }).eq('id', id);
         showToast('Lista completada', 'success'); fetchData();
+    }
+
+    async function shareList(id: string) {
+        if (!familyId) { showToast('No tienes familia vinculada', 'error'); return; }
+        await supabase.from('shopping_lists').update({ family_id: familyId }).eq('id', id);
+        showToast('Lista compartida con la familia', 'success'); fetchData();
+    }
+
+    async function unshareList(id: string) {
+        await supabase.from('shopping_lists').update({ family_id: null }).eq('id', id);
+        showToast('Lista dejó de compartirse', 'success'); fetchData();
     }
 
     // Item CRUD
@@ -164,11 +195,18 @@ export function Compras() {
                             return acc;
                         }, {});
 
+                        const isOwner = list.user_id === user?.id;
+                        const isShared = !!list.family_id;
+
                         return (
-                            <div key={list.id} className={`list-card ${overBudget ? 'over-budget' : ''}`}>
+                            <div key={list.id} className={`list-card ${overBudget ? 'over-budget' : ''} ${isShared ? 'shared-list' : ''}`}>
                                 <div className="list-card-header" onClick={() => setExpandedList(isExpanded ? null : list.id)}>
                                     <div className="list-info">
-                                        <h3>{list.name}</h3>
+                                        <div className="list-name-row">
+                                            <h3>{list.name}</h3>
+                                            {isShared && <span className="shared-badge"><Users2 size={12} /> Compartida</span>}
+                                            {!isOwner && <span className="foreign-badge">De familia</span>}
+                                        </div>
                                         <span className="list-meta">
                                             {stats.checked}/{stats.total} productos ·
                                             {list.budget_limit ? ` ${fmt(stats.actual, currency)} de ${fmt(list.budget_limit, currency)}` : ` ${fmt(stats.estimated, currency)} estimado`}
@@ -181,9 +219,14 @@ export function Compras() {
                                     </div>
                                     <div className="list-actions">
                                         <button type="button" title="Agregar producto" className="la-btn add" onClick={e => { e.stopPropagation(); openAddItem(list.id); }}><Plus size={16} /></button>
-                                        <button type="button" title="Completar" className="la-btn done" onClick={e => { e.stopPropagation(); completeList(list.id); }}><Check size={16} /></button>
-                                        <button type="button" title="Archivar" className="la-btn" onClick={e => { e.stopPropagation(); archiveList(list.id); }}><Archive size={16} /></button>
-                                        <button type="button" title="Eliminar" className="la-btn del" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'list', id: list.id, name: list.name }); }}><Trash2 size={16} /></button>
+                                        {isOwner && (
+                                            isShared
+                                                ? <button type="button" title="Dejar de compartir" className="la-btn share active" onClick={e => { e.stopPropagation(); unshareList(list.id); }}><Users2 size={16} /></button>
+                                                : <button type="button" title="Compartir con familia" className="la-btn share" onClick={e => { e.stopPropagation(); shareList(list.id); }}><Users2 size={16} /></button>
+                                        )}
+                                        {isOwner && <button type="button" title="Completar" className="la-btn done" onClick={e => { e.stopPropagation(); completeList(list.id); }}><Check size={16} /></button>}
+                                        {isOwner && <button type="button" title="Archivar" className="la-btn" onClick={e => { e.stopPropagation(); archiveList(list.id); }}><Archive size={16} /></button>}
+                                        {isOwner && <button type="button" title="Eliminar" className="la-btn del" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'list', id: list.id, name: list.name }); }}><Trash2 size={16} /></button>}
                                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </div>
                                 </div>
