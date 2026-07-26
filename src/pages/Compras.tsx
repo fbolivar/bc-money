@@ -1,594 +1,851 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-    Plus, Trash2, X, ShoppingCart, AlertTriangle, ChevronDown, ChevronUp,
-    Archive, CheckCircle2, Circle, ArrowUp, Minus, Equal,
-    Apple, SprayCanIcon, User, Pill, Smartphone, Shirt, Home, PawPrint, Package,
-    ClipboardList,
-    type LucideIcon,
+    ShoppingCart, Plus, ArrowLeft, Check, X, Upload,
+    FileText, Camera, ChevronRight, Trash2, Package,
+    Search, History, Store, Circle, CheckCircle2, ClipboardList,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { ShoppingList, ShoppingItem } from '../lib/supabase';
+import type { MarketStore, MarketProduct, ShoppingList, ShoppingItem } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './Compras.css';
 
-const ITEM_CATS: { value: ShoppingItem['category']; label: string; icon: LucideIcon; color: string }[] = [
-    { value: 'food',        label: 'Alimentos',   icon: Apple,         color: '#10B981' },
-    { value: 'cleaning',    label: 'Limpieza',    icon: SprayCanIcon,  color: '#3B82F6' },
-    { value: 'personal',    label: 'Personal',    icon: User,          color: '#8B5CF6' },
-    { value: 'pharmacy',    label: 'Farmacia',    icon: Pill,          color: '#EF4444' },
-    { value: 'electronics', label: 'Electrónica', icon: Smartphone,    color: '#F59E0B' },
-    { value: 'clothing',    label: 'Ropa',        icon: Shirt,         color: '#EC4899' },
-    { value: 'home',        label: 'Hogar',       icon: Home,          color: '#6366F1' },
-    { value: 'pets',        label: 'Mascotas',    icon: PawPrint,      color: '#14B8A6' },
-    { value: 'other',       label: 'Otro',        icon: Package,       color: '#94A3B8' },
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const DEFAULT_STORES = [
+    { name: 'Supermercado',       emoji: '🛒', color: '#3B82F6' },
+    { name: 'Frutas y Verduras',  emoji: '🥦', color: '#22C55E' },
+    { name: 'Carnes',             emoji: '🥩', color: '#EF4444' },
 ];
-const CAT_MAP = Object.fromEntries(ITEM_CATS.map(c => [c.value, c]));
-const PRIORITY_ICONS: Record<string, LucideIcon> = { high: ArrowUp, normal: Equal, low: Minus };
 
-function fmt(n: number, c: string) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: c, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
-}
+const UNIT_OPTIONS = ['und', 'kg', 'gr', 'lb', 'lt', 'ml', 'paq', 'doc', 'caj', 'bot'];
 
-// ── Text parser helpers ─────────────────────────────────────────────────────
+const STORE_EMOJIS = [
+    '🛒','🥦','🥩','🥛','🍞','🧴','💊','🏪','🥫','🧺',
+    '🌾','🐟','🍳','🧼','🌿','🍷','🍺','🛍️','🏬','🐾',
+];
 
-function normalizeUnit(u: string): string {
-    if (/^kg|kilo/i.test(u)) return 'kg';
-    if (/^lb|libra/i.test(u)) return 'lb';
-    if (/^lt|litro/i.test(u)) return 'lt';
-    if (/^ml/i.test(u)) return 'ml';
-    if (/^gr|gramo|^g$/i.test(u)) return 'gr';
-    if (/^paq|paquete/i.test(u)) return 'paq';
-    return 'und';
-}
+const STORE_COLORS = [
+    '#3B82F6','#22C55E','#EF4444','#F59E0B','#8B5CF6',
+    '#EC4899','#14B8A6','#6366F1','#F97316','#64748B',
+];
 
-function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
+// ── Types ────────────────────────────────────────────────────────────────────
 
-function guessCategory(name: string): ShoppingItem['category'] {
-    const n = name.toLowerCase();
-    if (/leche|pan\b|arroz|huevo|pollo|carne|res\b|cerdo|tomate|papa|queso|yogur|mantequilla|aceite|sal\b|azúcar|harina|pasta\b|frijol|lenteja|garbanzo|atún|sardina|avena|fruta|verdura|cebolla|ajo|zanahoria|lechuga|plátano|manzana|naranja|limón|yuca|maíz|arepa|chorizo|salchicha|jamón|café|chocolate|cereal|galleta|bizcocho|miel|mermelada|mayonesa|salsa|vinagre|mostaza|pimienta|panela|agua\b|gaseosa|refresco|jugo|sopa|crema de|cocoa|manteca|espagueti|fideos|arroz|pepino|espinaca|brócoli|coliflor|habichuela|champiñon|pimentón|aguacate|mango|papaya|melón|sandía|uva|fresa|mora/.test(n)) return 'food';
-    if (/jabón|detergente|suavizante|blanqueador|limpiador|ajax|fabuloso|esponja|escoba|trapero|papel higiénico|servilleta|bolsa\b|limpiapisos|desinfectante|cera\b|pinesol|ariel|fab\b|rindex|toilet|lavaplatos|lavatrastos/.test(n)) return 'cleaning';
-    if (/shampoo|champú|crema\b|desodorante|cepillo|pasta dental|afeitadora|acondicionador|toalla|pañal|jabón de tocador|loción|perfume|maquillaje|esmalte|tinte|depilador|preservativo|tampón|toalla higiénica/.test(n)) return 'personal';
-    if (/medicamento|pastilla|jarabe|vitamina|aspirina|ibuprofeno|acetaminofén|antibiótico|suero|antigripal|antiácido|omeprazol|alcohol\b|algodón|curitas|termómetro|jeringa/.test(n)) return 'pharmacy';
-    if (/bombillo|pila\b|vela\b|fósforo|escoba|destapacaño|llave|tornillo|pintura\b|brocha|extensión|cable/.test(n)) return 'home';
-    if (/iphone|celular|tablet|audífonos|cargador|cable usb|mouse|teclado|memoria/.test(n)) return 'electronics';
-    if (/camisa|pantalón|zapato|ropa|vestido|tenis|calcetín|media\b|interior|brassier|chaqueta|abrigo|sombrero/.test(n)) return 'clothing';
-    if (/perro|gato|mascota|comida para|arena\b|correa|juguete para/.test(n)) return 'pets';
-    return 'other';
-}
-
-interface ParsedItem {
-    name: string;
-    quantity: number;
+interface SelectionItem {
+    product: MarketProduct;
+    qty: number;
     unit: string;
-    category: ShoppingItem['category'];
-    selected: boolean;
 }
 
-function parseLine(raw: string): ParsedItem | null {
-    const line = raw.trim().replace(/^[-•*✓✗·]\s*/, '');
+type View = 'catalog' | 'list' | 'history';
+type ImportStep = 'idle' | 'paste' | 'file' | 'preview';
+interface ParsedLine { name: string; unit: string; selected: boolean }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function capitalize(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function parseLine(raw: string): ParsedLine | null {
+    const line = raw.trim().replace(/^[-•*✓✗·\d+.]\s*/, '').trim();
     if (!line) return null;
-
-    let quantity = 1;
-    let unit = 'und';
-    let name = line;
-
-    // "2 kg arroz" / "500 gr sal" / "3 litros leche" / "2 pollos"
-    const leading = line.match(/^(\d+(?:[.,]\d+)?)\s*(kg|kilos?|lb|libras?|lt|litros?|ml|gr|gramos?|g|paq|paquetes?)?\s+(?:de\s+)?(.+)$/i);
-    if (leading) {
-        quantity = parseFloat(leading[1].replace(',', '.'));
-        unit = normalizeUnit(leading[2] || '');
-        name = leading[3].trim();
-    } else {
-        // "jabón rey x3" or "jabón (x3)"
-        const trailing = line.match(/^(.+?)\s+[xX×](\d+)$/);
-        if (trailing) {
-            quantity = parseInt(trailing[2]);
-            name = trailing[1].trim();
-        }
-    }
-
-    return { name: capitalize(name), quantity, unit, category: guessCategory(name), selected: true };
+    const m = line.match(/^(\d+(?:[.,]\d+)?)\s*(kg|gr|lb|lt|ml|paq|und|doc|caj|bot)?\s+(?:de\s+)?(.+)$/i);
+    if (m) return { name: capitalize(m[3].trim()), unit: (m[2] || 'und').toLowerCase(), selected: true };
+    return { name: capitalize(line), unit: 'und', selected: true };
 }
 
-function parseTextList(text: string): ParsedItem[] {
-    return text.split('\n').map(parseLine).filter(Boolean) as ParsedItem[];
+function parseText(text: string): ParsedLine[] {
+    return text.split('\n').map(parseLine).filter((x): x is ParsedLine => x !== null);
 }
 
-// ── Component ───────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function Compras() {
-    const { user, profile } = useAuth();
-    const [lists, setLists] = useState<ShoppingList[]>([]);
-    const [items, setItems] = useState<ShoppingItem[]>([]);
+    const { user } = useAuth();
+
+    // Data
+    const [stores, setStores] = useState<MarketStore[]>([]);
+    const [products, setProducts] = useState<MarketProduct[]>([]);
+    const [activeList, setActiveList] = useState<ShoppingList | null>(null);
+    const [activeItems, setActiveItems] = useState<ShoppingItem[]>([]);
+    const [pastLists, setPastLists] = useState<ShoppingList[]>([]);
+
+    // Navigation
+    const [view, setView] = useState<View>('catalog');
+    const [activeStoreId, setActiveStoreId] = useState<string | null>(null);
+
+    // Selection (items to add to the next shopping list)
+    const [selection, setSelection] = useState<Map<string, SelectionItem>>(new Map());
+
+    // UI
     const [loading, setLoading] = useState(true);
-    const [expandedList, setExpandedList] = useState<string | null>(null);
-    const [isListModal, setIsListModal] = useState(false);
-    const [isItemModal, setIsItemModal] = useState(false);
-    const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'list' | 'item'; id: string; name: string } | null>(null);
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-    const [showArchived, setShowArchived] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showAddStore, setShowAddStore] = useState(false);
+    const [showAddProduct, setShowAddProduct] = useState(false);
+    const [showImport, setShowImport] = useState(false);
+    const [importStep, setImportStep] = useState<ImportStep>('idle');
+    const [importText, setImportText] = useState('');
+    const [importPreview, setImportPreview] = useState<ParsedLine[]>([]);
 
-    // Paste-list modal state
-    const [pasteStep, setPasteStep] = useState<'idle' | 'paste' | 'canvas'>('idle');
-    const [pasteText, setPasteText] = useState('');
-    const [parsedItems, setParsedItems] = useState<ParsedItem[]>([]);
-    const [canvasListName, setCanvasListName] = useState('');
-    const [importing, setImporting] = useState(false);
+    // Forms
+    const [newStoreName, setNewStoreName] = useState('');
+    const [newStoreEmoji, setNewStoreEmoji] = useState('🏪');
+    const [newStoreColor, setNewStoreColor] = useState('#6366F1');
+    const [newProductName, setNewProductName] = useState('');
+    const [newProductUnit, setNewProductUnit] = useState('und');
 
-    const currency = profile?.currency || 'COP';
+    // ── Load ──────────────────────────────────────────────────────────────────
 
-    const [listForm, setListForm] = useState({ name: '', budget_limit: '' });
-    const [itemForm, setItemForm] = useState({
-        list_id: '', name: '', category: 'food' as ShoppingItem['category'],
-        quantity: '1', unit: 'und', estimated_price: '', priority: 'normal' as ShoppingItem['priority'], notes: '',
-    });
-
-    const showToast = useCallback((msg: string, type: 'success' | 'error') => {
-        setToast({ message: msg, type });
-        setTimeout(() => setToast(null), 3000);
-    }, []);
-
-    const fetchData = useCallback(async () => {
+    const loadData = useCallback(async () => {
         if (!user) return;
-        const [lRes, iRes] = await Promise.all([
-            supabase.from('shopping_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-            supabase.from('shopping_items').select('*').eq('user_id', user.id).order('is_checked').order('priority', { ascending: true }).order('created_at'),
-        ]);
-        setLists(lRes.data || []);
-        setItems(iRes.data || []);
+        setLoading(true);
+
+        // Stores
+        let { data: storesData } = await supabase
+            .from('market_stores')
+            .select('*')
+            .order('sort_order');
+
+        if (!storesData || storesData.length === 0) {
+            const { data: seeded } = await supabase
+                .from('market_stores')
+                .insert(DEFAULT_STORES.map((s, i) => ({ ...s, user_id: user.id, sort_order: i })))
+                .select();
+            storesData = seeded || [];
+        }
+        setStores(storesData || []);
+
+        // Products
+        const { data: productsData } = await supabase
+            .from('market_products')
+            .select('*')
+            .order('name');
+        setProducts(productsData || []);
+
+        // Active list
+        const { data: listData } = await supabase
+            .from('shopping_lists')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (listData && listData.length > 0) {
+            setActiveList(listData[0]);
+            const { data: itemsData } = await supabase
+                .from('shopping_items')
+                .select('*')
+                .eq('list_id', listData[0].id)
+                .order('created_at');
+            setActiveItems(itemsData || []);
+        } else {
+            setActiveList(null);
+            setActiveItems([]);
+        }
+
+        // History
+        const { data: pastData } = await supabase
+            .from('shopping_lists')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('status', ['completed', 'archived'])
+            .order('created_at', { ascending: false })
+            .limit(30);
+        setPastLists(pastData || []);
+
         setLoading(false);
     }, [user]);
 
-    useEffect(() => { if (user) fetchData(); }, [user, fetchData]);
+    useEffect(() => { loadData(); }, [loadData]);
 
-    const activeLists = useMemo(() => lists.filter(l => l.status === 'active'), [lists]);
-    const archivedLists = useMemo(() => lists.filter(l => l.status !== 'active'), [lists]);
+    // ── Derived ───────────────────────────────────────────────────────────────
 
-    function getListItems(listId: string) { return items.filter(i => i.list_id === listId); }
+    const activeStore = stores.find(s => s.id === activeStoreId);
+    const storeProducts = products.filter(p => p.store_id === activeStoreId);
+    const filteredProducts = searchQuery
+        ? storeProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        : storeProducts;
 
-    function getListStats(listId: string) {
-        const li = getListItems(listId);
-        const total = li.length;
-        const checked = li.filter(i => i.is_checked).length;
-        const estimated = li.reduce((s, i) => s + (i.estimated_price || 0) * i.quantity, 0);
-        const actual = li.filter(i => i.is_checked).reduce((s, i) => s + (i.actual_price || i.estimated_price || 0) * i.quantity, 0);
-        return { total, checked, estimated, actual, progress: total > 0 ? (checked / total) * 100 : 0 };
-    }
+    const countByStore = (sid: string) => products.filter(p => p.store_id === sid).length;
+    const selectedByStore = (sid: string) =>
+        [...selection.values()].filter(s => s.product.store_id === sid).length;
 
-    // List CRUD
-    async function handleListSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!user) return;
-        await supabase.from('shopping_lists').insert({
-            user_id: user.id, name: listForm.name,
-            budget_limit: listForm.budget_limit ? parseFloat(listForm.budget_limit) : null,
-            currency,
+    const itemsByStore = (() => {
+        const map = new Map<string, { store: MarketStore | undefined; items: ShoppingItem[] }>();
+        for (const item of activeItems) {
+            const key = item.store_id || '__none__';
+            if (!map.has(key)) {
+                map.set(key, { store: stores.find(s => s.id === item.store_id), items: [] });
+            }
+            map.get(key)!.items.push(item);
+        }
+        return [...map.values()];
+    })();
+
+    // ── Catalog actions ───────────────────────────────────────────────────────
+
+    const toggleProduct = (product: MarketProduct) => {
+        setSelection(prev => {
+            const next = new Map(prev);
+            if (next.has(product.id)) next.delete(product.id);
+            else next.set(product.id, { product, qty: 1, unit: product.unit });
+            return next;
         });
-        setIsListModal(false);
-        setListForm({ name: '', budget_limit: '' });
-        showToast('Lista creada', 'success');
-        fetchData();
-    }
+    };
 
-    async function archiveList(id: string) {
-        await supabase.from('shopping_lists').update({ status: 'archived' }).eq('id', id);
-        showToast('Lista archivada', 'success'); fetchData();
-    }
-
-    async function completeList(id: string) {
-        await supabase.from('shopping_lists').update({ status: 'completed' }).eq('id', id);
-        showToast('Lista completada', 'success'); fetchData();
-    }
-
-    // Item CRUD
-    async function handleItemSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!user) return;
-        await supabase.from('shopping_items').insert({
-            list_id: itemForm.list_id, user_id: user.id, name: itemForm.name,
-            category: itemForm.category, quantity: parseFloat(itemForm.quantity) || 1,
-            unit: itemForm.unit || 'und',
-            estimated_price: itemForm.estimated_price ? parseFloat(itemForm.estimated_price) : null,
-            priority: itemForm.priority, notes: itemForm.notes || null,
+    const updateQty = (productId: string, delta: number) => {
+        setSelection(prev => {
+            const next = new Map(prev);
+            const item = next.get(productId);
+            if (item) next.set(productId, { ...item, qty: Math.max(0.5, parseFloat((item.qty + delta).toFixed(1))) });
+            return next;
         });
-        setIsItemModal(false);
-        setItemForm({ ...itemForm, name: '', estimated_price: '', notes: '' });
-        showToast('Producto agregado', 'success'); fetchData();
-    }
+    };
 
-    async function toggleItem(item: ShoppingItem) {
-        await supabase.from('shopping_items').update({ is_checked: !item.is_checked }).eq('id', item.id);
-        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_checked: !i.is_checked } : i));
-    }
-
-    async function updateActualPrice(itemId: string, price: string) {
-        await supabase.from('shopping_items').update({ actual_price: price ? parseFloat(price) : null }).eq('id', itemId);
-    }
-
-    async function handleDelete() {
-        if (!deleteConfirm) return;
-        if (deleteConfirm.type === 'list') await supabase.from('shopping_lists').delete().eq('id', deleteConfirm.id);
-        else await supabase.from('shopping_items').delete().eq('id', deleteConfirm.id);
-        setDeleteConfirm(null); showToast('Eliminado', 'success'); fetchData();
-    }
-
-    function openAddItem(listId: string) {
-        setItemForm({ list_id: listId, name: '', category: 'food', quantity: '1', unit: 'und', estimated_price: '', priority: 'normal', notes: '' });
-        setIsItemModal(true);
-    }
-
-    // ── Paste & canvas ──────────────────────────────────────────────────────
-
-    function openPasteModal() {
-        setPasteText('');
-        setParsedItems([]);
-        setCanvasListName(`Mercado ${format(new Date(), "d MMM", { locale: es })}`);
-        setPasteStep('paste');
-    }
-
-    function handleOrganize() {
-        const parsed = parseTextList(pasteText);
-        if (parsed.length === 0) { showToast('No encontré productos en el texto', 'error'); return; }
-        setParsedItems(parsed);
-        setPasteStep('canvas');
-    }
-
-    function toggleParsedItem(idx: number) {
-        setParsedItems(prev => prev.map((it, i) => i === idx ? { ...it, selected: !it.selected } : it));
-    }
-
-    function changeParsedCategory(idx: number, cat: ShoppingItem['category']) {
-        setParsedItems(prev => prev.map((it, i) => i === idx ? { ...it, category: cat } : it));
-    }
-
-    async function handleImport() {
-        if (!user || !canvasListName.trim()) return;
-        const selected = parsedItems.filter(it => it.selected);
-        if (selected.length === 0) { showToast('Selecciona al menos un producto', 'error'); return; }
-        setImporting(true);
-        const { data: list } = await supabase.from('shopping_lists')
-            .insert({ user_id: user.id, name: canvasListName.trim(), currency })
+    const addStore = async () => {
+        if (!user || !newStoreName.trim()) return;
+        const { data } = await supabase
+            .from('market_stores')
+            .insert({ user_id: user.id, name: newStoreName.trim(), emoji: newStoreEmoji, color: newStoreColor, sort_order: stores.length })
             .select().single();
-        if (!list) { showToast('Error al crear la lista', 'error'); setImporting(false); return; }
-        await supabase.from('shopping_items').insert(
-            selected.map(it => ({
-                list_id: list.id, user_id: user.id,
-                name: it.name, category: it.category,
-                quantity: it.quantity, unit: it.unit,
-                priority: 'normal' as const,
-            }))
+        if (data) {
+            setStores(prev => [...prev, data]);
+            setNewStoreName(''); setShowAddStore(false);
+        }
+    };
+
+    const deleteStore = async (storeId: string) => {
+        if (!confirm('¿Eliminar esta categoría y todos sus productos?')) return;
+        await supabase.from('market_stores').delete().eq('id', storeId);
+        setStores(prev => prev.filter(s => s.id !== storeId));
+        setProducts(prev => prev.filter(p => p.store_id !== storeId));
+        setSelection(prev => {
+            const next = new Map(prev);
+            for (const [k, v] of next) { if (v.product.store_id === storeId) next.delete(k); }
+            return next;
+        });
+        if (activeStoreId === storeId) setActiveStoreId(null);
+    };
+
+    const addProduct = async () => {
+        if (!user || !activeStoreId || !newProductName.trim()) return;
+        const { data } = await supabase
+            .from('market_products')
+            .insert({ user_id: user.id, store_id: activeStoreId, name: newProductName.trim(), unit: newProductUnit, sort_order: storeProducts.length })
+            .select().single();
+        if (data) {
+            setProducts(prev => [...prev, data]);
+            setNewProductName(''); setNewProductUnit('und'); setShowAddProduct(false);
+        }
+    };
+
+    const deleteProduct = async (productId: string) => {
+        await supabase.from('market_products').delete().eq('id', productId);
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        setSelection(prev => { const next = new Map(prev); next.delete(productId); return next; });
+    };
+
+    // ── Shopping list actions ─────────────────────────────────────────────────
+
+    const createList = async () => {
+        if (!user || selection.size === 0) return;
+        const name = `Mercado ${format(new Date(), "d 'de' MMM", { locale: es })}`;
+        const { data: list, error } = await supabase
+            .from('shopping_lists')
+            .insert({ user_id: user.id, name, status: 'active', currency: 'COP' })
+            .select().single();
+        if (error || !list) return;
+
+        const rows = [...selection.values()].map(s => ({
+            list_id: list.id,
+            user_id: user.id,
+            name: s.product.name,
+            quantity: s.qty,
+            unit: s.unit,
+            category: 'other' as const,
+            store_id: s.product.store_id,
+            product_id: s.product.id,
+            is_checked: false,
+            priority: 'normal' as const,
+        }));
+        await supabase.from('shopping_items').insert(rows);
+
+        setSelection(new Map());
+        setView('list');
+        await loadData();
+    };
+
+    const toggleItem = async (item: ShoppingItem) => {
+        const { data } = await supabase
+            .from('shopping_items')
+            .update({ is_checked: !item.is_checked })
+            .eq('id', item.id)
+            .select().single();
+        if (data) setActiveItems(prev => prev.map(i => i.id === item.id ? data : i));
+    };
+
+    const completeList = async () => {
+        if (!activeList) return;
+        await supabase.from('shopping_lists').update({ status: 'completed' }).eq('id', activeList.id);
+        setActiveList(null); setActiveItems([]);
+        setView('catalog');
+        await loadData();
+    };
+
+    // ── Import ────────────────────────────────────────────────────────────────
+
+    const importProducts = async () => {
+        if (!user || !activeStoreId) return;
+        const toAdd = importPreview.filter(p => p.selected);
+        if (toAdd.length === 0) return;
+        const { data } = await supabase
+            .from('market_products')
+            .insert(toAdd.map((p, i) => ({
+                user_id: user.id, store_id: activeStoreId,
+                name: p.name, unit: p.unit,
+                sort_order: storeProducts.length + i,
+            })))
+            .select();
+        if (data) setProducts(prev => [...prev, ...data]);
+        setShowImport(false); setImportText(''); setImportPreview([]); setImportStep('idle');
+    };
+
+    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const text = ev.target?.result as string;
+            setImportText(text);
+            setImportPreview(parseText(text));
+            setImportStep('preview');
+        };
+        reader.readAsText(file);
+    };
+
+    const closeImport = () => {
+        setShowImport(false); setImportText(''); setImportPreview([]); setImportStep('idle');
+    };
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    if (loading) {
+        return (
+            <div className="compras-page">
+                <div className="compras-loading">
+                    <ShoppingCart size={36} />
+                    <p>Cargando catálogo...</p>
+                </div>
+            </div>
         );
-        setPasteStep('idle');
-        setImporting(false);
-        showToast(`Lista creada con ${selected.length} productos`, 'success');
-        fetchData();
-        setExpandedList(list.id);
     }
 
-    // Canvas grouped by category
-    const canvasGrouped = useMemo(() => {
-        const groups: Record<string, { items: Array<ParsedItem & { idx: number }>; cat: typeof ITEM_CATS[0] }> = {};
-        parsedItems.forEach((it, idx) => {
-            if (!groups[it.category]) groups[it.category] = { items: [], cat: CAT_MAP[it.category] };
-            groups[it.category].items.push({ ...it, idx });
-        });
-        return groups;
-    }, [parsedItems]);
-
-    if (loading) return <div className="loading-screen">Cargando...</div>;
+    const checkedCount = activeItems.filter(i => i.is_checked).length;
 
     return (
         <div className="compras-page">
-            {toast && <div className={`shop-toast ${toast.type}`}>{toast.message}</div>}
 
+            {/* ── Header ── */}
             <div className="compras-header">
-                <div>
-                    <h1>Lista de Compras</h1>
-                    <p>Crea listas manualmente o pega tu lista de texto y la organizamos</p>
+                <div className="compras-header-left">
+                    {activeStoreId && view === 'catalog' && (
+                        <button
+                            className="compras-back-btn"
+                            onClick={() => { setActiveStoreId(null); setSearchQuery(''); setShowAddProduct(false); }}
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                    )}
+                    <div>
+                        <h1 className="compras-title">
+                            {view === 'catalog' && activeStoreId ? activeStore?.name
+                                : view === 'list' ? 'Mi Lista'
+                                : view === 'history' ? 'Historial'
+                                : 'Compras'}
+                        </h1>
+                        {view === 'catalog' && !activeStoreId && (
+                            <p className="compras-subtitle">Selecciona lo que necesitas mercar</p>
+                        )}
+                    </div>
                 </div>
-                <button type="button" className="btn-paste" onClick={openPasteModal}>
-                    <ClipboardList size={18} /> Pegar lista de texto
-                </button>
+                {view === 'catalog' && activeStoreId && (
+                    <div className="compras-header-actions">
+                        <button className="compras-icon-btn" onClick={() => setShowImport(true)} title="Importar lista">
+                            <Upload size={18} />
+                        </button>
+                        <button className="compras-icon-btn" onClick={() => setShowAddProduct(!showAddProduct)} title="Agregar producto">
+                            <Plus size={18} />
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {/* Active Lists */}
-            {activeLists.length === 0 ? (
-                <div className="compras-empty">
-                    <ShoppingCart size={48} />
-                    <h3>No tienes listas de compras</h3>
-                    <p>Crea una lista manualmente o pega tu lista de texto</p>
-                    <div className="empty-actions">
-                        <button type="button" className="empty-add-btn secondary" onClick={openPasteModal}><ClipboardList size={18} /> Pegar lista</button>
-                        <button type="button" className="empty-add-btn" onClick={() => setIsListModal(true)}><Plus size={18} /> Nueva Lista</button>
-                    </div>
-                </div>
-            ) : (
-                <div className="lists-container">
-                    {activeLists.map(list => {
-                        const stats = getListStats(list.id);
-                        const listItems = getListItems(list.id);
-                        const isExpanded = expandedList === list.id;
-                        const overBudget = list.budget_limit && stats.actual > list.budget_limit;
-
-                        const grouped = listItems.reduce((acc: Record<string, ShoppingItem[]>, item) => {
-                            (acc[item.category] = acc[item.category] || []).push(item);
-                            return acc;
-                        }, {});
-
-                        return (
-                            <div key={list.id} className={`list-card ${overBudget ? 'over-budget' : ''}`}>
-                                <div className="list-card-header" onClick={() => setExpandedList(isExpanded ? null : list.id)}>
-                                    <div className="list-info">
-                                        <h3>{list.name}</h3>
-                                        <span className="list-meta">
-                                            {stats.checked}/{stats.total} productos ·
-                                            {list.budget_limit
-                                                ? ` ${fmt(stats.actual, currency)} de ${fmt(list.budget_limit, currency)}`
-                                                : ` ${fmt(stats.estimated, currency)} estimado`}
-                                        </span>
-                                        {stats.total > 0 && (
-                                            <div className="list-progress">
-                                                <div className="list-progress-bar" style={{ width: `${stats.progress}%` }} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="list-actions">
-                                        <button type="button" title="Agregar producto" className="la-btn add" onClick={e => { e.stopPropagation(); openAddItem(list.id); }}><Plus size={16} /></button>
-                                        <button type="button" title="Archivar" className="la-btn" onClick={e => { e.stopPropagation(); archiveList(list.id); }}><Archive size={16} /></button>
-                                        <button type="button" title="Eliminar" className="la-btn del" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'list', id: list.id, name: list.name }); }}><Trash2 size={16} /></button>
-                                        <span className="la-btn chevron">{isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</span>
-                                    </div>
-                                </div>
-
-                                {overBudget && (
-                                    <div className="budget-warning"><AlertTriangle size={14} /> Presupuesto excedido por {fmt(stats.actual - (list.budget_limit || 0), currency)}</div>
-                                )}
-
-                                {isExpanded && (
-                                    <div className="list-items">
-                                        {listItems.length === 0 ? (
-                                            <p className="no-items">Lista vacía — agrega productos con el botón +</p>
-                                        ) : Object.entries(grouped).map(([cat, catItems]) => {
-                                            const catInfo = CAT_MAP[cat];
-                                            const CatIcon = catInfo?.icon || Package;
-                                            return (
-                                                <div key={cat} className="item-group">
-                                                    <div className="item-group-header" style={{ color: catInfo?.color }}>
-                                                        <CatIcon size={14} /><span>{catInfo?.label || cat}</span>
-                                                    </div>
-                                                    {catItems.map(item => {
-                                                        const PIcon = PRIORITY_ICONS[item.priority];
-                                                        return (
-                                                            <div key={item.id} className={`shop-item ${item.is_checked ? 'checked' : ''} pri-${item.priority}`}>
-                                                                <button type="button" className="check-btn" title="Marcar" onClick={() => toggleItem(item)}>
-                                                                    {item.is_checked ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-                                                                </button>
-                                                                <div className="item-info">
-                                                                    <span className="item-name">{item.name}</span>
-                                                                    <span className="item-qty">{item.quantity} {item.unit}</span>
-                                                                </div>
-                                                                <PIcon size={14} className={`pri-icon pri-${item.priority}`} />
-                                                                <div className="item-prices">
-                                                                    {item.estimated_price && <span className="est-price">{fmt(item.estimated_price * item.quantity, currency)}</span>}
-                                                                    {item.is_checked && (
-                                                                        <input type="number" className="actual-input" placeholder="Real" defaultValue={item.actual_price?.toString() || ''} onBlur={e => updateActualPrice(item.id, e.target.value)} min="0" step="0.01" />
-                                                                    )}
-                                                                </div>
-                                                                <button type="button" title="Eliminar" className="la-btn del sm" onClick={() => setDeleteConfirm({ type: 'item', id: item.id, name: item.name })}><Trash2 size={13} /></button>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+            {/* ── Tabs ── */}
+            {!activeStoreId && (
+                <div className="compras-tabs">
+                    {([
+                        { id: 'catalog', icon: Store, label: 'Catálogo' },
+                        { id: 'list',    icon: ClipboardList, label: 'Mi Lista' },
+                        { id: 'history', icon: History, label: 'Historial' },
+                    ] as const).map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`compras-tab ${view === tab.id ? 'active' : ''}`}
+                            onClick={() => setView(tab.id)}
+                        >
+                            <tab.icon size={15} />
+                            {tab.label}
+                            {tab.id === 'list' && activeList && activeItems.length > 0 && (
+                                <span className="tab-badge">{activeItems.length - checkedCount}</span>
+                            )}
+                        </button>
+                    ))}
                 </div>
             )}
 
-            {/* Archived */}
-            {archivedLists.length > 0 && (
-                <div className="archived-section">
-                    <button type="button" className="toggle-archived" onClick={() => setShowArchived(!showArchived)}>
-                        {showArchived ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        Listas anteriores ({archivedLists.length})
-                    </button>
-                    {showArchived && archivedLists.map(list => {
-                        const stats = getListStats(list.id);
-                        return (
-                            <div key={list.id} className="archived-item">
-                                <span className={`arch-status ${list.status}`}>{list.status === 'completed' ? <CheckCircle2 size={14} /> : <Archive size={14} />}</span>
-                                <span className="arch-name">{list.name}</span>
-                                <span className="arch-date">{format(new Date(list.created_at), 'd MMM', { locale: es })}</span>
-                                <span className="arch-total">{fmt(stats.actual || stats.estimated, currency)}</span>
-                                <button type="button" title="Eliminar" className="la-btn del sm" onClick={() => setDeleteConfirm({ type: 'list', id: list.id, name: list.name })}><Trash2 size={13} /></button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+            {/* ══════════════ CATALOG — STORES GRID ══════════════ */}
+            {view === 'catalog' && !activeStoreId && (
+                <div className="compras-content">
+                    <div className="stores-grid">
+                        {stores.map(store => {
+                            const selCount = selectedByStore(store.id);
+                            return (
+                                <button
+                                    key={store.id}
+                                    className="store-card"
+                                    style={{ '--store-color': store.color } as React.CSSProperties}
+                                    onClick={() => setActiveStoreId(store.id)}
+                                >
+                                    <div className="store-emoji">{store.emoji}</div>
+                                    <div className="store-body">
+                                        <span className="store-name">{store.name}</span>
+                                        <span className="store-count">{countByStore(store.id)} productos</span>
+                                    </div>
+                                    {selCount > 0 && (
+                                        <span className="store-sel-badge">{selCount}</span>
+                                    )}
+                                    <ChevronRight size={16} className="store-arrow" />
+                                </button>
+                            );
+                        })}
 
-            {/* FAB */}
-            <button type="button" className="fab-add" onClick={() => { setListForm({ name: '', budget_limit: '' }); setIsListModal(true); }}>
-                <Plus size={20} /> Nueva Lista
-            </button>
-
-            {/* ── Modal: Nueva Lista manual ── */}
-            {isListModal && (
-                <div className="modal-overlay" onClick={() => setIsListModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>Nueva Lista</h2>
-                            <button type="button" className="close-btn" title="Cerrar" onClick={() => setIsListModal(false)}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleListSubmit} className="modal-form">
-                            <div className="form-group"><label>Nombre</label><input type="text" className="form-input" value={listForm.name} onChange={e => setListForm({ ...listForm, name: e.target.value })} required placeholder="Ej: Supermercado semanal" autoFocus /></div>
-                            <div className="form-group"><label>Presupuesto máximo (opcional)</label><input type="number" className="form-input" value={listForm.budget_limit} onChange={e => setListForm({ ...listForm, budget_limit: e.target.value })} min="0" step="0.01" placeholder="Ej: 200000" /></div>
-                            <div className="modal-actions">
-                                <button type="button" className="btn-cancel" onClick={() => setIsListModal(false)}>Cancelar</button>
-                                <button type="submit" className="btn-submit">Crear Lista</button>
+                        {/* Add store */}
+                        <button className="store-card store-card-add" onClick={() => setShowAddStore(true)}>
+                            <div className="store-emoji store-emoji-add"><Plus size={20} /></div>
+                            <div className="store-body">
+                                <span className="store-name">Nueva categoría</span>
+                                <span className="store-count">Agregar lugar de compra</span>
                             </div>
-                        </form>
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* ── Modal: Agregar producto ── */}
-            {isItemModal && (
-                <div className="modal-overlay" onClick={() => setIsItemModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>Agregar Producto</h2>
-                            <button type="button" className="close-btn" title="Cerrar" onClick={() => setIsItemModal(false)}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleItemSubmit} className="modal-form">
-                            <div className="form-group"><label>Producto</label><input type="text" className="form-input" value={itemForm.name} onChange={e => setItemForm({ ...itemForm, name: e.target.value })} required placeholder="Ej: Leche" autoFocus /></div>
-                            <div className="form-row two-cols">
-                                <div className="form-group"><label>Categoría</label>
-                                    <select className="form-select" title="Categoría" value={itemForm.category} onChange={e => setItemForm({ ...itemForm, category: e.target.value as ShoppingItem['category'] })}>
-                                        {ITEM_CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Prioridad</label>
-                                    <select className="form-select" title="Prioridad" value={itemForm.priority} onChange={e => setItemForm({ ...itemForm, priority: e.target.value as ShoppingItem['priority'] })}>
-                                        <option value="high">Alta</option><option value="normal">Normal</option><option value="low">Baja</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="form-row three-cols">
-                                <div className="form-group"><label>Cantidad</label><input type="number" className="form-input" value={itemForm.quantity} onChange={e => setItemForm({ ...itemForm, quantity: e.target.value })} min="0.1" step="0.1" /></div>
-                                <div className="form-group"><label>Unidad</label>
-                                    <select className="form-select" title="Unidad" value={itemForm.unit} onChange={e => setItemForm({ ...itemForm, unit: e.target.value })}>
-                                        <option value="und">und</option><option value="kg">kg</option><option value="lb">lb</option><option value="lt">lt</option><option value="ml">ml</option><option value="gr">gr</option><option value="paq">paq</option>
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Precio est.</label><input type="number" className="form-input" value={itemForm.estimated_price} onChange={e => setItemForm({ ...itemForm, estimated_price: e.target.value })} min="0" step="0.01" /></div>
-                            </div>
-                            <div className="modal-actions">
-                                <button type="button" className="btn-cancel" onClick={() => setIsItemModal(false)}>Cancelar</button>
-                                <button type="submit" className="btn-submit">Agregar</button>
-                            </div>
-                        </form>
+            {/* ══════════════ CATALOG — PRODUCT LIST ═════════════ */}
+            {view === 'catalog' && activeStoreId && (
+                <div className="compras-content">
+                    {/* Search */}
+                    <div className="products-search-wrap">
+                        <Search size={15} className="products-search-icon" />
+                        <input
+                            className="products-search-input"
+                            placeholder="Buscar producto..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button className="products-search-clear" onClick={() => setSearchQuery('')}>
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
-                </div>
-            )}
 
-            {/* ── Modal: Pegar lista — Step 1: textarea ── */}
-            {pasteStep === 'paste' && (
-                <div className="modal-overlay" onClick={() => setPasteStep('idle')}>
-                    <div className="modal-content paste-modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <div>
-                                <h2>Pegar lista de texto</h2>
-                                <p className="modal-sub">Escribe o pega tu lista — un producto por línea</p>
-                            </div>
-                            <button type="button" className="close-btn" title="Cerrar" onClick={() => setPasteStep('idle')}><X size={20} /></button>
-                        </div>
-                        <div className="modal-form">
-                            <div className="paste-hints">
-                                <span>Ejemplos: <em>2 lt leche</em> · <em>jabón rey</em> · <em>500 gr arroz</em> · <em>pollo x2</em></span>
-                            </div>
-                            <textarea
-                                className="paste-textarea"
-                                value={pasteText}
-                                onChange={e => setPasteText(e.target.value)}
-                                placeholder={"2 lt leche\nPan tajado\n3 kg arroz\nJabón rey\nShampoo\n500 gr sal\n..."}
-                                rows={12}
+                    {/* Inline add product form */}
+                    {showAddProduct && (
+                        <div className="product-add-form">
+                            <input
+                                className="product-add-input"
+                                type="text"
+                                placeholder="Nombre del producto"
+                                value={newProductName}
+                                onChange={e => setNewProductName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addProduct()}
                                 autoFocus
                             />
-                            <div className="modal-actions">
-                                <button type="button" className="btn-cancel" onClick={() => setPasteStep('idle')}>Cancelar</button>
-                                <button type="button" className="btn-submit" onClick={handleOrganize} disabled={!pasteText.trim()}>
-                                    Organizar →
-                                </button>
-                            </div>
+                            <select
+                                className="product-add-unit"
+                                value={newProductUnit}
+                                onChange={e => setNewProductUnit(e.target.value)}
+                            >
+                                {UNIT_OPTIONS.map(u => <option key={u}>{u}</option>)}
+                            </select>
+                            <button className="product-add-ok" onClick={addProduct}>
+                                <Check size={15} />
+                            </button>
+                            <button className="product-add-cancel" onClick={() => setShowAddProduct(false)}>
+                                <X size={15} />
+                            </button>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
 
-            {/* ── Modal: Pegar lista — Step 2: canvas preview ── */}
-            {pasteStep === 'canvas' && (
-                <div className="modal-overlay canvas-overlay" onClick={() => setPasteStep('idle')}>
-                    <div className="canvas-modal" onClick={e => e.stopPropagation()}>
-                        <div className="canvas-modal-header">
-                            <div className="canvas-title-row">
-                                <button type="button" className="back-btn" title="Volver" onClick={() => setPasteStep('paste')}>← Volver</button>
-                                <input
-                                    type="text"
-                                    className="canvas-list-name"
-                                    value={canvasListName}
-                                    onChange={e => setCanvasListName(e.target.value)}
-                                    placeholder="Nombre de la lista"
-                                />
-                                <button
-                                    type="button"
-                                    className="btn-import"
-                                    onClick={handleImport}
-                                    disabled={importing || parsedItems.filter(i => i.selected).length === 0}
-                                >
-                                    {importing ? 'Importando...' : `Importar ${parsedItems.filter(i => i.selected).length} productos`}
-                                </button>
+                    {/* Product rows */}
+                    <div className="products-list">
+                        {filteredProducts.length === 0 && (
+                            <div className="products-empty">
+                                <Package size={44} />
+                                {searchQuery
+                                    ? <p>Sin resultados para "{searchQuery}"</p>
+                                    : <>
+                                        <p>No hay productos todavía</p>
+                                        <p className="products-empty-hint">
+                                            Agrega con el botón <Plus size={13} /> o importa una lista con <Upload size={13} />
+                                        </p>
+                                    </>
+                                }
                             </div>
-                            <p className="canvas-hint">Toca un producto para deseleccionarlo. Cambia su categoría con el selector.</p>
-                        </div>
+                        )}
 
-                        <div className="canvas-grid">
-                            {Object.entries(canvasGrouped).map(([cat, { items: catItems, cat: catInfo }]) => {
-                                const CatIcon = catInfo.icon;
-                                const selectedCount = catItems.filter(i => i.selected).length;
-                                return (
-                                    <div key={cat} className="canvas-card">
-                                        <div className="canvas-card-header" style={{ background: catInfo.color }}>
-                                            <CatIcon size={16} />
-                                            <span>{catInfo.label}</span>
-                                            <span className="canvas-count">{selectedCount}/{catItems.length}</span>
-                                        </div>
-                                        <div className="canvas-card-items">
-                                            {catItems.map(item => (
-                                                <div key={item.idx} className={`canvas-item ${item.selected ? '' : 'deselected'}`}>
-                                                    <button type="button" className="canvas-check" onClick={() => toggleParsedItem(item.idx)}>
-                                                        {item.selected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                                                    </button>
-                                                    <div className="canvas-item-info">
-                                                        <span className="canvas-item-name">{item.name}</span>
-                                                        <span className="canvas-item-qty">{item.quantity} {item.unit}</span>
-                                                    </div>
-                                                    <select
-                                                        title="Categoría"
-                                                        className="canvas-cat-select"
-                                                        value={item.category}
-                                                        onChange={e => changeParsedCategory(item.idx, e.target.value as ShoppingItem['category'])}
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        {ITEM_CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                                    </select>
-                                                </div>
-                                            ))}
-                                        </div>
+                        {filteredProducts.map(product => {
+                            const sel = selection.get(product.id);
+                            return (
+                                <div key={product.id} className={`product-row ${sel ? 'selected' : ''}`}>
+                                    <button className="product-check" onClick={() => toggleProduct(product)}>
+                                        {sel
+                                            ? <CheckCircle2 size={21} />
+                                            : <Circle size={21} />
+                                        }
+                                    </button>
+
+                                    <div className="product-info">
+                                        <span className="product-name">{product.name}</span>
+                                        <span className="product-unit">{product.unit}</span>
                                     </div>
-                                );
-                            })}
+
+                                    {sel && (
+                                        <div className="product-qty">
+                                            <button onClick={() => updateQty(product.id, -0.5)}>−</button>
+                                            <span>{sel.qty}</span>
+                                            <button onClick={() => updateQty(product.id, +0.5)}>+</button>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        className="product-delete"
+                                        onClick={() => deleteProduct(product.id)}
+                                        title="Eliminar del catálogo"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Delete store link */}
+                    <button className="delete-store-btn" onClick={() => deleteStore(activeStoreId)}>
+                        <Trash2 size={13} />
+                        Eliminar categoría
+                    </button>
+                </div>
+            )}
+
+            {/* ══════════════ MY LIST VIEW ════════════════════════ */}
+            {view === 'list' && !activeStoreId && (
+                <div className="compras-content">
+                    {!activeList ? (
+                        <div className="list-empty">
+                            <ClipboardList size={52} />
+                            <h3>No hay lista activa</h3>
+                            <p>Ve al Catálogo, selecciona productos y crea tu lista de mercado</p>
+                            <button className="btn-primary-sm" onClick={() => setView('catalog')}>
+                                Ir al Catálogo
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="active-list-header">
+                                <div>
+                                    <h2 className="active-list-name">{activeList.name}</h2>
+                                    <p className="active-list-meta">
+                                        {format(new Date(activeList.created_at), "d 'de' MMMM", { locale: es })}
+                                        {'  ·  '}{checkedCount}/{activeItems.length} listos
+                                    </p>
+                                </div>
+                                <button className="btn-success-sm" onClick={completeList}>
+                                    <Check size={14} />
+                                    Finalizar
+                                </button>
+                            </div>
+
+                            <div className="active-list-progress">
+                                <div
+                                    className="active-list-progress-bar"
+                                    style={{ width: activeItems.length ? `${(checkedCount / activeItems.length) * 100}%` : '0%' }}
+                                />
+                            </div>
+
+                            {itemsByStore.map(({ store, items }) => (
+                                <div key={store?.id || '__none__'} className="list-store-group">
+                                    <div className="list-store-header">
+                                        <span className="list-store-emoji">{store?.emoji ?? '📦'}</span>
+                                        <span className="list-store-name">{store?.name ?? 'Sin categoría'}</span>
+                                        <span className="list-store-count">
+                                            {items.filter(i => i.is_checked).length}/{items.length}
+                                        </span>
+                                    </div>
+                                    {items.map(item => (
+                                        <button
+                                            key={item.id}
+                                            className={`list-item ${item.is_checked ? 'checked' : ''}`}
+                                            onClick={() => toggleItem(item)}
+                                        >
+                                            <span className="list-item-check">
+                                                {item.is_checked
+                                                    ? <CheckCircle2 size={19} />
+                                                    : <Circle size={19} />
+                                                }
+                                            </span>
+                                            <span className="list-item-name">{item.name}</span>
+                                            <span className="list-item-qty">{item.quantity} {item.unit}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ))}
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* ══════════════ HISTORY VIEW ════════════════════════ */}
+            {view === 'history' && !activeStoreId && (
+                <div className="compras-content">
+                    {pastLists.length === 0 ? (
+                        <div className="list-empty">
+                            <History size={52} />
+                            <h3>Sin historial</h3>
+                            <p>Las listas completadas aparecerán aquí</p>
+                        </div>
+                    ) : (
+                        <div className="history-list">
+                            {pastLists.map(list => (
+                                <div key={list.id} className="history-item">
+                                    <div className="history-icon">
+                                        <ShoppingCart size={17} />
+                                    </div>
+                                    <div className="history-info">
+                                        <span className="history-name">{list.name}</span>
+                                        <span className="history-date">
+                                            {format(new Date(list.created_at), "d MMM yyyy · HH:mm", { locale: es })}
+                                        </span>
+                                    </div>
+                                    <span className={`history-status history-status-${list.status}`}>
+                                        {list.status === 'completed' ? 'Completado' : 'Archivado'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ══════════════ SELECTION BAR ═══════════════════════ */}
+            {selection.size > 0 && view === 'catalog' && !activeList && (
+                <div className="selection-bar">
+                    <div className="selection-bar-left">
+                        <ShoppingCart size={17} />
+                        <span>
+                            {selection.size} {selection.size === 1 ? 'producto' : 'productos'} seleccionados
+                        </span>
+                    </div>
+                    <div className="selection-bar-right">
+                        <button className="selection-clear-btn" onClick={() => setSelection(new Map())}>
+                            <X size={15} />
+                        </button>
+                        <button className="selection-create-btn" onClick={createList}>
+                            Crear lista
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════ ADD STORE MODAL ═════════════════════ */}
+            {showAddStore && (
+                <div className="modal-overlay" onClick={() => setShowAddStore(false)}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Nueva categoría</h3>
+                            <button className="modal-close" onClick={() => setShowAddStore(false)}>
+                                <X size={17} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="modal-label">Ícono</p>
+                            <div className="emoji-picker">
+                                {STORE_EMOJIS.map(e => (
+                                    <button
+                                        key={e}
+                                        className={`emoji-btn ${newStoreEmoji === e ? 'active' : ''}`}
+                                        onClick={() => setNewStoreEmoji(e)}
+                                    >
+                                        {e}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="modal-label">Nombre</p>
+                            <input
+                                className="modal-input"
+                                type="text"
+                                placeholder="Ej: Panadería, Farmacia..."
+                                value={newStoreName}
+                                onChange={e => setNewStoreName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addStore()}
+                                autoFocus
+                            />
+                            <p className="modal-label">Color</p>
+                            <div className="color-picker">
+                                {STORE_COLORS.map(c => (
+                                    <button
+                                        key={c}
+                                        className={`color-btn ${newStoreColor === c ? 'active' : ''}`}
+                                        style={{ background: c }}
+                                        onClick={() => setNewStoreColor(c)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn-ghost" onClick={() => setShowAddStore(false)}>Cancelar</button>
+                            <button className="btn-primary" onClick={addStore} disabled={!newStoreName.trim()}>
+                                Crear categoría
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ── Modal: Eliminar ── */}
-            {deleteConfirm && (
-                <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
-                    <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
-                        <AlertTriangle size={40} color="#F59E0B" />
-                        <h2>¿Eliminar "{deleteConfirm.name}"?</h2>
-                        <div className="modal-actions">
-                            <button type="button" className="btn-cancel" onClick={() => setDeleteConfirm(null)}>Cancelar</button>
-                            <button type="button" className="btn-delete" onClick={handleDelete}>Eliminar</button>
+            {/* ══════════════ IMPORT MODAL ════════════════════════ */}
+            {showImport && (
+                <div className="modal-overlay" onClick={closeImport}>
+                    <div className="modal-box modal-box-lg" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Importar productos a {activeStore?.name}</h3>
+                            <button className="modal-close" onClick={closeImport}><X size={17} /></button>
                         </div>
+
+                        {importStep !== 'preview' ? (
+                            <>
+                                <div className="import-tabs">
+                                    <button
+                                        className={`import-tab ${importStep === 'paste' || importStep === 'idle' ? 'active' : ''}`}
+                                        onClick={() => setImportStep('paste')}
+                                    >
+                                        <FileText size={14} /> Pegar texto
+                                    </button>
+                                    <button
+                                        className={`import-tab ${importStep === 'file' ? 'active' : ''}`}
+                                        onClick={() => setImportStep('file')}
+                                    >
+                                        <Upload size={14} /> Archivo
+                                    </button>
+                                    <button className="import-tab import-tab-soon" disabled>
+                                        <Camera size={14} /> Foto <span className="soon-badge">Pronto</span>
+                                    </button>
+                                </div>
+
+                                <div className="modal-body">
+                                    {(importStep === 'idle' || importStep === 'paste') && (
+                                        <>
+                                            <p className="import-hint">
+                                                Un producto por línea. Puedes incluir cantidades: "2 kg arroz" o simplemente "leche"
+                                            </p>
+                                            <textarea
+                                                className="import-textarea"
+                                                placeholder={"Pollo\n2 kg arroz\n1 lt aceite de oliva\nSal\nPan de molde"}
+                                                value={importText}
+                                                onChange={e => setImportText(e.target.value)}
+                                                rows={8}
+                                                autoFocus
+                                            />
+                                        </>
+                                    )}
+                                    {importStep === 'file' && (
+                                        <label className="file-drop" htmlFor="file-import-input">
+                                            <Upload size={30} />
+                                            <p>Sube un archivo <strong>.txt</strong> o <strong>.csv</strong></p>
+                                            <span className="btn-primary">Seleccionar archivo</span>
+                                            <input
+                                                id="file-import-input"
+                                                type="file"
+                                                accept=".txt,.csv"
+                                                onChange={handleFile}
+                                                style={{ display: 'none' }}
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+
+                                {(importStep === 'paste' || importStep === 'idle') && importText.trim() && (
+                                    <div className="modal-footer">
+                                        <button className="btn-ghost" onClick={() => setImportText('')}>Limpiar</button>
+                                        <button className="btn-primary" onClick={() => {
+                                            setImportPreview(parseText(importText));
+                                            setImportStep('preview');
+                                        }}>
+                                            Revisar lista →
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="modal-body">
+                                    <p className="import-hint">
+                                        Desmarca los que no quieras agregar. Ajusta la unidad si es necesario.
+                                    </p>
+                                    <div className="import-preview-list">
+                                        {importPreview.map((item, i) => (
+                                            <label key={i} className="import-preview-row">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.selected}
+                                                    onChange={() =>
+                                                        setImportPreview(prev =>
+                                                            prev.map((p, j) => j === i ? { ...p, selected: !p.selected } : p)
+                                                        )
+                                                    }
+                                                />
+                                                <span className="import-preview-name">{item.name}</span>
+                                                <select
+                                                    className="import-preview-unit"
+                                                    value={item.unit}
+                                                    onChange={e =>
+                                                        setImportPreview(prev =>
+                                                            prev.map((p, j) => j === i ? { ...p, unit: e.target.value } : p)
+                                                        )
+                                                    }
+                                                >
+                                                    {UNIT_OPTIONS.map(u => <option key={u}>{u}</option>)}
+                                                </select>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn-ghost" onClick={() => setImportStep('paste')}>← Volver</button>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={importProducts}
+                                        disabled={!importPreview.some(p => p.selected)}
+                                    >
+                                        Agregar {importPreview.filter(p => p.selected).length} al catálogo
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

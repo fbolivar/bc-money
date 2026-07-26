@@ -465,6 +465,7 @@ export type PetEvent = {
 export type ShoppingList = {
   id: string;
   user_id: string;
+  family_id: string | null;
   name: string;
   status: 'active' | 'completed' | 'archived';
   budget_limit: number | null;
@@ -486,6 +487,32 @@ export type ShoppingItem = {
   is_checked: boolean;
   priority: 'low' | 'normal' | 'high';
   notes: string | null;
+  store_id: string | null;
+  product_id: string | null;
+  created_at: string;
+};
+
+export type MarketStore = {
+  id: string;
+  user_id: string;
+  family_id: string | null;
+  name: string;
+  emoji: string;
+  color: string;
+  sort_order: number;
+  is_family: boolean;
+  created_at: string;
+};
+
+export type MarketProduct = {
+  id: string;
+  user_id: string;
+  family_id: string | null;
+  store_id: string;
+  name: string;
+  unit: string;
+  is_family: boolean;
+  sort_order: number;
   created_at: string;
 };
 
