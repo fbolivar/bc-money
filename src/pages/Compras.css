@@ -1040,6 +1040,130 @@
 }
 .btn-ghost:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
 
+/* ── Recommendations panel ───────────────────────────────────────────────── */
+
+.recs-panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.recs-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+    font-family: var(--font-family);
+}
+.recs-header:hover { background: var(--color-surface-hover); }
+
+.recs-title {
+    flex: 1;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.recs-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--color-primary);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 99px;
+}
+
+.recs-chevron {
+    color: var(--color-text-tertiary);
+    transition: transform var(--transition-fast);
+}
+.recs-chevron.collapsed { transform: rotate(-90deg); }
+
+.recs-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0 0.9rem 0.75rem;
+}
+
+/* ── Recommendation chips ── */
+
+.rec-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-family);
+    white-space: nowrap;
+}
+.rec-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+
+.rec-chip-goes_with {
+    background: #EFF6FF;
+    border-color: #BFDBFE;
+    color: #1D4ED8;
+}
+[data-theme="dark"] .rec-chip-goes_with {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #93C5FD;
+}
+
+.rec-chip-missing_typical {
+    background: #FFFBEB;
+    border-color: #FDE68A;
+    color: #B45309;
+}
+[data-theme="dark"] .rec-chip-missing_typical {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #FCD34D;
+}
+
+.rec-chip-last_time {
+    background: #F5F3FF;
+    border-color: #DDD6FE;
+    color: #6D28D9;
+}
+[data-theme="dark"] .rec-chip-last_time {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #C4B5FD;
+}
+
+.rec-chip-frequent {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.rec-chip-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.rec-chip-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+
+.rec-chip-count {
+    font-size: 0.68rem;
+    opacity: 0.75;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 @media (min-width: 640px) {

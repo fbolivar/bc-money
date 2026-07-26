@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     ShoppingCart, Plus, ArrowLeft, Check, X, Upload,
     FileText, Camera, ChevronRight, Trash2, Package,
     Search, History, Store, Circle, CheckCircle2, ClipboardList,
+    AlertTriangle, RotateCcw, Link2, Repeat2, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { MarketStore, MarketProduct, ShoppingList, ShoppingItem } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useRecommendations, type RecType } from '../hooks/useRecommendations';
 import './Compras.css';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -30,6 +32,13 @@ const STORE_COLORS = [
     '#3B82F6','#22C55E','#EF4444','#F59E0B','#8B5CF6',
     '#EC4899','#14B8A6','#6366F1','#F97316','#64748B',
 ];
+
+const REC_LABELS: Record<RecType, string> = {
+    goes_with:       'Va con lo que ya tienes',
+    missing_typical: 'Siempre lo llevas — ¿lo olvidaste?',
+    last_time:       'Lo llevaste la vez pasada',
+    frequent:        'Lo compras frecuentemente',
+};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +98,7 @@ export function Compras() {
     const [importStep, setImportStep] = useState<ImportStep>('idle');
     const [importText, setImportText] = useState('');
     const [importPreview, setImportPreview] = useState<ParsedLine[]>([]);
+    const [recsCollapsed, setRecsCollapsed] = useState(false);
 
     // Forms
     const [newStoreName, setNewStoreName] = useState('');
@@ -161,6 +171,11 @@ export function Compras() {
     }, [user]);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    // ── Recommendations ───────────────────────────────────────────────────────
+
+    const selectedIds = useMemo(() => [...selection.keys()], [selection]);
+    const { recs } = useRecommendations(activeStoreId, products, selectedIds);
 
     // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -463,6 +478,46 @@ export function Compras() {
                             </button>
                         )}
                     </div>
+
+                    {/* ── Recommendations panel ── */}
+                    {recs.length > 0 && (
+                        <div className="recs-panel">
+                            <button
+                                className="recs-header"
+                                onClick={() => setRecsCollapsed(c => !c)}
+                            >
+                                <span className="recs-title">✨ Sugeridos para ti</span>
+                                <span className="recs-count">{recs.length}</span>
+                                <ChevronDown
+                                    size={15}
+                                    className={`recs-chevron ${recsCollapsed ? 'collapsed' : ''}`}
+                                />
+                            </button>
+                            {!recsCollapsed && (
+                                <div className="recs-chips">
+                                    {recs.map(rec => (
+                                        <button
+                                            key={rec.product.id}
+                                            className={`rec-chip rec-chip-${rec.type}`}
+                                            onClick={() => toggleProduct(rec.product)}
+                                            title={REC_LABELS[rec.type]}
+                                        >
+                                            <span className="rec-chip-icon">
+                                                {rec.type === 'goes_with'       && <Link2      size={12} />}
+                                                {rec.type === 'missing_typical' && <AlertTriangle size={12} />}
+                                                {rec.type === 'last_time'       && <RotateCcw   size={12} />}
+                                                {rec.type === 'frequent'        && <Repeat2     size={12} />}
+                                            </span>
+                                            <span className="rec-chip-name">{rec.product.name}</span>
+                                            {rec.count > 1 && (
+                                                <span className="rec-chip-count">{rec.count}×</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Inline add product form */}
                     {showAddProduct && (
