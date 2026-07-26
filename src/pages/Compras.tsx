@@ -253,6 +253,15 @@ export function Compras() {
         ? storeProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
         : storeProducts;
 
+    // Agrupar productos por sección (mantiene orden de primera aparición)
+    const productsBySection = filteredProducts.reduce<{ section: string; items: typeof filteredProducts }[]>((acc, p) => {
+        const sec = p.section || 'General';
+        const existing = acc.find(g => g.section === sec);
+        if (existing) existing.items.push(p);
+        else acc.push({ section: sec, items: [p] });
+        return acc;
+    }, []);
+
     const countByStore = (sid: string) => products.filter(p => p.store_id === sid).length;
     const selectedByStore = (sid: string) =>
         [...selection.values()].filter(s => s.product.store_id === sid).length;
@@ -667,40 +676,35 @@ export function Compras() {
                             </div>
                         )}
 
-                        {filteredProducts.map(product => {
-                            const sel = selection.get(product.id);
-                            return (
-                                <div key={product.id} className={`product-row ${sel ? 'selected' : ''}`}>
-                                    <button className="product-check" onClick={() => toggleProduct(product)}>
-                                        {sel
-                                            ? <CheckCircle2 size={21} />
-                                            : <Circle size={21} />
-                                        }
-                                    </button>
-
-                                    <div className="product-info">
-                                        <span className="product-name">{product.name}</span>
-                                        <span className="product-unit">{product.unit}</span>
-                                    </div>
-
-                                    {sel && (
-                                        <div className="product-qty">
-                                            <button onClick={() => updateQty(product.id, -0.5)}>−</button>
-                                            <span>{sel.qty}</span>
-                                            <button onClick={() => updateQty(product.id, +0.5)}>+</button>
+                        {productsBySection.map(({ section, items }) => (
+                            <div key={section} className="product-section">
+                                <div className="product-section-header">{section}</div>
+                                {items.map(product => {
+                                    const sel = selection.get(product.id);
+                                    return (
+                                        <div key={product.id} className={`product-row ${sel ? 'selected' : ''}`}>
+                                            <button className="product-check" onClick={() => toggleProduct(product)}>
+                                                {sel ? <CheckCircle2 size={21} /> : <Circle size={21} />}
+                                            </button>
+                                            <div className="product-info">
+                                                <span className="product-name">{product.name}</span>
+                                                <span className="product-unit">{product.unit}</span>
+                                            </div>
+                                            {sel && (
+                                                <div className="product-qty">
+                                                    <button onClick={() => updateQty(product.id, -0.5)}>−</button>
+                                                    <span>{sel.qty}</span>
+                                                    <button onClick={() => updateQty(product.id, +0.5)}>+</button>
+                                                </div>
+                                            )}
+                                            <button className="product-delete" onClick={() => deleteProduct(product.id)} title="Eliminar del catálogo">
+                                                <Trash2 size={14} />
+                                            </button>
                                         </div>
-                                    )}
-
-                                    <button
-                                        className="product-delete"
-                                        onClick={() => deleteProduct(product.id)}
-                                        title="Eliminar del catálogo"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            );
-                        })}
+                                    );
+                                })}
+                            </div>
+                        ))}
                     </div>
 
                     {/* Delete store link */}

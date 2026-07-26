@@ -511,6 +511,7 @@ export type MarketProduct = {
   store_id: string;
   name: string;
   unit: string;
+  section: string | null;
   is_family: boolean;
   sort_order: number;
   created_at: string;
