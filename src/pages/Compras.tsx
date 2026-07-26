@@ -280,7 +280,7 @@ export function Compras() {
     if (loading) return <div className="loading-screen">Cargando...</div>;
 
     return (
-        <div className="compras-container">
+        <div className="compras-page">
             {toast && <div className={`shop-toast ${toast.type}`}>{toast.message}</div>}
 
             <div className="compras-header">
@@ -338,7 +338,7 @@ export function Compras() {
                                         <button type="button" title="Agregar producto" className="la-btn add" onClick={e => { e.stopPropagation(); openAddItem(list.id); }}><Plus size={16} /></button>
                                         <button type="button" title="Archivar" className="la-btn" onClick={e => { e.stopPropagation(); archiveList(list.id); }}><Archive size={16} /></button>
                                         <button type="button" title="Eliminar" className="la-btn del" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'list', id: list.id, name: list.name }); }}><Trash2 size={16} /></button>
-                                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        <span className="la-btn chevron">{isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</span>
                                     </div>
                                 </div>
 
