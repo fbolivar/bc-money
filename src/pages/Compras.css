@@ -19,6 +19,28 @@
     color: var(--color-text-secondary);
 }
 
+.compras-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--color-danger-light, #fee2e2);
+    color: var(--color-danger, #dc2626);
+    font-size: 0.85rem;
+}
+.compras-error-banner button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    display: flex;
+}
+[data-theme="dark"] .compras-error-banner {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+}
+
 /* ── Header ─────────────────────────────────────────────────────────────── */
 
 .compras-header {

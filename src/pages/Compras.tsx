@@ -156,6 +156,7 @@ export function Compras() {
     // UI
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [createError, setCreateError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddStore, setShowAddStore] = useState(false);
     const [showAddProduct, setShowAddProduct] = useState(false);
@@ -337,12 +338,17 @@ export function Compras() {
 
     const createList = async () => {
         if (!user || selection.size === 0) return;
+        setCreateError(null);
         const name = `Mercado ${format(new Date(), "d 'de' MMM", { locale: es })}`;
         const { data: list, error } = await supabase
             .from('shopping_lists')
             .insert({ user_id: user.id, name, status: 'active', currency: 'COP' })
             .select().single();
-        if (error || !list) return;
+        if (error || !list) {
+            console.error('createList list insert:', error);
+            setCreateError(`Error al crear la lista: ${error?.message || 'sin respuesta'}`);
+            return;
+        }
 
         const rows = [...selection.values()].map(s => ({
             list_id: list.id,
@@ -359,6 +365,7 @@ export function Compras() {
         const { error: insertErr } = await supabase.from('shopping_items').insert(rows);
         if (insertErr) {
             console.error('createList items insert:', insertErr);
+            setCreateError(`Error al guardar productos: ${insertErr.message}`);
             await supabase.from('shopping_lists').delete().eq('id', list.id);
             return;
         }
@@ -804,6 +811,13 @@ export function Compras() {
             )}
 
             {/* ══════════════ SELECTION BAR ═══════════════════════ */}
+            {createError && (
+                <div className="compras-error-banner">
+                    <AlertTriangle size={15} />
+                    <span>{createError}</span>
+                    <button onClick={() => setCreateError(null)}><X size={13} /></button>
+                </div>
+            )}
             {selection.size > 0 && view === 'catalog' && !activeList && (
                 <div className="selection-bar">
                     <div className="selection-bar-left">
