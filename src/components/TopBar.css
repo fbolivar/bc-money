@@ -168,10 +168,10 @@
     cursor: pointer;
     font-size: 0.82rem;
     font-weight: 600;
-    color: var(--color-primary, #6366f1);
+    color: var(--color-primary);
     text-align: center;
 }
-.search-see-all:hover { background: var(--color-primary-light, #ede9fe); }
+.search-see-all:hover { background: var(--color-primary-light); }
 
 @media (max-width: 768px) {
     .search-dropdown { width: calc(100vw - 2rem); left: auto; right: 0; }

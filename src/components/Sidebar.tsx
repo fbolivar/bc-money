@@ -120,11 +120,13 @@ export const Sidebar = memo(function Sidebar({ isOpen, onClose }: SidebarProps) 
             <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="sidebar-logo">
-                        <DollarSign size={28} />
-                        <span>BC MONEY</span>
+                        <div className="sidebar-logo-icon">
+                            <DollarSign size={18} />
+                        </div>
+                        <span>BC Money</span>
                     </div>
                     <button className="close-sidebar-btn" title="Cerrar" onClick={onClose}>
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
 

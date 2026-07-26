@@ -3,9 +3,9 @@
 /* ========== CSS Variables ========== */
 :root {
   /* Colors - Modern Futuristic */
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-light: #EEF2FF;
+  --color-primary: #22C55E;
+  --color-primary-hover: #16A34A;
+  --color-primary-light: #DCFCE7;
 
   --color-secondary: #0EA5E9;
   --color-secondary-hover: #0284C7;
@@ -33,7 +33,7 @@
   --color-text-inverse: #FFFFFF;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #4F46E5, #7C3AED);
+  --gradient-primary: linear-gradient(135deg, #22C55E, #16A34A);
   --gradient-success: linear-gradient(135deg, #10B981, #34D399);
   --gradient-danger: linear-gradient(135deg, #EF4444, #F87171);
   --gradient-warning: linear-gradient(135deg, #F59E0B, #FBBF24);
@@ -45,7 +45,7 @@
   --shadow-md: 0 4px 12px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.03);
   --shadow-lg: 0 12px 24px rgb(0 0 0 / 0.08), 0 4px 8px rgb(0 0 0 / 0.04);
   --shadow-xl: 0 24px 48px rgb(0 0 0 / 0.12), 0 8px 16px rgb(0 0 0 / 0.06);
-  --shadow-colored: 0 8px 24px rgb(79 70 229 / 0.2);
+  --shadow-colored: 0 8px 24px rgb(34 197 94 / 0.2);
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -103,7 +103,7 @@
   --color-text-primary: #F1F5F9;
   --color-text-secondary: #94A3B8;
   --color-text-tertiary: #64748B;
-  --color-primary-light: rgba(79, 70, 229, 0.2);
+  --color-primary-light: rgba(34, 197, 94, 0.2);
   --color-secondary-light: rgba(14, 165, 233, 0.2);
   --color-danger-light: rgba(239, 68, 68, 0.2);
   --color-warning-light: rgba(245, 158, 11, 0.2);
@@ -205,11 +205,11 @@ a:hover {
 .btn-primary {
   background: var(--gradient-primary);
   color: var(--color-text-inverse);
-  box-shadow: 0 4px 12px rgb(79 70 229 / 0.3);
+  box-shadow: 0 4px 12px rgb(34 197 94 / 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgb(79 70 229 / 0.4);
+  box-shadow: 0 6px 20px rgb(34 197 94 / 0.4);
   transform: translateY(-1px);
 }
 
