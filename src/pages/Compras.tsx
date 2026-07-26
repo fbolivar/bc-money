@@ -21,6 +21,70 @@ const DEFAULT_STORES = [
     { name: 'Carnes',             emoji: '🥩', color: '#EF4444' },
 ];
 
+// Productos semilla por índice de tienda (mismo orden que DEFAULT_STORES)
+const DEFAULT_PRODUCTS: { name: string; unit: string }[][] = [
+    // Supermercado
+    [
+        { name: 'Arroz', unit: 'kg' },
+        { name: 'Aceite vegetal', unit: 'lt' },
+        { name: 'Azúcar', unit: 'kg' },
+        { name: 'Sal', unit: 'kg' },
+        { name: 'Harina de trigo', unit: 'kg' },
+        { name: 'Pasta', unit: 'paq' },
+        { name: 'Lentejas', unit: 'kg' },
+        { name: 'Fríjoles', unit: 'kg' },
+        { name: 'Salsa de tomate', unit: 'bot' },
+        { name: 'Atún en lata', unit: 'und' },
+        { name: 'Leche', unit: 'lt' },
+        { name: 'Huevos', unit: 'und' },
+        { name: 'Mantequilla', unit: 'und' },
+        { name: 'Queso', unit: 'gr' },
+        { name: 'Yogurt', unit: 'und' },
+        { name: 'Pan tajado', unit: 'und' },
+        { name: 'Papel higiénico', unit: 'paq' },
+        { name: 'Jabón de baño', unit: 'und' },
+        { name: 'Shampoo', unit: 'bot' },
+        { name: 'Detergente', unit: 'und' },
+        { name: 'Jabón lavar loza', unit: 'und' },
+        { name: 'Desinfectante', unit: 'bot' },
+    ],
+    // Frutas y Verduras
+    [
+        { name: 'Tomate', unit: 'kg' },
+        { name: 'Cebolla cabezona', unit: 'kg' },
+        { name: 'Papa', unit: 'kg' },
+        { name: 'Zanahoria', unit: 'kg' },
+        { name: 'Ajo', unit: 'und' },
+        { name: 'Limón', unit: 'kg' },
+        { name: 'Plátano', unit: 'kg' },
+        { name: 'Banano', unit: 'kg' },
+        { name: 'Manzana', unit: 'kg' },
+        { name: 'Naranja', unit: 'kg' },
+        { name: 'Aguacate', unit: 'und' },
+        { name: 'Lechuga', unit: 'und' },
+        { name: 'Cilantro', unit: 'und' },
+        { name: 'Pimentón', unit: 'und' },
+        { name: 'Pepino cohombro', unit: 'und' },
+        { name: 'Espinaca', unit: 'und' },
+        { name: 'Habichuela', unit: 'kg' },
+        { name: 'Yuca', unit: 'kg' },
+    ],
+    // Carnes
+    [
+        { name: 'Pechuga de pollo', unit: 'kg' },
+        { name: 'Pollo entero', unit: 'kg' },
+        { name: 'Muslos de pollo', unit: 'kg' },
+        { name: 'Carne molida de res', unit: 'kg' },
+        { name: 'Costilla de res', unit: 'kg' },
+        { name: 'Lomo de cerdo', unit: 'kg' },
+        { name: 'Chorizo', unit: 'und' },
+        { name: 'Salchicha', unit: 'paq' },
+        { name: 'Jamón', unit: 'gr' },
+        { name: 'Filete de tilapia', unit: 'kg' },
+        { name: 'Camarón', unit: 'kg' },
+    ],
+];
+
 const UNIT_OPTIONS = ['und', 'kg', 'gr', 'lb', 'lt', 'ml', 'paq', 'doc', 'caj', 'bot'];
 
 const STORE_EMOJIS = [
@@ -138,7 +202,31 @@ export function Compras() {
                 .select('*')
                 .order('name');
             if (productsErr) throw productsErr;
-            setProducts(productsData || []);
+
+            // Si el usuario tiene tiendas pero sin productos, sembrar productos por defecto
+            if (storesData && storesData.length > 0 && (!productsData || productsData.length === 0)) {
+                // Ordenar las tiendas por sort_order para alinear con DEFAULT_PRODUCTS
+                const sortedStores = [...storesData].sort((a, b) => a.sort_order - b.sort_order);
+                const productRows = sortedStores.flatMap((store, storeIdx) =>
+                    (DEFAULT_PRODUCTS[storeIdx] || []).map((p, pi) => ({
+                        user_id: user.id,
+                        store_id: store.id,
+                        name: p.name,
+                        unit: p.unit,
+                        sort_order: pi,
+                    }))
+                );
+                if (productRows.length > 0) {
+                    const { data: seededProds, error: prodSeedErr } = await supabase
+                        .from('market_products')
+                        .insert(productRows)
+                        .select();
+                    if (prodSeedErr) console.warn('Seed products error:', prodSeedErr);
+                    else setProducts(seededProds || []);
+                }
+            } else {
+                setProducts(productsData || []);
+            }
 
             // Active list
             const { data: listData, error: listErr } = await supabase
