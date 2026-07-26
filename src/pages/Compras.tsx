@@ -280,16 +280,19 @@ export function Compras() {
     const selectedByStore = (sid: string) =>
         [...selection.values()].filter(s => s.product.store_id === sid).length;
 
-    const itemsByStore = (() => {
-        const map = new Map<string, { store: MarketStore | undefined; items: ShoppingItem[] }>();
+    const itemsBySection = (() => {
+        const map: Record<string, ShoppingItem[]> = {};
         for (const item of activeItems) {
-            const key = item.store_id || '__none__';
-            if (!map.has(key)) {
-                map.set(key, { store: stores.find(s => s.id === item.store_id), items: [] });
-            }
-            map.get(key)!.items.push(item);
+            const product = products.find(p => p.id === item.product_id);
+            const sec = product?.section || (stores.find(s => s.id === item.store_id)?.name) || 'General';
+            if (!map[sec]) map[sec] = [];
+            map[sec].push(item);
         }
-        return [...map.values()];
+        return Object.entries(map).sort(([a], [b]) => {
+            const ia = SECTION_ORDER.indexOf(a);
+            const ib = SECTION_ORDER.indexOf(b);
+            return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        });
     })();
 
     // ── Catalog actions ───────────────────────────────────────────────────────
@@ -760,11 +763,10 @@ export function Compras() {
                                 />
                             </div>
 
-                            {itemsByStore.map(({ store, items }) => (
-                                <div key={store?.id || '__none__'} className="list-store-group">
+                            {itemsBySection.map(([section, items]) => (
+                                <div key={section} className="list-store-group">
                                     <div className="list-store-header">
-                                        <span className="list-store-emoji">{store?.emoji ?? '📦'}</span>
-                                        <span className="list-store-name">{store?.name ?? 'Sin categoría'}</span>
+                                        <span className="list-store-name">{section}</span>
                                         <span className="list-store-count">
                                             {items.filter(i => i.is_checked).length}/{items.length}
                                         </span>
@@ -776,10 +778,7 @@ export function Compras() {
                                             onClick={() => toggleItem(item)}
                                         >
                                             <span className="list-item-check">
-                                                {item.is_checked
-                                                    ? <CheckCircle2 size={19} />
-                                                    : <Circle size={19} />
-                                                }
+                                                {item.is_checked ? <CheckCircle2 size={19} /> : <Circle size={19} />}
                                             </span>
                                             <span className="list-item-name">{item.name}</span>
                                             <span className="list-item-qty">{item.quantity} {item.unit}</span>
